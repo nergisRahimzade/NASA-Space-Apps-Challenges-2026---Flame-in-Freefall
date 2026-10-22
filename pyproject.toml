@@ -1,0 +1,30 @@
+[project]
+name = "flame-in-freefall"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Nergis", email = "nergisrahimzade123@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "openai>=3.36.0",
+    "pandas>=3.0.6",
+    "plotly>=7.1.0",
+    "pypdf>=6.21.2",
+    "sentence-transformers>=6.2.0",
+    "streamlit>=1.66.1",
+]
+
+[project.scripts]
+flame-in-freefall = "flame_in_freefall:main"
+
+[build-system]
+requires = ["uv_build>=0.13.4,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "ipykernel>=7.4.0",
+    "pytest>=9.1.1",
+]
