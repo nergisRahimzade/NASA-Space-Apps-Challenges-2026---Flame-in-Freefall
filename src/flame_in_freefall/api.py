@@ -6,16 +6,21 @@ import csv
 import json
 from pathlib import Path
 
+# Build the path from this file's own location (up 2 folders = repo root),
+# so it works no matter which folder the app is started from.
 MOCK_DIR = Path(__file__).resolve().parents[2] / "data" / "mock"
+# The only filter keys the contract allows; get_table() rejects anything else.
 ALLOWED_FILTERS = {"experiment", "material", "oxygen_min", "oxygen_max"}
 
 
 def _load_mock_chunks() -> list[dict]:
+    # JSONL = one JSON object per line; skip blank lines so a trailing newline can't break it.
     lines = (MOCK_DIR / "chunks.mock.jsonl").read_text().splitlines()
     return [json.loads(line) for line in lines if line.strip()]
 
 
 def search(query: str, k: int = 3) -> list[dict]:
+    # Fail loudly on a blank question instead of running an empty search.
     if not query or not query.strip():
         raise ValueError("query must not be empty")
     chunks = _load_mock_chunks()[:k]
@@ -24,8 +29,10 @@ def search(query: str, k: int = 3) -> list[dict]:
 
 
 def summarize(passages: list[dict]) -> dict:
+    # Nothing found -> say so, never invent an answer (contract rule).
     if not passages:
         return {"takeaways": [], "not_found": True}
+    # Each takeaway keeps the chunk_id it came from, so every claim can be traced to a source.
     takeaways = [
         {"text": f"(mock) {p['text'][:80]}", "source": p["source"], "chunk_id": p["id"]}
         for p in passages
@@ -34,7 +41,8 @@ def summarize(passages: list[dict]) -> dict:
 
 
 def get_table(filters: dict | None = None) -> list[dict]:
-    filters = filters or {}
+    filters = filters or {}  # None means "no filters"
+    # Reject typos like "colour" instead of silently returning the whole table.
     unknown = set(filters) - ALLOWED_FILTERS
     if unknown:
         raise ValueError(f"unknown filter(s): {sorted(unknown)}")
@@ -43,6 +51,7 @@ def get_table(filters: dict | None = None) -> list[dict]:
     for row in rows:  # CSV gives strings; convert numbers
         for col in ("oxygen_pct", "pressure_kpa", "flow_cm_s", "spread_rate_mm_s"):
             row[col] = float(row[col])
+    # Each filter that was given narrows the rows further; missing ones are skipped.
     if "experiment" in filters:
         rows = [r for r in rows if r["experiment"] == filters["experiment"]]
     if "material" in filters:
