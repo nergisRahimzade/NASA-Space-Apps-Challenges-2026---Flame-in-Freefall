@@ -1,0 +1,6 @@
+experiment,material,oxygen_pct,pressure_kpa,flow_cm_s,spread_rate_mm_s
+BASS,cotton,21.0,101.3,10,0.8
+BASS,PMMA,21.0,101.3,10,0.3
+Saffire,cotton-fiberglass,21.0,101.3,20,1.6
+Saffire,Nomex,21.0,101.3,20,0.0
+FLEX,heptane,21.0,101.3,0,0.5
