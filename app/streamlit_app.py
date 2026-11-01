@@ -1,4 +1,5 @@
 import pandas as pd
+import plotly.express as px
 import streamlit as st
 
 from flame_in_freefall.api import search
@@ -44,3 +45,18 @@ table = table[table["oxygen_pct"].between(oxygen_min, oxygen_max)]
 
 st.caption(f"{len(table)} rows")
 st.dataframe(table, hide_index=True, width="stretch")
+
+st.subheader("Flame spread vs. oxygen")
+fig = px.scatter(
+    table,
+    x="oxygen_pct",
+    y="spread_rate_mm_s",
+    color="material",
+    hover_data=["experiment", "pressure_kpa", "flow_cm_s"],
+    labels={
+        "oxygen_pct": "Oxygen (%)",
+        "spread_rate_mm_s": "Flame spread rate (mm/s)",
+        "material": "Material",
+    },
+)
+st.plotly_chart(fig)
