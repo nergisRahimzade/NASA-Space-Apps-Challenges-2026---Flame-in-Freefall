@@ -60,3 +60,41 @@ fig = px.scatter(
     },
 )
 st.plotly_chart(fig)
+
+st.subheader("Flame spread by material and oxygen")
+st.caption("Fake numbers for building the layout. Real data replaces them on Day 9.")
+
+# Made-up grid, not NASA data: each material spreads faster as oxygen rises
+base_rate = {
+    "cotton": 0.8,
+    "PMMA": 0.3,
+    "cotton-fiberglass": 1.6,
+    "Nomex": 0.1,
+    "heptane": 0.5,
+}
+fake = pd.DataFrame(
+    [
+        {"material": m, "oxygen_pct": o, "spread_rate_mm_s": round(rate * (o - 15) / 6, 2)}
+        for m, rate in base_rate.items()
+        for o in [16, 18, 21, 25, 30]
+    ]
+)
+
+# Reuse the sidebar filters so the heatmap matches the table
+if materials:
+    fake = fake[fake["material"].isin(materials)]
+fake = fake[fake["oxygen_pct"].between(oxygen_min, oxygen_max)]
+
+if fake.empty:
+    st.info("No data for these filters.")
+else:
+    grid = fake.pivot(index="material", columns="oxygen_pct", values="spread_rate_mm_s")
+    grid.columns = [f"{o}%" for o in grid.columns]  # text labels keep the cells evenly spaced
+    fig = px.imshow(
+        grid,
+        color_continuous_scale="YlOrRd",
+        text_auto=True,
+        aspect="auto",
+        labels={"x": "Oxygen", "y": "Material", "color": "Spread (mm/s)"},
+    )
+    st.plotly_chart(fig)
