@@ -1,3 +1,4 @@
+import pandas as pd
 import streamlit as st
 
 from flame_in_freefall.api import search
@@ -20,3 +21,26 @@ if query.strip():
         with st.container(border=True):
             st.write(r["text"])
             st.caption(f"{r['source']} · page {r['page']} · score {r['score']:.2f}")
+
+st.divider()
+st.subheader("Experiment data")
+
+table = pd.read_csv("data/mock/master.mock.csv")
+
+with st.sidebar:
+    st.header("Filters")
+    experiments = st.multiselect(
+        "Experiment", sorted(table["experiment"].unique()), placeholder="All"
+    )
+    materials = st.multiselect("Material", sorted(table["material"].unique()), placeholder="All")
+    oxygen_min, oxygen_max = st.slider("Oxygen %", 15.0, 30.0, (15.0, 30.0), step=0.5)
+
+# An empty multiselect means "no filter", so keep every row
+if experiments:
+    table = table[table["experiment"].isin(experiments)]
+if materials:
+    table = table[table["material"].isin(materials)]
+table = table[table["oxygen_pct"].between(oxygen_min, oxygen_max)]
+
+st.caption(f"{len(table)} rows")
+st.dataframe(table, hide_index=True, width="stretch")
