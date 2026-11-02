@@ -1,10 +1,13 @@
 """Day 2 (BE): the three contract functions, returning MOCK data for now.
 Real versions replace the bodies later (summarize on Day 5, get_table Day 9, search Day 10).
-The signatures and return shapes must stay exactly as in docs/contract.md."""
+The signatures and return shapes must stay exactly as in docs/contract.md.
+Day 5 (BE): summarize is real now; the OpenAI work lives in summarizer.py."""
 
 import csv
 import json
 from pathlib import Path
+
+from flame_in_freefall.summarizer import summarize_passages
 
 # Build the path from this file's own location (up 2 folders = repo root),
 # so it works no matter which folder the app is started from.
@@ -29,15 +32,8 @@ def search(query: str, k: int = 3) -> list[dict]:
 
 
 def summarize(passages: list[dict]) -> dict:
-    # Nothing found -> say so, never invent an answer (contract rule).
-    if not passages:
-        return {"takeaways": [], "not_found": True}
-    # Each takeaway keeps the chunk_id it came from, so every claim can be traced to a source.
-    takeaways = [
-        {"text": f"(mock) {p['text'][:80]}", "source": p["source"], "chunk_id": p["id"]}
-        for p in passages
-    ]
-    return {"takeaways": takeaways, "not_found": False}
+    # Thin wrapper: the contract signature stays here, the OpenAI call lives in summarizer.py.
+    return summarize_passages(passages)
 
 
 def get_table(filters: dict | None = None) -> list[dict]:
