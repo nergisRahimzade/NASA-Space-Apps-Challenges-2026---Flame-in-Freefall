@@ -1,0 +1,10 @@
+# Fire-safety look: dark background, flame orange for buttons and sliders
+[theme]
+base = "dark"
+primaryColor = "#F77F00"
+backgroundColor = "#14161A"
+secondaryBackgroundColor = "#1F2329"
+textColor = "#F5F3EF"
+font = "sans-serif"
+# Colors Plotly uses for categories (e.g. one per material)
+chartCategoricalColors = ["#F77F00", "#D62828", "#FCBF49", "#4EA8DE", "#8AB17D", "#B392F0"]
