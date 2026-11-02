@@ -11,6 +11,10 @@ texts = ["My dog loves walks", "Puppies enjoy going outside", "Tax forms are due
 res = client.models.embed_content(model="gemini-embedding-001", contents=texts)
 vecs = [np.array(e.values) for e in res.embeddings]
 
-def sim(a, b): return a @ b / (np.linalg.norm(a) * np.linalg.norm(b))
+
+def sim(a, b):
+    return a @ b / (np.linalg.norm(a) * np.linalg.norm(b))
+
+
 print(sim(vecs[0], vecs[1]))  # should be high (similar meaning)
 print(sim(vecs[0], vecs[2]))  # should be lower
