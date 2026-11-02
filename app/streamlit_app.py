@@ -79,6 +79,42 @@ else:
     )
     st.plotly_chart(fig)
 
+    st.subheader("Riskiest materials")
+    st.caption(
+        "Ranked by fastest flame spread. Fake numbers for building the layout. "
+        "Real data replaces them on Day 13."
+    )
+    # One bar per material; a material can have several test rows, so keep its fastest
+    ranking = (
+        table.groupby("material", as_index=False)
+        .agg(
+            spread_rate_mm_s=("spread_rate_mm_s", "max"),
+            experiment=("experiment", lambda names: ", ".join(sorted(set(names)))),
+            tests=("material", "size"),
+        )
+        .sort_values("spread_rate_mm_s")  # Plotly draws the last row on top, so riskiest goes first
+    )
+    fig = px.bar(
+        ranking,
+        x="spread_rate_mm_s",
+        y="material",
+        orientation="h",
+        text="spread_rate_mm_s",
+        color="spread_rate_mm_s",
+        color_continuous_scale="YlOrRd",
+        hover_data={"experiment": True, "tests": True},
+        labels={
+            "spread_rate_mm_s": "Fastest flame spread (mm/s)",
+            "material": "Material",
+            "experiment": "Experiment",
+            "tests": "Tests",
+        },
+    )
+    # Labels sit outside the bars so a 0 (no spread) still shows a number
+    fig.update_traces(textposition="outside", cliponaxis=False)
+    fig.update_coloraxes(showscale=False)
+    st.plotly_chart(fig)
+
 st.subheader("Flame spread by material and oxygen")
 st.caption("Fake numbers for building the layout. Real data replaces them on Day 9.")
 
