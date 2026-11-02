@@ -1,7 +1,7 @@
 """Day 2 (BE): the three contract functions, returning MOCK data for now.
 Real versions replace the bodies later (summarize on Day 5, get_table Day 9, search Day 10).
 The signatures and return shapes must stay exactly as in docs/contract.md.
-Day 5 (BE): summarize is real now; the OpenAI work lives in summarizer.py."""
+Day 5 (BE): summarize is real now; the Gemini work lives in summarizer.py."""
 
 import csv
 import json
@@ -32,7 +32,7 @@ def search(query: str, k: int = 3) -> list[dict]:
 
 
 def summarize(passages: list[dict]) -> dict:
-    # Thin wrapper: the contract signature stays here, the OpenAI call lives in summarizer.py.
+    # Thin wrapper: the contract signature stays here, the Gemini call lives in summarizer.py.
     return summarize_passages(passages)
 
 

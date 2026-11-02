@@ -13,8 +13,8 @@ class Settings:
     # One object holds every setting, so other files read settings from here
     # instead of each calling os.getenv with its own default.
     # frozen=True: a setting can't be changed by accident while the app runs.
-    openai_api_key: str | None  # None when no key is set (e.g. in CI, which doesn't need one)
-    openai_model: str
+    gemini_api_key: str | None  # None when no key is set (e.g. in CI, which doesn't need one)
+    gemini_model: str
     embed_model: str
     log_level: str
 
@@ -23,8 +23,9 @@ def get_settings() -> Settings:
     # Read fresh on every call, so a changed environment (or a test's monkeypatch) is picked up.
     # Each os.getenv default below is what you get when that variable isn't set.
     return Settings(
-        openai_api_key=os.getenv("OPENAI_API_KEY"),
-        openai_model=os.getenv("OPENAI_MODEL", "gpt-5-mini"),
+        gemini_api_key=os.getenv("GEMINI_API_KEY"),
+        # "latest" alias: follows Google's newest Flash model until the team picks a fixed one.
+        gemini_model=os.getenv("GEMINI_MODEL", "gemini-flash-latest"),
         embed_model=os.getenv("EMBED_MODEL", "sentence-transformers/all-MiniLM-L6-v2"),
         log_level=os.getenv("LOG_LEVEL", "INFO"),
     )
