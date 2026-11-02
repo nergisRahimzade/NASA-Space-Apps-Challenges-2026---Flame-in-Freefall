@@ -1,10 +1,11 @@
-"""Day 5 (BE): summarize_passages with a fake OpenAI client (no network, no key)."""
+"""Day 5 (BE): summarize_passages with a fake Gemini client (no network, no key)."""
 
 import json
 from types import SimpleNamespace
 
-import openai
+import httpx
 import pytest
+from google.genai import errors
 
 from flame_in_freefall import summarizer
 from flame_in_freefall.summarizer import summarize_passages
@@ -16,24 +17,24 @@ PASSAGES = [
 
 
 class FakeClient:
-    """Stands in for OpenAI(): remembers each request and replies with text or an error."""
+    """Stands in for genai.Client(): remembers each request and replies with text or an error."""
 
     def __init__(self, reply: str = "", error: Exception | None = None):
         self.calls = []
         self.reply, self.error = reply, error
-        self.responses = self  # so fake.responses.create(...) works like the real client
+        self.models = self  # so fake.models.generate_content(...) works like the real client
 
-    def create(self, **kwargs):
+    def generate_content(self, **kwargs):
         self.calls.append(kwargs)
         if self.error:
             raise self.error
-        return SimpleNamespace(output_text=self.reply)
+        return SimpleNamespace(text=self.reply)
 
 
 @pytest.fixture
 def use_fake(monkeypatch):
     # Set a fake key and swap in the fake client; returns a helper that installs one.
-    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
 
     def install(**kwargs) -> FakeClient:
         fake = FakeClient(**kwargs)
@@ -60,8 +61,9 @@ def test_sends_prompt_and_passage_ids(use_fake):
     fake = use_fake(reply=_reply([], not_found=True))
     summarize_passages(PASSAGES)
     sent = fake.calls[0]
-    assert sent["instructions"] == summarizer.PROMPT_PATH.read_text(encoding="utf-8")
-    assert "[bass-001-p3-c0]" in sent["input"] and "[flex-002-p1-c0]" in sent["input"]
+    prompt = summarizer.PROMPT_PATH.read_text(encoding="utf-8")
+    assert sent["config"].system_instruction == prompt
+    assert "[bass-001-p3-c0]" in sent["contents"] and "[flex-002-p1-c0]" in sent["contents"]
 
 
 def test_not_found_reply(use_fake):
@@ -69,14 +71,14 @@ def test_not_found_reply(use_fake):
     assert summarize_passages(PASSAGES) == {"takeaways": [], "not_found": True}
 
 
-def test_no_passages_skips_openai(use_fake):
+def test_no_passages_skips_gemini(use_fake):
     fake = use_fake(reply="unused")
     assert summarize_passages([]) == {"takeaways": [], "not_found": True}
     assert fake.calls == []
 
 
 def test_no_key_quotes_passages():
-    # conftest.py already removed OPENAI_API_KEY, so this is the "no key" case.
+    # conftest.py already removed GEMINI_API_KEY, so this is the "no key" case.
     out = summarize_passages(PASSAGES)
     assert out["not_found"] is False
     assert out["takeaways"][0] == {
@@ -87,10 +89,16 @@ def test_no_key_quotes_passages():
 
 
 def test_timeout_falls_back(use_fake):
-    # request=None: the error normally carries the HTTP request, but a fake doesn't need one.
-    use_fake(error=openai.APITimeoutError(request=None))
+    # The error Gemini's client raises when an attempt takes longer than the timeout.
+    use_fake(error=httpx.ReadTimeout("timed out"))
     out = summarize_passages(PASSAGES)
     assert [t["chunk_id"] for t in out["takeaways"]] == ["bass-001-p3-c0", "flex-002-p1-c0"]
+
+
+def test_server_error_falls_back(use_fake):
+    # 503 = Gemini overloaded; this is what's left after the client's own retries.
+    use_fake(error=errors.ServerError(503, {"error": {"message": "overloaded"}}))
+    assert summarize_passages(PASSAGES)["takeaways"][0]["chunk_id"] == "bass-001-p3-c0"
 
 
 def test_broken_json_falls_back(use_fake):
