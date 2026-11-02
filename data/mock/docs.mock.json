@@ -1,0 +1,27 @@
+[
+  {
+    "doc_id": "bass-mock",
+    "source": "BASS final report (mock)",
+    "pages": [
+      "This is a made-up document for building and testing only. The Burning and Suppression of Solids experiment burned thin fabric samples inside a small chamber on a space station.",
+      "In microgravity, flames on thin fabrics spread more slowly upstream than in normal gravity because there is no buoyant flow. A gentle airflow from a fan supplied fresh oxygen to the flame.",
+      "When the airflow was turned down, some flames shrank and went out. The samples that kept burning had flames that looked dim and rounded instead of tall and bright."
+    ]
+  },
+  {
+    "doc_id": "flex-mock",
+    "source": "FLEX results summary (mock)",
+    "pages": [
+      "This is a made-up document for building and testing only. The Flame Extinguishment experiment ignited small fuel droplets that floated freely without any support.",
+      "Heptane droplets showed cool-flame burning after the visible flame went out, a behavior rarely seen on Earth. The cool flame gave off almost no light but kept slowly consuming the fuel."
+    ]
+  },
+  {
+    "doc_id": "saffire-mock",
+    "source": "Saffire overview (mock)",
+    "pages": [
+      "This is a made-up document for building and testing only. The Spacecraft Fire Experiment tested fires much larger than any that can be lit safely on a crewed station.",
+      "Large cotton-fiberglass samples burned in an uncrewed cargo vehicle; flame spread rate rose with airflow speed. Sensors recorded how the fire changed oxygen and temperature in the cabin air."
+    ]
+  }
+]

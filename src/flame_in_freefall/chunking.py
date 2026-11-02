@@ -1,0 +1,57 @@
+"""Day 2 (AI): cut long text into overlapping pieces, keeping where each piece came from.
+
+Search compares a question with small pieces ("chunks") instead of whole documents,
+so the best-matching passage can be shown with its source and page."""
+
+# Word counts, not characters. all-MiniLM-L6-v2 reads at most 256 tokens (word pieces);
+# 150 words is about 190 tokens, so a chunk isn't cut off when it's embedded (200 was ~250).
+DEFAULT_SIZE = 150
+DEFAULT_OVERLAP = 30
+
+
+def chunk_text(text: str, size: int = DEFAULT_SIZE, overlap: int = DEFAULT_OVERLAP) -> list[str]:
+    """Split text into chunks of `size` words; each chunk repeats the last
+    `overlap` words of the previous one so ideas aren't cut in half."""
+    # Fail loudly on settings that would loop forever or make no sense.
+    if size <= 0:
+        raise ValueError("size must be > 0")
+    if not 0 <= overlap < size:
+        raise ValueError("overlap must be >= 0 and smaller than size")
+    words = text.split()  # also squeezes newlines and repeated spaces
+    if not words:
+        return []  # blank page = no chunks, not one empty chunk
+    step = size - overlap  # how far each new chunk moves forward
+    chunks = []
+    for start in range(0, len(words), step):
+        chunks.append(" ".join(words[start : start + size]))
+        # This chunk reached the end, so stop; another one would only repeat its tail.
+        if start + size >= len(words):
+            break
+    return chunks
+
+
+def chunk_document(
+    pages: list[str],
+    source: str,
+    doc_id: str,
+    size: int = DEFAULT_SIZE,
+    overlap: int = DEFAULT_OVERLAP,
+) -> list[dict]:
+    """pages[0] is page 1. Returns chunk dicts with the fields in docs/contract.md, section 2."""
+    # Every chunk id and citation is built from these, so empty ones would break tracing.
+    if not source.strip() or not doc_id.strip():
+        raise ValueError("source and doc_id must not be empty")
+    out = []
+    # Chunk page by page, so every chunk knows its page number (chunks never span two pages).
+    for page_num, page_text in enumerate(pages, start=1):
+        for i, piece in enumerate(chunk_text(page_text, size, overlap)):
+            out.append(
+                {
+                    # doc-page-chunk number, e.g. "bass-001-p3-c0": unique and readable.
+                    "id": f"{doc_id}-p{page_num}-c{i}",
+                    "text": piece,
+                    "source": source,
+                    "page": page_num,
+                }
+            )
+    return out
