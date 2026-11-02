@@ -1,7 +1,8 @@
-from google import genai
-import numpy as np
 from pathlib import Path
+
+import numpy as np
 from dotenv import load_dotenv
+from google import genai
 
 load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
