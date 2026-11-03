@@ -2,9 +2,9 @@
 
 ## Experiments we'll use
 
-- FLEX-II
-- Saffire-II
-- FLEX
+- FLEX-II (Flame Extinguishment Experiment II)
+- Saffire-II (Spacecraft Fire Safety Demonstration II)
+- FLEX (Flame Extinguishment Experiment)
 
 ## What column each experiment includes
 
@@ -23,4 +23,4 @@
 
 - FLEX-II: Material / Fuel, Outcome
 - Saffire-II: Material / Fuel, Outcome
-- FLEX: Airflow, Material / Fuel, Outcome
+- FLEX: Airflow, Outcome
