@@ -50,5 +50,3 @@
   - Sample: Material, shape, size, thickness.
   - Test conditions: O₂ %, pressure, flow speed. 
   - Measurements: spread rate, flame length, extinction yes/no, and which sensors took them (camera, thermocouple).
-
-Question: Which materials are the riskiest that cause most of the fires in the spacecrafts or experiments and why and when?
