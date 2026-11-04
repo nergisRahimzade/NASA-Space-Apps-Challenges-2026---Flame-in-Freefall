@@ -14,6 +14,7 @@ from google import genai
 from google.genai import errors, types
 
 from flame_in_freefall.config import get_settings
+from flame_in_freefall.summary_check import check_summary
 
 # Built from this file's location (up 1 folder = src/), so it works from any folder.
 PROMPT_PATH = Path(__file__).resolve().parents[1] / "prompts" / "summary_v1.txt"
@@ -114,11 +115,16 @@ def summarize_passages(passages: list[dict]) -> dict:
                 response_json_schema=REPLY_SCHEMA,
             ),
         )
-        return _parse_reply(response.text, passages)
+        summary = _parse_reply(response.text, passages)
+        # Day 6 auto-check (summary_check.py): e.g. a takeaway with no text never reaches users.
+        problems = check_summary(summary, passages)
+        if problems:
+            raise ValueError("; ".join(problems))  # caught below, like any other bad reply
+        return summary
     # APIError: bad key, unknown model, rate limit or server error after retries.
     # httpx.TransportError: timeout or no connection (Gemini's client is built on httpx).
-    # ValueError covers broken JSON and invented chunk ids; KeyError/TypeError cover JSON
-    # in the wrong shape (TypeError also catches an empty reply, where text is None).
+    # ValueError covers broken JSON, invented chunk ids and failed checks; KeyError/TypeError
+    # cover JSON in the wrong shape (TypeError also catches an empty reply, where text is None).
     except (errors.APIError, httpx.TransportError, ValueError, KeyError, TypeError) as e:
         log.warning("summarize fell back to quoting passages: %s", e)
         return _quote_passages(passages)
