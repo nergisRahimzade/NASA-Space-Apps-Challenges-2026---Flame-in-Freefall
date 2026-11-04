@@ -1,0 +1,9 @@
+google-genai>=2.34.0
+pandas>=3.0.6
+plotly>=7.1.0
+pypdf>=6.21.2
+python-dotenv>=1.2.4
+sentence-transformers>=6.2.0
+streamlit>=1.66.1
+httpx
+numpy

@@ -1,8 +1,14 @@
+import sys
+from pathlib import Path
+
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from flame_in_freefall.api import get_table, search
+# Make src/ importable when the package isn't installed (e.g. Streamlit Community Cloud).
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+
+from flame_in_freefall.api import get_table, search  # noqa: E402
 
 st.set_page_config(page_title="Flame in Freefall", layout="wide")
 st.title("Flame in Freefall")
