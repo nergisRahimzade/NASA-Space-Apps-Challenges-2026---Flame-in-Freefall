@@ -74,3 +74,10 @@ Oxygen, pressure and airflow are stored as **min and max columns**. FLEX-2 gives
 - Material spelling: `(pure)` and `(mixture)` are removed, so FLEX-2 `Heptane (pure)` matches FLEX `Heptane`.
 - Saffire-II: blank materials filled from the row above; `037 mm` read as 0.37 mm; `0.85 and 0.37 mm` (PMMA & Nomex, two thicknesses) left empty; burn length `5 cm & 0 (note 2)` read as 5 cm (the PMMA part).
 - Extra columns kept in the clean tables (not all go into `master.csv`): FLEX-2 `gas_mixture`; Saffire-II `sample_id`, `thickness_mm`, `flow_direction`, `burn_length_cm`, `burn_time_s`; FLEX `test_id`, `test_date`, `nitrogen_pct`, `co_pct`, `helium_pct`, droplet and extinction diameters, `burn_time_s`.
+
+## 5. Building `master.csv` (Day 9, FIF-D09-DAT)
+
+- Saved at `data/master.csv`: 290 rows (FLEX-2 8, Saffire-II 9, FLEX 273) with the 10 columns in section 2, in that order.
+- Rebuild from scratch: `uv run python -m flame_in_freefall.clean_tables` then `uv run python -m flame_in_freefall.build_master`.
+- The master table only stacks the clean tables and keeps the section 2 columns; no values are changed. A column a source lacks is left empty.
+- `tests/test_master.py` checks the columns, the row counts and the expected empty cells. It also checks that the saved `data/master.csv` matches a fresh build, so re-run both commands after any cleaning change.
