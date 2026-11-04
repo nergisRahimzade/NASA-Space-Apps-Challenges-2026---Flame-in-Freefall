@@ -61,4 +61,16 @@ Oxygen, pressure and airflow are stored as **min and max columns**. FLEX-2 gives
 - FLEX `Disruption` tests (61) are **kept** in `master.csv`. Charts or summaries about "burned vs went out" can filter them out using `outcome`.
 - Known thin spot: only FLEX has an outcome (`Test end`), and FLEX has no airflow. FLEX-2 (the main source) holds planned ranges, not measurements. Airflow only comes from FLEX-2 and Saffire-II (one value). The app should say so.
 - Messy values to fix during Day 8 cleaning are listed per table in `docs/column_dictionary.md`. Examples: `�` and `~6` in FLEX numeric columns, the duplicate FLEX ID `193F001`, the zero pressure in `C11M201`, mixed date formats, and in Saffire-II, units inside values (`20 cm/s`), words mixed with numbers (`~ 0`, `Note 4`, `n/a (Nomex)`) and the `037 mm` typo. Material names also need one spelling across tables (FLEX-2 `Heptane (pure)` vs FLEX `Heptane`).
-- Cleaning (Day 8) writes cleaned CSVs, and Day 9 builds `master.csv` from them. The output folder is still to be chosen (`data/processed/` or `clean/`).
+- Cleaning (Day 8) writes cleaned CSVs to `data/clean/` (`flex2.csv`, `saffire2.csv`, `flex.csv`), and Day 9 builds `master.csv` from them. Rebuild with `uv run python -m flame_in_freefall.clean_tables`.
+
+## 4. Cleaning decisions (Day 8, FIF-D08-DAT)
+
+- Every column renamed to snake_case with the unit in the name (`oxygen_pct_min`, `pressure_kpa_max`, `burn_time_s`).
+- Units: mole fraction x 100 = %, atm x 101.325 = kPa, mmHg x 0.133322 = kPa, Saffire thickness in cm x 10 = mm.
+- Placeholders become empty (missing): `�`, `n/a`, `n/a (Nomex)`, `Note 4`, `Insignificant`, `See Fig. 5`. Approximate values keep their number: `~6` = 6, `~ 0` = 0.
+- FLEX `193F001` appears twice (tests #70 and #73) with the same date, time and conditions; the first is kept, so FLEX has 273 rows.
+- FLEX `C11M201` pressure of 0 mmHg becomes missing.
+- FLEX dates are written as `YYYY-MM-DD`; FLEX `Test GMT` is dropped.
+- Material spelling: `(pure)` and `(mixture)` are removed, so FLEX-2 `Heptane (pure)` matches FLEX `Heptane`.
+- Saffire-II: blank materials filled from the row above; `037 mm` read as 0.37 mm; `0.85 and 0.37 mm` (PMMA & Nomex, two thicknesses) left empty; burn length `5 cm & 0 (note 2)` read as 5 cm (the PMMA part).
+- Extra columns kept in the clean tables (not all go into `master.csv`): FLEX-2 `gas_mixture`; Saffire-II `sample_id`, `thickness_mm`, `flow_direction`, `burn_length_cm`, `burn_time_s`; FLEX `test_id`, `test_date`, `nitrogen_pct`, `co_pct`, `helium_pct`, droplet and extinction diameters, `burn_time_s`.
