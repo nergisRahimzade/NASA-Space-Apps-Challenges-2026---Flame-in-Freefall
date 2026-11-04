@@ -1,4 +1,4 @@
-"""Day 5 (BE): the real summarize(): ask OpenAI for takeaways that cite their chunk.
+"""Day 5 (BE): the real summarize(): ask Gemini for takeaways that cite their chunk.
 
 Fails safely: with no API key, a timeout after retries, or a broken reply, it quotes the
 passages instead (real text, real sources), so the app keeps working and nothing is invented.
@@ -9,19 +9,24 @@ import logging
 import re
 from pathlib import Path
 
-from openai import OpenAI, OpenAIError
+import httpx
+from google import genai
+from google.genai import errors, types
 
 from flame_in_freefall.config import get_settings
 
 # Built from this file's location (up 1 folder = src/), so it works from any folder.
 PROMPT_PATH = Path(__file__).resolve().parents[1] / "prompts" / "summary_v1.txt"
-TIMEOUT_S = 30.0  # give up on one attempt after this many seconds
-MAX_RETRIES = 2  # the OpenAI client retries timeouts, rate limits and server errors itself
+TIMEOUT_MS = 30_000  # give up on one attempt after 30 s (the Gemini client counts milliseconds)
+# First try + 2 retries. The client then retries timeouts, rate limits (429) and server errors
+# (5xx) itself; without retry options it would never retry.
+ATTEMPTS = 3
 
 log = logging.getLogger(__name__)
 
 # Structured output: the model must reply with JSON in exactly this shape.
 # It only gives chunk_id; we fill in source ourselves, so a source can't be made up.
+# Kept to basic JSON Schema features, because Gemini supports only part of the standard.
 REPLY_SCHEMA = {
     "type": "object",
     "properties": {
@@ -31,19 +36,22 @@ REPLY_SCHEMA = {
                 "type": "object",
                 "properties": {"text": {"type": "string"}, "chunk_id": {"type": "string"}},
                 "required": ["text", "chunk_id"],
-                "additionalProperties": False,
             },
         },
         "not_found": {"type": "boolean"},
     },
     "required": ["takeaways", "not_found"],
-    "additionalProperties": False,
 }
 
 
-def _get_client(api_key: str) -> OpenAI:
+def _get_client(api_key: str) -> genai.Client:
     # Its own function so tests can swap in a fake client (no network, no key, no cost).
-    return OpenAI(api_key=api_key, timeout=TIMEOUT_S, max_retries=MAX_RETRIES)
+    return genai.Client(
+        api_key=api_key,
+        http_options=types.HttpOptions(
+            timeout=TIMEOUT_MS, retry_options=types.HttpRetryOptions(attempts=ATTEMPTS)
+        ),
+    )
 
 
 def _format_passages(passages: list[dict]) -> str:
@@ -90,29 +98,27 @@ def summarize_passages(passages: list[dict]) -> dict:
     if not passages:
         return {"takeaways": [], "not_found": True}
     settings = get_settings()
-    # None = no key set (e.g. in CI), so don't even try to call OpenAI.
-    if not settings.openai_api_key:
-        log.warning("OPENAI_API_KEY not set; quoting passages instead of summarizing")
+    # None = no key set (e.g. in CI), so don't even try to call Gemini.
+    if not settings.gemini_api_key:
+        log.warning("GEMINI_API_KEY not set; quoting passages instead of summarizing")
         return _quote_passages(passages)
     # Read outside the try: a missing prompt file is our bug, so it should fail loudly.
     instructions = PROMPT_PATH.read_text(encoding="utf-8")
     try:
-        response = _get_client(settings.openai_api_key).responses.create(
-            model=settings.openai_model,
-            instructions=instructions,
-            input=_format_passages(passages),
-            text={
-                "format": {
-                    "type": "json_schema",
-                    "name": "summary",
-                    "schema": REPLY_SCHEMA,
-                    "strict": True,
-                }
-            },
+        response = _get_client(settings.gemini_api_key).models.generate_content(
+            model=settings.gemini_model,
+            contents=_format_passages(passages),
+            config=types.GenerateContentConfig(
+                system_instruction=instructions,
+                response_mime_type="application/json",  # reply with JSON only, no extra prose
+                response_json_schema=REPLY_SCHEMA,
+            ),
         )
-        return _parse_reply(response.output_text, passages)
-    # OpenAIError: no connection, timeout after retries, bad key... ValueError covers broken
-    # JSON and invented chunk ids; KeyError/TypeError cover JSON in the wrong shape.
-    except (OpenAIError, ValueError, KeyError, TypeError) as e:
+        return _parse_reply(response.text, passages)
+    # APIError: bad key, unknown model, rate limit or server error after retries.
+    # httpx.TransportError: timeout or no connection (Gemini's client is built on httpx).
+    # ValueError covers broken JSON and invented chunk ids; KeyError/TypeError cover JSON
+    # in the wrong shape (TypeError also catches an empty reply, where text is None).
+    except (errors.APIError, httpx.TransportError, ValueError, KeyError, TypeError) as e:
         log.warning("summarize fell back to quoting passages: %s", e)
         return _quote_passages(passages)

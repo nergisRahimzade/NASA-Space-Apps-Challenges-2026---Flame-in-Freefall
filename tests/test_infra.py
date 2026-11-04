@@ -3,8 +3,8 @@ from flame_in_freefall.config import get_settings
 
 
 def test_settings_read_env(monkeypatch):
-    monkeypatch.setenv("OPENAI_MODEL", "test-model")
-    assert get_settings().openai_model == "test-model"
+    monkeypatch.setenv("GEMINI_MODEL", "test-model")
+    assert get_settings().gemini_model == "test-model"
 
 
 def test_normalize():

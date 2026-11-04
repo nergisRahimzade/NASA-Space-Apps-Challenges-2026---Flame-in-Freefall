@@ -1,10 +1,8 @@
-from pathlib import Path
-
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from flame_in_freefall.api import search
+from flame_in_freefall.api import get_table, search
 
 st.set_page_config(page_title="Flame in Freefall", layout="wide")
 st.title("Flame in Freefall")
@@ -35,28 +33,37 @@ else:
 st.divider()
 st.subheader("Experiment data")
 
-# Build the path from this file's location so the app runs from any folder (and when deployed)
-DATA_FILE = Path(__file__).resolve().parents[1] / "data" / "mock" / "master.mock.csv"
+ALL = "All"
+
 try:
-    table = pd.read_csv(DATA_FILE)
-except FileNotFoundError:
-    st.error(f"Experiment data is missing: {DATA_FILE.name} was not found.")
+    # The unfiltered rows fill the sidebar, so its choices don't shrink as filters change
+    all_rows = pd.DataFrame(get_table())
+except Exception:
+    st.error("Experiment data isn't available right now. Please try again in a moment.")
     st.stop()
+if all_rows.empty:
+    st.info("No experiment data has been loaded yet.")
+    st.stop()
+
+# Widen the slider if the data goes past 15-30%, so no rows are hidden by default
+oxygen_low = min(15.0, float(all_rows["oxygen_pct"].min()))
+oxygen_high = max(30.0, float(all_rows["oxygen_pct"].max()))
 
 with st.sidebar:
     st.header("Filters")
-    experiments = st.multiselect(
-        "Experiment", sorted(table["experiment"].unique()), placeholder="All"
+    # Single choice, because the contract's get_table() filters take one experiment and material
+    experiment = st.selectbox("Experiment", [ALL, *sorted(all_rows["experiment"].unique())])
+    material = st.selectbox("Material", [ALL, *sorted(all_rows["material"].unique())])
+    oxygen_min, oxygen_max = st.slider(
+        "Oxygen %", oxygen_low, oxygen_high, (oxygen_low, oxygen_high), step=0.5
     )
-    materials = st.multiselect("Material", sorted(table["material"].unique()), placeholder="All")
-    oxygen_min, oxygen_max = st.slider("Oxygen %", 15.0, 30.0, (15.0, 30.0), step=0.5)
 
-# An empty multiselect means "no filter", so keep every row
-if experiments:
-    table = table[table["experiment"].isin(experiments)]
-if materials:
-    table = table[table["material"].isin(materials)]
-table = table[table["oxygen_pct"].between(oxygen_min, oxygen_max)]
+filters = {"oxygen_min": oxygen_min, "oxygen_max": oxygen_max}
+if experiment != ALL:
+    filters["experiment"] = experiment
+if material != ALL:
+    filters["material"] = material
+table = pd.DataFrame(get_table(filters))
 
 st.caption(f"{len(table)} rows")
 if table.empty:
@@ -116,7 +123,7 @@ else:
     st.plotly_chart(fig)
 
 st.subheader("Flame spread by material and oxygen")
-st.caption("Fake numbers for building the layout. Real data replaces them on Day 9.")
+st.caption("Fake numbers for building the layout. Real data replaces them once master.csv lands.")
 
 # Made-up grid, not NASA data: each material spreads faster as oxygen rises
 base_rate = {
@@ -135,8 +142,11 @@ fake = pd.DataFrame(
 )
 
 # Reuse the sidebar filters so the heatmap matches the table
-if materials:
-    fake = fake[fake["material"].isin(materials)]
+if experiment != ALL:
+    in_experiment = all_rows.loc[all_rows["experiment"] == experiment, "material"]
+    fake = fake[fake["material"].isin(in_experiment)]
+if material != ALL:
+    fake = fake[fake["material"] == material]
 fake = fake[fake["oxygen_pct"].between(oxygen_min, oxygen_max)]
 
 if fake.empty:
