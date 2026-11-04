@@ -1,0 +1,9 @@
+experiment,material,gas_mixture,oxygen_pct_min,oxygen_pct_max,pressure_kpa_min,pressure_kpa_max,flow_cm_s_min,flow_cm_s_max
+FLEX-2,IsoOctane,O2/N2 or O2/He,17.0,30.0,50.662,303.975,0.1,5.0
+FLEX-2,n-Octane,O2/N2 or O2/He,17.0,30.0,50.662,303.975,0.1,5.0
+FLEX-2,Heptane,O2/N2 or O2/He,17.0,30.0,50.662,303.975,0.1,5.0
+FLEX-2,Decane,O2/N2 or O2/He,17.0,30.0,50.662,303.975,0.1,5.0
+FLEX-2,Ethanol,O2/N2 or O2/He,17.0,30.0,50.662,303.975,0.1,5.0
+FLEX-2,Propanol (95%) Glycerol (5%),O2/N2 or O2/He,17.0,30.0,50.662,303.975,0.1,5.0
+FLEX-2,Heptane (50%) IsoOctane (50%),O2/N2 or O2/He,17.0,30.0,50.662,303.975,0.1,5.0
+FLEX-2,Propanol (80%) Glycerol (20%),O2/N2 or O2/He,17.0,30.0,50.662,303.975,0.1,5.0

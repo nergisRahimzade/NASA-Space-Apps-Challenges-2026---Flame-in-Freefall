@@ -1,0 +1,10 @@
+experiment,sample_id,material,thickness_mm,flow_direction,oxygen_pct_min,oxygen_pct_max,flow_cm_s_min,flow_cm_s_max,spread_rate_mm_s,burn_length_cm,burn_time_s
+Saffire-II,2-1,Silicone,0.27,concurrent,21.5,21.5,20.0,20.0,,0.0,
+Saffire-II,2-2,Silicone,0.61,concurrent,22.1,22.1,20.0,20.0,,0.0,
+Saffire-II,2-3,Silicone,1.03,concurrent,22.1,22.1,20.0,20.0,,0.0,
+Saffire-II,2-4,Silicone,0.37,opposed,22.1,22.1,20.0,20.0,,0.0,
+Saffire-II,2-5,Cotton-Fiberglass (SIBAL),0.37,concurrent,22.1,22.1,20.0,20.0,2.1,29.0,145.0
+Saffire-II,2-6,Cotton-Fiberglass (SIBAL),0.37,concurrent,22.1,22.1,20.0,20.0,2.6,29.0,115.0
+Saffire-II,2-7,PMMA & Nomex,,concurrent,22.1,22.1,20.0,20.0,,5.0,140.0
+Saffire-II,2-8,PMMA,,concurrent,22.0,22.1,20.0,20.0,,10.0,600.0
+Saffire-II,2-9,PMMA,10.0,concurrent,21.9,22.0,20.0,20.0,,10.0,900.0
