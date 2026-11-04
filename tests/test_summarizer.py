@@ -110,3 +110,12 @@ def test_invented_chunk_id_falls_back(use_fake):
     use_fake(reply=_reply([{"text": "Made up.", "chunk_id": "nope-999"}]))
     texts = [t["text"] for t in summarize_passages(PASSAGES)["takeaways"]]
     assert "Made up." not in texts
+
+
+def test_prompt_v1_matches_reply_fields():
+    # Day 5 (AI): the prompt must name the same fields as REPLY_SCHEMA, or Gemini is told one
+    # thing and checked against another. Fails if someone renames a field in only one place.
+    prompt = summarizer.PROMPT_PATH.read_text(encoding="utf-8")
+    assert "PLACEHOLDER" not in prompt  # the stub from FIF-D05-BE has been replaced
+    for field in ("takeaways", "chunk_id", "not_found"):
+        assert field in prompt
