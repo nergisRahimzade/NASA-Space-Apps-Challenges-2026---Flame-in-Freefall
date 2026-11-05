@@ -75,6 +75,8 @@ def test_only_known_flex_tests_share_a_date_and_time():
         ("oxygen_pct_min", 40.0),  # in range, but above oxygen_pct_max (30)
         ("experiment", "BASS"),  # out of scope
         ("outcome", "Extinguished"),  # not one of the 3 FLEX outcomes
+        ("material_category", "metal"),  # not a category in MATERIAL_CATEGORY
+        ("spread_rate_per_flow", 0.105),  # airflow left in cm/s, not turned into mm/s
     ],
 )
 def test_range_check_catches_a_bad_value(master, col, value):

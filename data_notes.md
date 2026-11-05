@@ -95,3 +95,12 @@ Found while checking (left as-is, to confirm in the reports):
 - FLEX `C11M201` has the same date and time as `C11H201` (2010-09-06 19:14:22), while the other C11M tests ran on 2010-09-01. Together with its 0 mmHg pressure, its date, time and pressure look copied by mistake. Its oxygen and gas mix match the other C11M tests, so the row is kept.
 - FLEX `193F001`'s two copies differ slightly in droplet diameter (4.67 vs 4.64 mm) and extinction diameter (4.60 vs 4.58 mm), so it may have been run twice, not entered twice. The first copy is still the one kept (section 4).
 - FLEX `C13H102`: the flame went out at 3.34 mm on a 3.33 mm droplet. Treated as measurement noise (0.05 mm allowed).
+
+## 7. Helpful columns (Day 11, FIF-D11-DAT)
+
+- `master.csv` now has **12 columns**: `material_category` is inserted after `material`, and `spread_rate_per_flow` after `spread_rate_mm_s`. Rows are unchanged (290).
+- `material_category`: one of `hydrocarbon`, `alcohol` (liquid fuels), `plastic`, `fabric`, `silicone`, `plastic + fabric` (Saffire-II solids). Filled on every row.
+- `spread_rate_per_flow` is the normalized spread rate: the spread rate divided by the airflow speed, both in mm/s, so it has no unit. It is filled only for the 2 SIBAL samples (0.0105 and 0.013), because only they have a spread rate.
+- Full definitions, the material-to-category table and the reasons are in `docs/column_dictionary.md` section 4.
+- Quality checks (section 6) now also check these columns. `material_category` must be a known category, and `spread_rate_per_flow` must be between 0 and 0.1. An airflow left in cm/s would give about 0.1-0.13, so the check catches it.
+- **For BE (contract):** these are two more columns on top of the section 2 changes. `get_table()` and `master.mock.csv` don't have them yet. `material_category` would also be a useful filter, so charts can be coloured or filtered by category.

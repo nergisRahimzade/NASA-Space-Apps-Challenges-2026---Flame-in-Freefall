@@ -81,6 +81,37 @@ Issues to fix on Day 8: `�` and `~` values in numeric columns, 1 duplicate ID,
 
 Issues: every number is text with units inside; `~`, `n/a`, `Note 4`, `Insignificant`, `Complete` and `Acceleratory` mix words with numbers; only 4 distinct O2 values, 1 airflow value, so Saffire-II can't show an airflow effect on its own. Burn outcome has to be derived (for example `~ 0` burn length means flame did not spread = went out).
 
+## 4. Added columns in `master.csv` (Day 11, FIF-D11-DAT)
+
+These two columns are not in any raw table. `build_master.py` works them out from the other master columns. The rest of `master.csv` is listed in `data_notes.md` section 2.
+
+| Column | Type | Unit | Meaning |
+|---|---|---|---|
+| `material_category` | text | n/a | The group a material belongs to, so charts can compare like with like. Never empty. |
+| `spread_rate_per_flow` | float | none (ratio) | `spread_rate_mm_s` / (airflow in cm/s x 10), so both sides are in mm/s. How fast the flame moves compared with the air blowing past it: `0.0105` means 1/95th as fast. |
+
+**`material_category` values**
+
+| Category | Kind | Materials | Experiments |
+|---|---|---|---|
+| `hydrocarbon` | liquid fuel | Heptane, IsoOctane, n-Octane, Decane, Heptane (50%) IsoOctane (50%) | FLEX-2, FLEX (Heptane) |
+| `alcohol` | liquid fuel | Methanol, Ethanol, Propanol (95%) Glycerol (5%), Propanol (80%) Glycerol (20%) | FLEX-2, FLEX (Methanol) |
+| `plastic` | solid sheet | PMMA (acrylic, Plexiglas) | Saffire-II |
+| `fabric` | solid sheet | Cotton-Fiberglass (SIBAL) | Saffire-II |
+| `silicone` | solid sheet | Silicone (silicone rubber) | Saffire-II |
+| `plastic + fabric` | solid sheet | PMMA & Nomex (PMMA with Nomex, a fire-resistant fabric) | Saffire-II |
+
+Rules:
+- A mixture goes with its parts: Propanol and Glycerol are both alcohols, Heptane and IsoOctane are both hydrocarbons.
+- The lookup is `MATERIAL_CATEGORY` in `src/flame_in_freefall/build_master.py`. If a material is not in it, the build stops with an error instead of leaving the category empty.
+
+**`spread_rate_per_flow` filled rows:** only the 2 Saffire-II SIBAL samples (`2-5`: 2.1 mm/s / 200 mm/s = 0.0105, `2-6`: 2.6 / 200 = 0.013). It is empty when:
+- there is no spread rate (all of FLEX-2 and FLEX, and the other Saffire-II samples),
+- the airflow is 0 (FLEX), so there is nothing to divide by,
+- the airflow is a range (FLEX-2, 0.1-5 cm/s), so there is no single number to divide by.
+
+Why spread / airflow and not a 0-1 scale: with only 2 spread rates, a 0-1 scale would just turn them into 0 and 1. The ratio keeps its meaning, and it can still be compared if tests at other airflow speeds are added.
+
 ## Gaps and risks for the project
 
 - **Airflow** exists only as a range in FLEX-2 and as a constant in Saffire-II; FLEX has none. A "which airflow" answer will be thin.
