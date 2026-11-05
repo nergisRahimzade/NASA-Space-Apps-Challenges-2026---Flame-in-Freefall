@@ -17,7 +17,7 @@ st.write("Explore microgravity combustion experiments.")
 query = st.text_input("Search the research reports")
 
 if not query.strip():
-    st.caption("Try a question like: Which materials burn fastest in microgravity?")
+    st.caption("Try a question like: What gases were tested as fire suppressants in microgravity?")
 else:
     try:
         with st.spinner("Searching the reports..."):
@@ -31,9 +31,12 @@ else:
         st.subheader(f"Results ({len(results)})")
         if not results:
             st.info("No matching passages found. Try different words.")
+        else:
+            st.caption("The closest passages, best first. They may not answer your question.")
         for r in results:
             with st.container(border=True):
-                st.write(r["text"])
+                # st.text, not st.write: report text can have $ or * that Markdown would mangle
+                st.text(r["text"])
                 st.caption(f"{r['source']} · page {r['page']} · score {r['score']:.2f}")
 
 st.divider()
