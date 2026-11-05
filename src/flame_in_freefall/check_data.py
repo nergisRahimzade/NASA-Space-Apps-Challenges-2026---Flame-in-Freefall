@@ -18,7 +18,7 @@ import sys
 
 import pandas as pd
 
-from flame_in_freefall.build_master import CLEAN, CLEAN_FILES, MASTER
+from flame_in_freefall.build_master import CLEAN, CLEAN_FILES, MASTER, MATERIAL_CATEGORY
 from flame_in_freefall.clean_tables import FLEX_RAW
 
 # Lowest and highest believable value per column (missing values are not checked).
@@ -33,6 +33,9 @@ LIMITS = {
     "flow_cm_s_min": (0, 50),
     "flow_cm_s_max": (0, 50),
     "spread_rate_mm_s": (0, 20),  # real: 2.1-2.6, flames spread slowly in microgravity
+    # No unit (spread / airflow, both mm/s). Real: 0.0105-0.013. Forgetting to turn the
+    # airflow from cm/s into mm/s gives 0.105-0.13.
+    "spread_rate_per_flow": (0, 0.1),
     "nitrogen_pct": (0, 100),
     "co_pct": (0, 100),
     "helium_pct": (0, 100),
@@ -46,6 +49,7 @@ LIMITS = {
 ALLOWED = {
     "experiment": {"FLEX-2", "Saffire-II", "FLEX"},
     "outcome": {"Extinction", "Completion", "Disruption"},
+    "material_category": set(MATERIAL_CATEGORY.values()),
 }
 
 # FLEX tests ran on the ISS; real dates are 2009-03-05 to 2011-12-08.
