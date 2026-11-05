@@ -1,4 +1,4 @@
-# AI notes: what's built and where to pick up (Days 1–8, FIF-D01-AI … FIF-D08-AI)
+# AI notes: what's built and where to pick up (Days 1–9, FIF-D01-AI … FIF-D09-AI)
 
 For whoever takes over the AI role, and for anyone reviewing AI PRs. Like `data_notes.md`,
 this file records what exists, the decisions behind it, and the open questions.
@@ -24,6 +24,7 @@ with a citation for every claim.
 | D06-AI | Auto-check summaries: every claim cites a real passage | `src/flame_in_freefall/summary_check.py`, `tests/test_summary_check.py`, this file | FIF-D06-AI PR |
 | D07-AI | Chunk the real reports and save them | `chunk_reports` in `src/flame_in_freefall/chunking.py`, `scripts/day7_chunk_reports.py`, `data/processed/chunks.jsonl`, `tests/test_chunking.py` | FIF-D07-AI PR |
 | D08-AI | Embed the real chunks, save the search index, and time it | `scripts/day8_embed_chunks.py`, `artifacts/index/` (git-ignored) | FIF-D08-AI PR |
+| D09-AI | Test real search with 10 questions and judge the top 3 | `scripts/day9_test_search.py`, `tests/retrieval.md` | FIF-D09-AI PR |
 
 Related BE pieces the AI code uses: `store.py` saves/loads the index (D04-BE), `summarizer.py`
 calls Gemini (D05-BE), and `config.py` reads the settings (D03-BE).
@@ -56,6 +57,7 @@ uv run python scripts/day3_embed_mock.py         # fake docs -> artifacts/mock_i
 uv run python scripts/day4_try_questions.py      # 5 fake questions against the mock index
 uv run python scripts/day7_chunk_reports.py      # real reports -> data/processed/chunks.jsonl
 uv run python scripts/day8_embed_chunks.py       # real chunks -> artifacts/index/, prints the time
+uv run python scripts/day9_test_search.py        # 10 real questions -> artifacts/retrieval_draft.md
 ```
 
 The first embedding run downloads the model (~90 MB) from Hugging Face. After that it's cached.
@@ -106,6 +108,13 @@ For Gemini: put `GEMINI_API_KEY=...` in `.env` (git-ignored, see `.env.example`)
 - **The index is built, not committed (D08):** `artifacts/` is git-ignored. Rebuild it whenever
   `chunks.jsonl` changes. It's small (about 28 KB of vectors plus 19 KB of chunk text).
 
+- **Search baseline (D09):** on the 8 answerable questions, 4 had a relevant first result and 6
+  had one in the top 3. Across all 10 that's 6 of 10, against the D14-AI goal of 8 of 10. Full log:
+  `tests/retrieval.md`. Claude Code did the judging at NathanRivera1's request; no teammate has
+  reviewed it yet.
+- **The test log stays apart from the script's output (D09):** the script writes a draft to
+  git-ignored `artifacts/`, so rerunning it can't overwrite the judgments in `tests/retrieval.md`.
+
 ## 5. Open questions and known issues
 
 - **Embedding model not confirmed by the team.** Nergis tried Gemini embeddings
@@ -124,24 +133,41 @@ For Gemini: put `GEMINI_API_KEY=...` in `.env` (git-ignored, see `.env.example`)
   on what was asked. It's a contract change (BE) if we want it.
 - **Worst-case wait for a summary is about 95 s** (3 tries × 30 s timeout + waits between
   retries) before the fallback kicks in. Worth lowering if it feels slow in the app.
-- **The corpus is small:** 3 reports, about 2,100 words in total (see §6). Keep that in mind for
+- **Search can return the wrong experiment (D09).** For Q4, about FLEX-2's oxygen and pressure, the
+  top result was FLEX with a pressure range that isn't FLEX-2's, and the right chunk ranked 4th of 18.
+  A summary could repeat those wrong numbers. Possible cause, untested: that chunk never names FLEX-2,
+  and the experiment name isn't embedded with it.
+- **A strongly worded match can still rank near the bottom (D09).** For Q6, `saffire2-p1-c0` ranked
+  17th of 18. Possible cause, untested: the chunk mixes the objective with a lot of hardware detail.
+- **Chunk boundaries can cut off answers (D09).** For Q7, the top result stops just before the airflow
+  values. The chunk with the values ranked 2nd.
+- **No score cutoff separates good from bad (D09).** Q3's relevant chunk scored 0.427, and Q9's
+  irrelevant top result scored 0.478. Search always returns k passages, so "not found" depends on
+  `summarize()`.
+- **Should D14-AI reuse these 10 questions?** Two of them aren't answerable from the reports, so 8 of
+  10 would need all 8 answerable ones to pass. The team hasn't decided.
+- **The corpus is small:** 3 reports, about 2,100 words in total. Keep that in mind for
   the "8 of 10 relevant" goal in D14-AI.
 
-## 6. Where the next ticket starts (FIF-D09-AI: test real search)
+## 6. Where the next ticket starts (FIF-D10-AI: try chunk sizes)
 
-- **Build the index first:** run `scripts/day8_embed_chunks.py`. It writes `embeddings.npz` and
-  `chunks.json` to `artifacts/index/`. Each machine builds its own, because `artifacts/` is git-ignored.
-- **D09-AI** asks 10 test questions with `find_passages`, judges the top 3 results by hand, and logs
-  them in `tests/retrieval.md`. `scripts/day4_try_questions.py` is a good starting point: it already
-  pairs each question with the chunk expected to win, but it points at the mock index.
-- **Quick check so far (only 2 questions, not the D09 test):** "What gases were tested to suppress
-  fire in microgravity?" found `flex-p1-c5` (0.76), and "How fast does a large fire grow on a
-  spacecraft?" found `saffire2-p1-c3` (0.55).
+- **The ticket:** compare chunk sizes of 200, 400 and 600 words, compare overlap, record the scores,
+  and choose the best size. Use `tests/retrieval.md` as the baseline (150 words, overlap 30).
+- **Sort out the size limit first:** MiniLM reads at most 256 tokens and silently cuts off the rest,
+  and 200 words is about 253 tokens. So 400 and 600 would embed only the start of each chunk. Either
+  test sizes at or below 200 or use a model that reads longer text, and record which you chose.
+- **Rerun the same test each time:** change the settings, then run `scripts/day7_chunk_reports.py`,
+  `scripts/day8_embed_chunks.py` and `scripts/day9_test_search.py`. A test fails if `chunks.jsonl`
+  no longer matches the settings, so commit only the final choice.
+- **Judge by hand again:** chunk ids change with the settings, so the old judgments don't carry over.
+  Watch Q4, Q6 and Q7. Size may not fix Q4 or Q6, so note any failure that looks like a different
+  problem, such as the missing experiment names.
 - **Check with the D08-BE owner:** `be_notes.md` asks both roles to agree where `chunks.jsonl` and
   the index live, so `make ingest` writes the same files. We use `data/processed/chunks.jsonl` and
   `artifacts/index/`; that hasn't been confirmed with them yet.
 - **Real search isn't in the app yet:** `api.search()` returns mock data until **FIF-D10-BE** connects
   `find_passages`. The live app also needs a way to build its index, since it isn't committed.
+- **Next after that:** D11-AI tries top 3, 5 and 8 and logs failures, and D14-AI records the checkpoint.
 
 ## 7. Rules to keep
 
