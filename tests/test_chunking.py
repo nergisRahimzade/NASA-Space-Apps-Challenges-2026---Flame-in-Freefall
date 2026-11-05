@@ -5,9 +5,13 @@ from pathlib import Path
 
 import pytest
 
-from flame_in_freefall.chunking import chunk_document, chunk_text
+from flame_in_freefall.chunking import chunk_document, chunk_reports, chunk_text
 
-MOCK_DOCS = Path(__file__).resolve().parents[1] / "data" / "mock" / "docs.mock.json"
+ROOT = Path(__file__).resolve().parents[1]
+MOCK_DOCS = ROOT / "data" / "mock" / "docs.mock.json"
+SOURCES = ROOT / "data" / "sources.csv"
+REPORTS = ROOT / "docs" / "reports"
+CHUNKS = ROOT / "data" / "processed" / "chunks.jsonl"
 
 
 def test_chunks_have_right_size_and_overlap():
@@ -56,3 +60,27 @@ def test_mock_docs_make_contract_chunks():
         assert set(c) == {"id", "text", "source", "page"}  # chunk fields in docs/contract.md
         assert isinstance(c["page"], int) and c["text"]
     assert len({c["id"] for c in chunks}) == len(chunks)  # every id is unique
+
+
+def test_real_reports_make_contract_chunks():
+    chunks = chunk_reports(SOURCES, REPORTS)
+    for c in chunks:
+        assert set(c) == {"id", "text", "source", "page"}
+        assert c["page"] == 1 and c["text"]  # plain-text reports have no pages
+    assert len({c["id"] for c in chunks}) == len(chunks)
+    assert {c["id"].split("-")[0] for c in chunks} == {"flex", "flex2", "saffire2"}
+    assert all(c["source"].split(" ")[0] in {"FLEX", "FLEX-2", "Saffire-II"} for c in chunks)
+
+
+def test_blank_report_fails_loudly(tmp_path):
+    sources = tmp_path / "sources.csv"
+    sources.write_text("file_name,title\nblank.txt,Blank report\n")
+    (tmp_path / "blank.txt").write_text("   ")
+    with pytest.raises(ValueError):
+        chunk_reports(sources, tmp_path)
+
+
+def test_saved_chunks_match_the_reports():
+    # Fails if a report changes without re-running scripts/day7_chunk_reports.py
+    lines = CHUNKS.read_text(encoding="utf-8").splitlines()
+    assert [json.loads(line) for line in lines] == chunk_reports(SOURCES, REPORTS)
