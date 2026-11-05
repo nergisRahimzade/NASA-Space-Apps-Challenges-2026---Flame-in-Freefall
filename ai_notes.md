@@ -1,4 +1,4 @@
-# AI notes: what's built and where to pick up (Days 1–7, FIF-D01-AI … FIF-D07-AI)
+# AI notes: what's built and where to pick up (Days 1–8, FIF-D01-AI … FIF-D08-AI)
 
 For whoever takes over the AI role, and for anyone reviewing AI PRs. Like `data_notes.md`,
 this file records what exists, the decisions behind it, and the open questions.
@@ -23,6 +23,7 @@ with a citation for every claim.
 | D05-AI | Summary prompt v1 | `src/prompts/summary_v1.txt`, test in `tests/test_summarizer.py` | #122 |
 | D06-AI | Auto-check summaries: every claim cites a real passage | `src/flame_in_freefall/summary_check.py`, `tests/test_summary_check.py`, this file | FIF-D06-AI PR |
 | D07-AI | Chunk the real reports and save them | `chunk_reports` in `src/flame_in_freefall/chunking.py`, `scripts/day7_chunk_reports.py`, `data/processed/chunks.jsonl`, `tests/test_chunking.py` | FIF-D07-AI PR |
+| D08-AI | Embed the real chunks, save the search index, and time it | `scripts/day8_embed_chunks.py`, `artifacts/index/` (git-ignored) | FIF-D08-AI PR |
 
 Related BE pieces the AI code uses: `store.py` saves/loads the index (D04-BE), `summarizer.py`
 calls Gemini (D05-BE), and `config.py` reads the settings (D03-BE).
@@ -54,6 +55,7 @@ uv run python scripts/day1_check_ai.py           # embeddings work; Gemini part 
 uv run python scripts/day3_embed_mock.py         # fake docs -> artifacts/mock_index/
 uv run python scripts/day4_try_questions.py      # 5 fake questions against the mock index
 uv run python scripts/day7_chunk_reports.py      # real reports -> data/processed/chunks.jsonl
+uv run python scripts/day8_embed_chunks.py       # real chunks -> artifacts/index/, prints the time
 ```
 
 The first embedding run downloads the model (~90 MB) from Hugging Face. After that it's cached.
@@ -97,6 +99,13 @@ For Gemini: put `GEMINI_API_KEY=...` in `.env` (git-ignored, see `.env.example`)
   have the right source. Chunks split mid-sentence by design, and the 30-word overlap carries the
   context across.
 
+- **Search index timing (D08):** embedding all 18 chunks took 5.5–9.2 s per run of
+  `scripts/day8_embed_chunks.py` over 4 runs (MacBook, Apple GPU), and the printed time includes
+  loading the model. Measured separately in one run, loading took 3.3 s and embedding took 0.13 s,
+  then 0.03 s on repeat calls. So the model load is the slow part, not the embedding.
+- **The index is built, not committed (D08):** `artifacts/` is git-ignored. Rebuild it whenever
+  `chunks.jsonl` changes. It's small (about 28 KB of vectors plus 19 KB of chunk text).
+
 ## 5. Open questions and known issues
 
 - **Embedding model not confirmed by the team.** Nergis tried Gemini embeddings
@@ -118,19 +127,21 @@ For Gemini: put `GEMINI_API_KEY=...` in `.env` (git-ignored, see `.env.example`)
 - **The corpus is small:** 3 reports, about 2,100 words in total (see §6). Keep that in mind for
   the "8 of 10 relevant" goal in D14-AI.
 
-## 6. Where the next ticket starts (FIF-D08-AI: embed the real chunks)
+## 6. Where the next ticket starts (FIF-D09-AI: test real search)
 
-- **Input:** `data/processed/chunks.jsonl`, 18 chunks, one JSON object per line. To rebuild it, run
-  `scripts/day7_chunk_reports.py`. The reports are in `docs/reports/`, not `docs/` as the plan says.
-- **D08-AI** embeds the `text` of each chunk with `embed_texts` and saves them with `save_index` to
-  the default `artifacts/index/` (time it, as the ticket asks). `artifacts/` is git-ignored, so
-  each machine and the live app must build its own index.
+- **Build the index first:** run `scripts/day8_embed_chunks.py`. It writes `embeddings.npz` and
+  `chunks.json` to `artifacts/index/`. Each machine builds its own, because `artifacts/` is git-ignored.
+- **D09-AI** asks 10 test questions with `find_passages`, judges the top 3 results by hand, and logs
+  them in `tests/retrieval.md`. `scripts/day4_try_questions.py` is a good starting point: it already
+  pairs each question with the chunk expected to win, but it points at the mock index.
+- **Quick check so far (only 2 questions, not the D09 test):** "What gases were tested to suppress
+  fire in microgravity?" found `flex-p1-c5` (0.76), and "How fast does a large fire grow on a
+  spacecraft?" found `saffire2-p1-c3` (0.55).
 - **Check with the D08-BE owner:** `be_notes.md` asks both roles to agree where `chunks.jsonl` and
-  the index live, so `make ingest` writes the same files. D07 chose the paths above; that hasn't
-  been confirmed with them yet.
-- **D09-AI** asks 10 questions with `find_passages` and writes the results to `tests/retrieval.md`.
-  `scripts/day4_try_questions.py` is a good starting point: it already pairs each question with
-  the chunk expected to win.
+  the index live, so `make ingest` writes the same files. We use `data/processed/chunks.jsonl` and
+  `artifacts/index/`; that hasn't been confirmed with them yet.
+- **Real search isn't in the app yet:** `api.search()` returns mock data until **FIF-D10-BE** connects
+  `find_passages`. The live app also needs a way to build its index, since it isn't committed.
 
 ## 7. Rules to keep
 
