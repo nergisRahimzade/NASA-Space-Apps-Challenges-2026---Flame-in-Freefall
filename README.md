@@ -2,6 +2,8 @@
 
 A Python project for exploring microgravity combustion experiments, with a Streamlit dashboard. The planned features include report search, AI summaries, and interactive charts.
 
+**Live app:** https://crc-flame-in-freefall.streamlit.app (redeploys on every merge to `main`; how it works is in `be_notes.md`)
+
 The current app displays a title and search input. Search, summaries, and data loading are not implemented yet. You can run this starter without datasets or an API key.
 
 ## First-time setup
