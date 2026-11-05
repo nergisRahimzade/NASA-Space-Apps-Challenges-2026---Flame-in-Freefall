@@ -27,7 +27,7 @@ Note: `data/downloads.csv` still says `has_material = no` for FLEX-2 and Saffire
 
 BASS was in the original plan but we never downloaded it; it is **out of scope**. (Fallback rule from the sprint plan: if scope slips, stay at these experiments.)
 
-Reports in `data/reports/` and their links in `data/sources.csv` are the text side (for search).
+Reports in `docs/reports/` and their links in `data/sources.csv` are the text side (for search).
 
 ## 2. Final columns of `master.csv`
 

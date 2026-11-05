@@ -58,7 +58,7 @@ The first installation can take a while because the machine-learning dependencie
 Git tracks files, so empty folders do not arrive with a clone. Also, `artifacts/` is intentionally ignored. Run this command in PowerShell, macOS, or Linux to create the working folders; existing folders and files are preserved:
 
 ```text
-uv run --locked python -c "from pathlib import Path; folders = ['data/raw', 'data/processed', 'data/reports', 'artifacts', 'notebooks', 'scripts', 'tests', 'evaluation', 'docs']; [Path(folder).mkdir(parents=True, exist_ok=True) for folder in folders]"
+uv run --locked python -c "from pathlib import Path; folders = ['data/raw', 'data/processed', 'docs/reports', 'artifacts', 'notebooks', 'scripts', 'tests', 'evaluation', 'docs']; [Path(folder).mkdir(parents=True, exist_ok=True) for folder in folders]"
 ```
 
 This creates directories only. NASA data, reports, and generated embeddings will need to be downloaded or built separately when those workflows are implemented.
@@ -91,14 +91,14 @@ flame-in-freefall/
 |-- src/flame_in_freefall/    # Reusable Python package
 |-- data/
 |   |-- raw/                 # Original experiment datasets
-|   |-- processed/           # Cleaned tables
-|   `-- reports/             # Source reports and abstracts
+|   `-- processed/           # Cleaned tables
 |-- artifacts/               # Generated chunks, embeddings, and indexes
 |-- notebooks/               # Exploratory analysis
 |-- scripts/                 # Future download and processing commands
 |-- tests/                   # Automated tests as they are added
 |-- evaluation/              # Retrieval and summary test questions
 |-- docs/                    # Glossary, data notes, and demo materials
+|   `-- reports/             # Source reports and abstracts (input for chunking)
 |-- .python-version          # Python version selected for development
 |-- pyproject.toml           # Project metadata and dependency declarations
 |-- uv.lock                  # Resolved dependency versions
