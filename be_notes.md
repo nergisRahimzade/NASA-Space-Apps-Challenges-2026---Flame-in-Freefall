@@ -1,4 +1,4 @@
-# BE notes: what's built and how it runs (Days 1–6, FIF-D01-BE … FIF-D06-BE)
+# BE notes: what's built and how it runs (Days 1–7, FIF-D01-BE … FIF-D07-BE)
 
 For anyone reviewing BE PRs, and for teammates whose code calls the backend. Like
 `data_notes.md` and `ai_notes.md`, this file records what exists, the decisions behind it, and
@@ -18,7 +18,8 @@ the open questions.
 | D03-BE | Settings, cache and logging | `config.py`, `cache.py`, `tests/test_infra.py` | #104 |
 | D04-BE | Save/load the search index (vectors + chunks) | `store.py`, `tests/test_store.py` | #107 |
 | D05-BE | Real `summarize()`: timeout, retry, fallback, mocked client in tests | `summarizer.py`, `tests/test_summarizer.py`, `tests/conftest.py` | #108, then Gemini in #111 |
-| D06-BE | First deploy on Streamlit Community Cloud | `app/requirements.txt`, `app/streamlit_app.py` (Nergis, #123); this file | #123 + FIF-D06-BE PR |
+| D06-BE | First deploy on Streamlit Community Cloud | `app/requirements.txt`, `app/streamlit_app.py` (Nergis, #123); this file | #123 + #128 |
+| D07-BE | Repeatable deploy: Dockerfile, health checks, merge deploys | `Dockerfile`, `.dockerignore`, `tests/test_app.py` | FIF-D07-BE PR |
 
 ## 2. What each BE file does
 
@@ -54,6 +55,26 @@ The app (`app/streamlit_app.py`) belongs to FE and only calls `api.py`.
   this app back up!" and waits about a minute.
 - **Checked on 2026-11-04:** page loads, search shows the mock results and the summary
   placeholder, the table and sidebar filters work, and all 3 charts draw.
+- **Health check (D07):** the live URL can't be checked from CI. `/_stcore/health` redirects
+  automated requests to a Streamlit sign-in page, and `/healthz` answers `{"status":"ok"}` even
+  for an app name that doesn't exist (it's the hosting platform, not our app). So the app is
+  checked **before** it can reach `main`: `tests/test_app.py` runs the real
+  `app/streamlit_app.py` with Streamlit's `AppTest` in CI and fails on a crash or a red error
+  box. Tried on purpose: a failing `get_table()` and renamed `master.csv` columns both fail it.
+
+### Docker (backup host, D07)
+
+- `Dockerfile` installs from `uv.lock` (the exact versions our tests use) and runs the app on
+  port 8501. Commands are at the top of the file. Secrets are passed in when it starts
+  (`--env-file .env`) and never built into the image (`.dockerignore` keeps `.env` out).
+- Its `HEALTHCHECK` asks `/_stcore/health` every 30 s; inside the container there's no sign-in
+  redirect, so `docker ps` shows `(healthy)` or `(unhealthy)` for the real app.
+- **Tested on 2026-11-04:** built in ~14 min, image ~20 GB, container `(healthy)`, health
+  endpoint and main page answer HTTP 200.
+- Run it with `-p 127.0.0.1:8501:8501` so only your own computer can open it.
+- Needs Docker (on Windows: Docker Desktop with WSL integration for Ubuntu turned on). If
+  `docker` says "permission denied", restart WSL once (`wsl --shutdown`) so your user's new
+  `docker` group applies.
 
 ## 4. Decisions and why
 
@@ -74,14 +95,16 @@ The app (`app/streamlit_app.py`) belongs to FE and only calls `api.py`.
 
 ## 5. Open questions and known issues
 
-- **Two package lists can drift apart:** `pyproject.toml` + `uv.lock` (laptops and CI) and
-  `app/requirements.txt` (live app). A package added to only one breaks the other, and the
-  `>=` versions mean the live app may get newer versions than our tests ran on. One option for
-  D07: generate `app/requirements.txt` from the lock file with `uv export`.
-- **PyTorch is huge on Linux:** it pulls in ~4.4 GB of NVIDIA GPU libraries that Community Cloud
-  can't use (no GPU). Fine while the app doesn't load PyTorch. Once real search (D10) loads the
-  embedding model, watch the 2.7 GB memory limit. A CPU-only PyTorch would help, but it changes
-  `uv.lock` for everyone, so it's a team decision.
+- **Two package lists:** `pyproject.toml` + `uv.lock` (laptops, CI, Docker) and
+  `app/requirements.txt` (live app). Since D07, a test fails if a `pyproject.toml` package is
+  missing from `app/requirements.txt`. Versions can still differ: `requirements.txt` uses `>=`,
+  so the live app may get newer versions than our tests ran on. `uv export` could generate it
+  from the lock file if that ever causes trouble.
+- **PyTorch is huge on Linux:** it pulls in ~4.4 GB of NVIDIA GPU libraries that neither
+  Community Cloud nor our Docker image can use (no GPU), and it's most of the ~20 GB Docker
+  image. Fine while the app doesn't load PyTorch. Once real search (D10) loads the embedding
+  model, watch Community Cloud's 2.7 GB memory limit. A CPU-only PyTorch would help both, but
+  it changes `uv.lock` for everyone, so it's a team decision.
 - **Contract v1.0 is out of date with `data/master.csv`** (#126): oxygen, pressure and airflow
   are now `_min`/`_max` pairs, `outcome` is new, the experiments are FLEX-2 / Saffire-II / FLEX
   (not BASS), and some cells are empty. That's D09-BE (see `data_notes.md`, "Changes compared to
@@ -93,18 +116,21 @@ The app (`app/streamlit_app.py`) belongs to FE and only calls `api.py`.
 - **Worst-case wait for a summary is about 95 s** (3 tries × 30 s + waits between them) before the
   fallback.
 
-## 6. Where the next ticket starts (FIF-D07-BE: repeatable deploy)
+## 6. Where the next ticket starts (FIF-D08-BE: one command to ingest)
 
-The plan: *1) Dockerfile. 2) CI deploys on merge. 3) Health check. Done when: merge deploys.*
+The plan: *1) `make ingest` runs docs → chunks → embeddings. 2) Skip finished steps. Done when:
+ingest runs end to end.*
 
-- **Step 2 already happens:** Community Cloud redeploys on every merge to `main` (§3). What's
-  missing is a check that the deploy *worked*.
-- **Health check:** Streamlit has a built-in health endpoint (`/_stcore/health`). Careful: the
-  live URL redirects automated requests to a Streamlit sign-in page, so a simple `curl` from CI
-  may not reach it. Test this first.
-- **Dockerfile:** only needed for a Docker host. It's still useful as the backup if Community
-  Cloud fails (D24-BE "Backup plan"), and it's a natural place to fix the two-package-lists issue
-  (§5) by installing from `uv.lock`.
+- **The pieces exist** (see `ai_notes.md` §2): `chunking.chunk_document`,
+  `embedding.embed_texts` and `store.save_index`. The real documents are in `data/reports/`, with
+  their names in `data/sources.csv`, and they make 18 chunks (`ai_notes.md` §6).
+- **The AI steps it runs belong to the AI role** (D07-AI chunk the real docs, D08-AI embed them),
+  now owned by another teammate. Agree with them where `chunks.jsonl` and the index are saved,
+  so the ingest command and their scripts write the same files.
+- **`make` isn't installed on Windows by default.** A Python command (e.g.
+  `uv run python -m flame_in_freefall.ingest`) works for everyone; a `Makefile` could wrap it.
+- **"Skip finished steps"** can compare file times: skip chunking if `chunks.jsonl` is newer
+  than every report, and skip embedding if the index is newer than `chunks.jsonl`.
 
 ## 7. Rules to keep
 

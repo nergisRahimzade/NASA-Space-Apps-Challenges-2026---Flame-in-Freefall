@@ -1,0 +1,14 @@
+# Kept out of the Docker image: secrets, local environments, generated files, Git history.
+# Secrets are passed in when the container starts (--env-file .env), never built in.
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+.venv/
+.git/
+artifacts/
+notes/
+.claude/
+.pytest_cache/
+.ruff_cache/
+**/__pycache__/
