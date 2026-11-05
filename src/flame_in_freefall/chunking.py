@@ -3,6 +3,9 @@
 Search compares a question with small pieces ("chunks") instead of whole documents,
 so the best-matching passage can be shown with its source and page."""
 
+import csv
+from pathlib import Path
+
 # Word counts, not characters. all-MiniLM-L6-v2 reads at most 256 tokens (word pieces);
 # 150 words is about 190 tokens, so a chunk isn't cut off when it's embedded (200 was ~250).
 DEFAULT_SIZE = 150
@@ -54,4 +57,21 @@ def chunk_document(
                     "page": page_num,
                 }
             )
+    return out
+
+
+def chunk_reports(sources_csv: Path, reports_dir: Path) -> list[dict]:
+    """Chunk every report listed in sources.csv. Each report is plain text with no pages,
+    so the whole text goes in as page 1. The source is the title, as contract section 2 asks."""
+    with open(sources_csv, newline="", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+    out = []
+    for row in rows:
+        text = (reports_dir / row["file_name"]).read_text(encoding="utf-8")
+        # A blank report would silently vanish from search, so fail loudly instead.
+        if not text.strip():
+            raise ValueError(f"report is empty: {row['file_name']}")
+        # flex2_abstract.txt -> flex2, so ids read like flex2-p1-c3
+        doc_id = Path(row["file_name"]).stem.removesuffix("_abstract")
+        out.extend(chunk_document([text], row["title"], doc_id))
     return out
