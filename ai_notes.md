@@ -1,4 +1,4 @@
-# AI notes: what's built and where to pick up (Days 1–6, FIF-D01-AI … FIF-D06-AI)
+# AI notes: what's built and where to pick up (Days 1–7, FIF-D01-AI … FIF-D07-AI)
 
 For whoever takes over the AI role, and for anyone reviewing AI PRs. Like `data_notes.md`,
 this file records what exists, the decisions behind it, and the open questions.
@@ -22,6 +22,7 @@ with a citation for every claim.
 | D04-AI | Find the top 3 chunks for a question (cosine similarity) | `src/flame_in_freefall/retrieval.py`, `scripts/day4_try_questions.py`, `tests/test_retrieval.py` | #121 |
 | D05-AI | Summary prompt v1 | `src/prompts/summary_v1.txt`, test in `tests/test_summarizer.py` | #122 |
 | D06-AI | Auto-check summaries: every claim cites a real passage | `src/flame_in_freefall/summary_check.py`, `tests/test_summary_check.py`, this file | FIF-D06-AI PR |
+| D07-AI | Chunk the real reports and save them | `chunk_reports` in `src/flame_in_freefall/chunking.py`, `scripts/day7_chunk_reports.py`, `data/processed/chunks.jsonl`, `tests/test_chunking.py` | FIF-D07-AI PR |
 
 Related BE pieces the AI code uses: `store.py` saves/loads the index (D04-BE), `summarizer.py`
 calls Gemini (D05-BE), and `config.py` reads the settings (D03-BE).
@@ -52,6 +53,7 @@ uv run pytest -q                                # all tests; a fake model/client
 uv run python scripts/day1_check_ai.py           # embeddings work; Gemini part skipped without a key
 uv run python scripts/day3_embed_mock.py         # fake docs -> artifacts/mock_index/
 uv run python scripts/day4_try_questions.py      # 5 fake questions against the mock index
+uv run python scripts/day7_chunk_reports.py      # real reports -> data/processed/chunks.jsonl
 ```
 
 The first embedding run downloads the model (~90 MB) from Hugging Face. After that it's cached.
@@ -86,6 +88,15 @@ For Gemini: put `GEMINI_API_KEY=...` in `.env` (git-ignored, see `.env.example`)
   and the tests also run it on the fallback. A claim with no text, no `chunk_id`, an unknown
   `chunk_id` or the wrong source is rejected.
 
+- **Real chunks are committed at `data/processed/chunks.jsonl` (D07).** It's plain text like the
+  other generated data in `data/`, so teammates get it without running anything. A test fails if
+  a report changes and the file isn't rebuilt. Each report goes in as one page, so `page` is
+  always 1 until we have paged documents. Doc ids drop `_abstract`: `flex2-p1-c3`.
+- **Spot-check result (D07):** all 18 chunks are at most 222 tokens, under MiniLM's 256, and joining
+  them back (minus overlap) gives each report's exact words. The 5 checked chunks read correctly and
+  have the right source. Chunks split mid-sentence by design, and the 30-word overlap carries the
+  context across.
+
 ## 5. Open questions and known issues
 
 - **Embedding model not confirmed by the team.** Nergis tried Gemini embeddings
@@ -107,23 +118,19 @@ For Gemini: put `GEMINI_API_KEY=...` in `.env` (git-ignored, see `.env.example`)
 - **The corpus is small:** 3 reports, about 2,100 words in total (see §6). Keep that in mind for
   the "8 of 10 relevant" goal in D14-AI.
 
-## 6. Where the next ticket starts (FIF-D07-AI: chunk the real documents)
+## 6. Where the next ticket starts (FIF-D08-AI: embed the real chunks)
 
-- **The real documents are in `data/reports/`**, not `docs/` as the plan says. Nergis put them
-  there on Day 6: `flex_abstract.txt`, `flex2_abstract.txt` and `saffire2_abstract.txt`
-  (investigation descriptions from the PSI site, 813 / 803 / 478 words).
-- **Sources are in `data/sources.csv`:** use its `title` column as each chunk's `source`
-  (contract §2: "document name, as listed in sources.csv"), and `file_name` to match files.
-- **They're plain text with no pages**, so pass the whole text as one page:
-  `chunk_document([text], source=title, doc_id="flex2")` gives `page = 1` for every chunk.
-- **Size check (already tried):** with the current settings, the 3 abstracts make 7 + 7 + 4 =
-  **18 chunks**.
-- **Save as `chunks.jsonl`** (one JSON object per line, contract §2). The plan doesn't say
-  where; `data/processed/chunks.jsonl` would sit next to the other generated data.
-- **D08-AI** then embeds those chunks with `embed_texts` and saves them with `save_index` to the
-  default `artifacts/index/` (time it, as the ticket asks). **D09-AI** asks 10 questions with
-  `find_passages` and writes the results to `tests/retrieval.md`. `scripts/day4_try_questions.py`
-  is a good starting point: it already pairs each question with the chunk expected to win.
+- **Input:** `data/processed/chunks.jsonl`, 18 chunks, one JSON object per line. To rebuild it, run
+  `scripts/day7_chunk_reports.py`. The reports are in `docs/reports/`, not `docs/` as the plan says.
+- **D08-AI** embeds the `text` of each chunk with `embed_texts` and saves them with `save_index` to
+  the default `artifacts/index/` (time it, as the ticket asks). `artifacts/` is git-ignored, so
+  each machine and the live app must build its own index.
+- **Check with the D08-BE owner:** `be_notes.md` asks both roles to agree where `chunks.jsonl` and
+  the index live, so `make ingest` writes the same files. D07 chose the paths above; that hasn't
+  been confirmed with them yet.
+- **D09-AI** asks 10 questions with `find_passages` and writes the results to `tests/retrieval.md`.
+  `scripts/day4_try_questions.py` is a good starting point: it already pairs each question with
+  the chunk expected to win.
 
 ## 7. Rules to keep
 
