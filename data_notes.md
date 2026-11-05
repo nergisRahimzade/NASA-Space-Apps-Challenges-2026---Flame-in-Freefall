@@ -27,7 +27,7 @@ Note: `data/downloads.csv` still says `has_material = no` for FLEX-2 and Saffire
 
 BASS was in the original plan but we never downloaded it; it is **out of scope**. (Fallback rule from the sprint plan: if scope slips, stay at these experiments.)
 
-Reports in `data/reports/` and their links in `data/sources.csv` are the text side (for search).
+Reports in `docs/reports/` and their links in `data/sources.csv` are the text side (for search).
 
 ## 2. Final columns of `master.csv`
 
@@ -81,3 +81,17 @@ Oxygen, pressure and airflow are stored as **min and max columns**. FLEX-2 gives
 - Rebuild from scratch: `uv run python -m flame_in_freefall.clean_tables` then `uv run python -m flame_in_freefall.build_master`.
 - The master table only stacks the clean tables and keeps the section 2 columns; no values are changed. A column a source lacks is left empty.
 - `tests/test_master.py` checks the columns, the row counts and the expected empty cells. It also checks that the saved `data/master.csv` matches a fresh build, so re-run both commands after any cleaning change.
+
+## 6. Data quality checks (Day 10, FIF-D10-DAT)
+
+- Checks live in `src/flame_in_freefall/check_data.py`; `tests/test_data_quality.py` runs them in pytest (so CI runs them too).
+- Print a report for the saved files: `uv run python -m flame_in_freefall.check_data` (prints "No problems found", or one line per problem and exits with an error).
+- **Range checks:** each number must sit between limits that fit these experiments (listed with the real min/max in `LIMITS`). They are set to catch unit slips: a mole fraction not x100, atm or mmHg not turned into kPa, mm/s instead of cm/s. Also checked: every `_min` is at most its `_max`, `experiment` and `outcome` only use known words, FLEX dates fall in the mission years, the FLEX gas mix (O2 + N2 + CO + He) adds up to 97-102%, and no flame went out on a droplet bigger than the starting one.
+- **Duplicate checks:** each FLEX-2 fuel, Saffire-II `sample_id` and FLEX `test_id` appears once.
+- `master.csv` **does** have 10 rows that are exact copies of other rows. They are not mistakes: different FLEX tests run at the same conditions, and 3 Saffire-II Silicone samples at the same conditions. Don't drop them; charts that count tests should count them.
+- The tests also plant mistakes (for example 760 in a kPa column, a repeated test id) and check they are caught.
+
+Found while checking (left as-is, to confirm in the reports):
+- FLEX `C11M201` has the same date and time as `C11H201` (2010-09-06 19:14:22), while the other C11M tests ran on 2010-09-01. Together with its 0 mmHg pressure, its date, time and pressure look copied by mistake. Its oxygen and gas mix match the other C11M tests, so the row is kept.
+- FLEX `193F001`'s two copies differ slightly in droplet diameter (4.67 vs 4.64 mm) and extinction diameter (4.60 vs 4.58 mm), so it may have been run twice, not entered twice. The first copy is still the one kept (section 4).
+- FLEX `C13H102`: the flame went out at 3.34 mm on a 3.33 mm droplet. Treated as measurement noise (0.05 mm allowed).
