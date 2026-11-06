@@ -3,14 +3,18 @@ Real versions replaced the bodies later (summarize on Day 5, get_table Day 9, se
 The signatures and return shapes must stay exactly as in docs/contract.md.
 Day 5 (BE): summarize is real now; the Gemini work lives in summarizer.py.
 Day 9 (BE): get_table is real now; it reads data/master.csv (built by the data role).
-Day 10 (BE): search is real now; it ranks the report chunks with retrieval.find_passages."""
+Day 10 (BE): search is real now; it ranks the report chunks with retrieval.find_passages.
+Day 11 (BE): every call is timed (speed.py), and repeated questions come from memory."""
 
+import copy
 import threading
+import time
 from pathlib import Path
 
 import pandas as pd
 
-from flame_in_freefall import ingest
+from flame_in_freefall import ingest, speed
+from flame_in_freefall.cache import memo
 from flame_in_freefall.retrieval import find_passages
 from flame_in_freefall.store import _paths
 from flame_in_freefall.summarizer import summarize_passages
@@ -36,20 +40,36 @@ def _ensure_index() -> None:
     with _index_lock:
         if not ingest._is_fresh(list(_paths(INDEX)), [CHUNKS]):
             ingest.build_index(CHUNKS, INDEX)
+            _find.cache.clear()  # answers from the old index could be out of date
+
+
+@memo  # cache.py: the same question (ignoring capitals and spaces) and k are answered once
+def _find(query: str, k: int) -> list[dict]:
+    # {id, text, source, page, score} best first, plus each chunk's experiment (Day 12).
+    return find_passages(query, k, folder=INDEX)
 
 
 def search(query: str, k: int = 5) -> list[dict]:  # contract v1.1: default 5 (was 3)
     # Fail loudly on a blank question instead of running an empty search.
     if not query or not query.strip():
         raise ValueError("query must not be empty")
+    start = time.perf_counter()
+    # Check the index first, even for a remembered question: it only compares file times, and
+    # a rebuild empties the cache, so an out-of-date answer can't be served from memory.
     _ensure_index()
-    # {id, text, source, page, score} best first, plus each chunk's experiment (Day 12).
-    return find_passages(query, k, folder=INDEX)
+    cached = _find.is_cached(query, k)
+    # A copy, so a caller changing its results can't change what's remembered for others.
+    results = copy.deepcopy(_find(query, k))
+    speed.record("search", query, time.perf_counter() - start, cached)
+    return results
 
 
 def summarize(passages: list[dict]) -> dict:
     # Thin wrapper: the contract signature stays here, the Gemini call lives in summarizer.py.
-    return summarize_passages(passages)
+    start = time.perf_counter()
+    summary = summarize_passages(passages)
+    speed.record("summarize", f"{len(passages)} passages", time.perf_counter() - start)
+    return summary
 
 
 def _check_filters(filters: dict) -> None:
@@ -71,6 +91,7 @@ def _check_filters(filters: dict) -> None:
 def get_table(filters: dict | None = None) -> list[dict]:
     filters = filters or {}  # None means "no filters"
     _check_filters(filters)
+    start = time.perf_counter()
     table = pd.read_csv(MASTER_CSV)
     # Each filter that was given narrows the rows further; missing ones are skipped.
     for key in TEXT_FILTERS & set(filters):
@@ -84,4 +105,6 @@ def get_table(filters: dict | None = None) -> list[dict]:
     # Empty cells (e.g. no pressure for Saffire-II) come back as None, not NaN, so callers
     # can test "is None" and the rows turn into JSON cleanly.
     table = table.astype(object).where(table.notna(), None)
-    return table.to_dict(orient="records")
+    rows = table.to_dict(orient="records")
+    speed.record("get_table", f"{filters} -> {len(rows)} rows", time.perf_counter() - start)
+    return rows

@@ -28,3 +28,14 @@ def test_memo_calls_once():
 
     slow("Hello"), slow("hello "), slow("HELLO")
     assert len(calls) == 1
+
+
+def test_memo_knows_what_is_cached():
+    @memo
+    def slow(query, k=3):
+        return query
+
+    assert not slow.is_cached("Hello")
+    slow("Hello")
+    assert slow.is_cached(" hello ")  # same cleaned-up question
+    assert not slow.is_cached("hello", 5)  # other arguments are remembered separately

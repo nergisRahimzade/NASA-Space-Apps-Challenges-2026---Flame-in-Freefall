@@ -41,6 +41,12 @@ def test_search_shows_results(app):
     assert any(h.value.startswith("Results") for h in app.subheader)
 
 
+def test_search_shows_how_long_it_took(app):
+    # Day 11: the speed is visible to everyone on the page, not only in the logs.
+    app.text_input[0].input("flame spread").run()
+    assert any(c.value.startswith("Searched in ") for c in app.caption)
+
+
 PASSAGE = "Spread was 0.3 mm/s * at 21% O2, and cost rose from $5 to $10."
 RESULT = {
     "id": "bass-001-p3-c0",
