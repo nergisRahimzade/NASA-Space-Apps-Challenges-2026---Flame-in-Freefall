@@ -1,4 +1,4 @@
-# BE notes: what's built and how it runs (Days 1–7, FIF-D01-BE … FIF-D07-BE)
+# BE notes: what's built and how it runs (Days 1–8, FIF-D01-BE … FIF-D08-BE)
 
 For anyone reviewing BE PRs, and for teammates whose code calls the backend. Like
 `data_notes.md` and `ai_notes.md`, this file records what exists, the decisions behind it, and
@@ -19,7 +19,8 @@ the open questions.
 | D04-BE | Save/load the search index (vectors + chunks) | `store.py`, `tests/test_store.py` | #107 |
 | D05-BE | Real `summarize()`: timeout, retry, fallback, mocked client in tests | `summarizer.py`, `tests/test_summarizer.py`, `tests/conftest.py` | #108, then Gemini in #111 |
 | D06-BE | First deploy on Streamlit Community Cloud | `app/requirements.txt`, `app/streamlit_app.py` (Nergis, #123); this file | #123 + #128 |
-| D07-BE | Repeatable deploy: Dockerfile, health checks, merge deploys | `Dockerfile`, `.dockerignore`, `tests/test_app.py` | FIF-D07-BE PR |
+| D07-BE | Repeatable deploy: Dockerfile, health checks, merge deploys | `Dockerfile`, `.dockerignore`, `tests/test_app.py` | #129 |
+| D08-BE | One command to ingest: reports → chunks → index, skipping finished steps | `ingest.py`, `tests/test_ingest.py` | FIF-D08-BE PR |
 
 ## 2. What each BE file does
 
@@ -30,7 +31,8 @@ All code is in `src/flame_in_freefall/`.
 | `api.py` | The 3 functions everyone calls, with the exact shapes in `docs/contract.md` | `summarize()` is real; `get_table()` reads mock data until **D09-BE**; `search()` returns mock data until **D10-BE** |
 | `config.py` | Reads every setting from environment variables into one frozen `Settings` | in use |
 | `cache.py` | Remembers answers by question (JSON files, or in memory with `@memo`) | built, **not used yet** (D11-BE "Cache repeats") |
-| `store.py` | Saves/loads the search index as `embeddings.npz` + `chunks.json` | used by the AI scripts |
+| `store.py` | Saves/loads the search index as `embeddings.npz` + `chunks.json` | used by the AI scripts and `ingest.py` |
+| `ingest.py` | One command builds the search index: `uv run python -m flame_in_freefall.ingest` (`--force` redoes every step) | in use; same files as the AI scripts for Days 7–8 |
 | `summarizer.py` | Calls Gemini for takeaways; falls back to quoting passages on any failure | in use through `api.summarize()` |
 
 The app (`app/streamlit_app.py`) belongs to FE and only calls `api.py`.
@@ -95,6 +97,10 @@ The app (`app/streamlit_app.py`) belongs to FE and only calls `api.py`.
 
 ## 5. Open questions and known issues
 
+- **The live app has no search index yet.** `artifacts/index/` is git-ignored, so Community
+  Cloud never gets one. Before real search (D10-BE) goes live, the app must build it on first use
+  (e.g. call `ingest.run()` when the index is missing; about 10 s plus the model download) or the
+  index must be committed. To decide in D10-BE.
 - **Two package lists:** `pyproject.toml` + `uv.lock` (laptops, CI, Docker) and
   `app/requirements.txt` (live app). Since D07, a test fails if a `pyproject.toml` package is
   missing from `app/requirements.txt`. Versions can still differ: `requirements.txt` uses `>=`,
@@ -116,21 +122,37 @@ The app (`app/streamlit_app.py`) belongs to FE and only calls `api.py`.
 - **Worst-case wait for a summary is about 95 s** (3 tries × 30 s + waits between them) before the
   fallback.
 
-## 6. Where the next ticket starts (FIF-D08-BE: one command to ingest)
+### Ingest (D08)
 
-The plan: *1) `make ingest` runs docs → chunks → embeddings. 2) Skip finished steps. Done when:
-ingest runs end to end.*
+- **Steps:** reports (`docs/reports/` + `data/sources.csv`) → `data/processed/chunks.jsonl`
+  (committed) → `artifacts/index/` (git-ignored). These are the same files the AI scripts
+  `scripts/day7_chunk_reports.py` and `scripts/day8_embed_chunks.py` write, so either way of
+  building gives the same result.
+- **Skip finished steps:** a step is skipped when its output is newer than all of its inputs
+  (file times). Chunking's inputs include `chunking.py` itself, so changing the chunk size
+  rebuilds. Changing the embedding model (`EMBED_MODEL`) is **not** detected: run with `--force`.
+- **Not `make ingest`** as the plan says: `make` isn't installed on Windows (or in our WSL) by
+  default, and a Python command works for everyone.
+- **Tested on 2026-11-05 with the real reports:** 18 chunks, then 18 × 384 vectors in ~7–12 s
+  (mostly loading the model). A second run skips both steps, and touching a report rebuilds both.
+  Rebuilding `chunks.jsonl` gives the same content, so Git sees no change.
 
-- **The pieces exist** (see `ai_notes.md` §2): `chunking.chunk_document`,
-  `embedding.embed_texts` and `store.save_index`. The real documents are in `data/reports/`, with
-  their names in `data/sources.csv`, and they make 18 chunks (`ai_notes.md` §6).
-- **The AI steps it runs belong to the AI role** (D07-AI chunk the real docs, D08-AI embed them),
-  now owned by another teammate. Agree with them where `chunks.jsonl` and the index are saved,
-  so the ingest command and their scripts write the same files.
-- **`make` isn't installed on Windows by default.** A Python command (e.g.
-  `uv run python -m flame_in_freefall.ingest`) works for everyone; a `Makefile` could wrap it.
-- **"Skip finished steps"** can compare file times: skip chunking if `chunks.jsonl` is newer
-  than every report, and skip embedding if the index is newer than `chunks.jsonl`.
+## 6. Where the next ticket starts (FIF-D09-BE: real `get_table()`)
+
+The plan: *1) Read `master.csv`. 2) Filter in pandas. 3) Validate inputs. Done when: function
+returns right rows.*
+
+- **`data/master.csv` has 12 columns now** (`data_notes.md`): `experiment`, `material`,
+  `material_category`, `oxygen_pct_min`/`_max`, `pressure_kpa_min`/`_max`, `flow_cm_s_min`/`_max`,
+  `spread_rate_mm_s`, `spread_rate_per_flow`, `outcome`. Contract v1.0 still lists the old 6, so
+  `docs/contract.md` needs a version bump.
+- **Empty cells are normal** (e.g. Saffire-II has no pressure, only FLEX has an outcome). The mock
+  version runs `float()` on every number and would crash on them.
+- **Oxygen filters on ranges:** FLEX-2 rows hold a range (17–30 %). Decide whether a row matches
+  `oxygen_min`/`oxygen_max` when its range only overlaps the filter (suggested: yes).
+- **The app reads `oxygen_pct` directly** (`app/streamlit_app.py`, FE's file). Switching
+  `get_table()` to `master.csv` makes the app crash, and `tests/test_app.py` will fail on exactly
+  that. Agree with FE how to change both together.
 
 ## 7. Rules to keep
 
