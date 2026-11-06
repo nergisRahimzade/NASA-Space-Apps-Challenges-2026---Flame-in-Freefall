@@ -8,22 +8,9 @@ from pathlib import Path
 
 from flame_in_freefall.config import setup_logging
 from flame_in_freefall.retrieval import find_passages
+from flame_in_freefall.retrieval_eval import QUESTIONS  # the last 2 aren't covered by the reports
 
 DRAFT = Path(__file__).resolve().parents[1] / "artifacts" / "retrieval_draft.md"
-
-# The last 2 aren't covered by the reports, to show what a poor match looks like.
-QUESTIONS = [
-    "What gases were tested as fire suppressants in microgravity?",
-    "What is the Limiting Oxygen Index and how did FLEX measure it?",
-    "What is a cool flame?",
-    "What oxygen levels and pressures were used in the FLEX-2 chamber?",
-    "How were fuel droplets deployed and ignited in FLEX-2?",
-    "How fast does a large fire grow in low gravity?",
-    "What airflow speeds were used in Saffire-II?",
-    "Why are normal-gravity fire tests risky for designing spacecraft safety systems?",
-    "Which spacecraft materials are the most dangerous at 30 percent oxygen?",
-    "How do you put out a lithium battery fire on Mars?",
-]
 
 log = setup_logging()
 

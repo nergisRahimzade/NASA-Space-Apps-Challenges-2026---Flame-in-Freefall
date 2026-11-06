@@ -104,3 +104,14 @@ Found while checking (left as-is, to confirm in the reports):
 - Full definitions, the material-to-category table and the reasons are in `docs/column_dictionary.md` section 4.
 - Quality checks (section 6) now also check these columns. `material_category` must be a known category, and `spread_rate_per_flow` must be between 0 and 0.1. An airflow left in cm/s would give about 0.1-0.13, so the check catches it.
 - **For BE (contract):** these are two more columns on top of the section 2 changes. `get_table()` and `master.mock.csv` don't have them yet. `material_category` would also be a useful filter, so charts can be coloured or filtered by category.
+
+## 8. Chunks tagged by experiment (Day 12, FIF-D12-DAT)
+
+- Each report is linked to its experiment in the `experiment` column of `data/sources.csv`: `flex_abstract.txt` is FLEX, `flex2_abstract.txt` is FLEX-2, and `saffire2_abstract.txt` is Saffire-II. BASS has no report and is out of scope (section 1).
+- `chunk_reports()` in `src/flame_in_freefall/chunking.py` copies that value onto every chunk. Each line of `data/processed/chunks.jsonl` now has 5 fields: `id`, `text`, `source`, `page`, `experiment`. There are 18 chunks: FLEX 7, FLEX-2 7, Saffire-II 4.
+- The names are spelled exactly as in the `experiment` column of `master.csv`, so one dropdown value (for example `Saffire-II`) can filter both search and the table.
+- A report with no experiment in `sources.csv` (a missing column or a blank cell) stops the chunking with an error. An untagged chunk would never appear in a filtered search, so it fails loudly instead.
+- Rebuild: run `uv run python scripts/day7_chunk_reports.py`, then `uv run python scripts/day8_embed_chunks.py`. The search index is built from `chunks.jsonl`, so the second command is what makes `experiment` show up in search results.
+- `tests/test_chunking.py` checks that every chunk has the right experiment, that the names match `master.csv`, and that an untagged report fails.
+- **For AI (D12-AI):** the tag is in the chunk metadata saved with the index. Filter on `chunk["experiment"]` before ranking.
+- **For BE (D12-BE, contract v1.1):** contract section 2 should list `experiment` (str, `FLEX-2` / `Saffire-II` / `FLEX`) as a chunk field. `search()` results will then include it too. `data/mock/chunks.mock.jsonl` doesn't have the field yet and still uses BASS names. Its test (`tests/test_mock_data.py`) needs the field added when the mock gets it.

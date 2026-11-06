@@ -60,9 +60,17 @@ def chunk_document(
     return out
 
 
-def chunk_reports(sources_csv: Path, reports_dir: Path) -> list[dict]:
+def chunk_reports(
+    sources_csv: Path,
+    reports_dir: Path,
+    size: int = DEFAULT_SIZE,
+    overlap: int = DEFAULT_OVERLAP,
+) -> list[dict]:
     """Chunk every report listed in sources.csv. Each report is plain text with no pages,
-    so the whole text goes in as page 1. The source is the title, as contract section 2 asks."""
+    so the whole text goes in as page 1. The source is the title, as contract section 2 asks.
+    Day 12 (DAT): every chunk also gets its report's `experiment` from sources.csv
+    (FLEX-2, Saffire-II or FLEX, spelled as in master.csv), so search can filter by it.
+    Day 10 (AI): size and overlap can be changed to compare settings (day10 script)."""
     with open(sources_csv, newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
     out = []
@@ -71,7 +79,12 @@ def chunk_reports(sources_csv: Path, reports_dir: Path) -> list[dict]:
         # A blank report would silently vanish from search, so fail loudly instead.
         if not text.strip():
             raise ValueError(f"report is empty: {row['file_name']}")
+        # An untagged report would never show up when search is filtered, so fail loudly too.
+        experiment = (row.get("experiment") or "").strip()
+        if not experiment:
+            raise ValueError(f"no experiment listed for {row['file_name']} in sources.csv")
         # flex2_abstract.txt -> flex2, so ids read like flex2-p1-c3
         doc_id = Path(row["file_name"]).stem.removesuffix("_abstract")
-        out.extend(chunk_document([text], row["title"], doc_id))
+        for chunk in chunk_document([text], row["title"], doc_id, size, overlap):
+            out.append({**chunk, "experiment": experiment})
     return out
