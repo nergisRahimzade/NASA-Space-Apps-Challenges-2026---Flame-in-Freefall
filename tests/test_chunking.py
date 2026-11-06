@@ -112,6 +112,15 @@ def test_untagged_report_fails_loudly(tmp_path, csv_text):
         chunk_reports(sources, tmp_path)
 
 
+def test_chunk_reports_size_and_overlap_can_change():
+    # Day 10 compares settings, so these must reach chunk_text.
+    default = chunk_reports(SOURCES, REPORTS)
+    big = chunk_reports(SOURCES, REPORTS, size=400, overlap=0)
+    assert len(big) < len(default)
+    assert max(len(c["text"].split()) for c in big) == 400
+    assert all(c["experiment"] for c in big)  # the Day 12 tag survives other settings
+
+
 def test_saved_chunks_match_the_reports():
     # Fails if a report changes without re-running scripts/day7_chunk_reports.py
     lines = CHUNKS.read_text(encoding="utf-8").splitlines()
