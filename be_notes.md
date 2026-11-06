@@ -1,4 +1,4 @@
-# BE notes: what's built and how it runs (Days 1–8, FIF-D01-BE … FIF-D08-BE)
+# BE notes: what's built and how it runs (Days 1–9, FIF-D01-BE … FIF-D09-BE)
 
 For anyone reviewing BE PRs, and for teammates whose code calls the backend. Like
 `data_notes.md` and `ai_notes.md`, this file records what exists, the decisions behind it, and
@@ -20,7 +20,8 @@ the open questions.
 | D05-BE | Real `summarize()`: timeout, retry, fallback, mocked client in tests | `summarizer.py`, `tests/test_summarizer.py`, `tests/conftest.py` | #108, then Gemini in #111 |
 | D06-BE | First deploy on Streamlit Community Cloud | `app/requirements.txt`, `app/streamlit_app.py` (Nergis, #123); this file | #123 + #128 |
 | D07-BE | Repeatable deploy: Dockerfile, health checks, merge deploys | `Dockerfile`, `.dockerignore`, `tests/test_app.py` | #129 |
-| D08-BE | One command to ingest: reports → chunks → index, skipping finished steps | `ingest.py`, `tests/test_ingest.py` | FIF-D08-BE PR |
+| D08-BE | One command to ingest: reports → chunks → index, skipping finished steps | `ingest.py`, `tests/test_ingest.py` | #139 |
+| D09-BE | Real `get_table()` from `data/master.csv`; contract v1.2 | `api.py`, `docs/contract.md`, `tests/test_get_table.py`, `tests/test_contract.py`, 2 small edits in `app/streamlit_app.py` (FE's file) | FIF-D09-BE PR |
 
 ## 2. What each BE file does
 
@@ -28,7 +29,7 @@ All code is in `src/flame_in_freefall/`.
 
 | File | Job | Status |
 |---|---|---|
-| `api.py` | The 3 functions everyone calls, with the exact shapes in `docs/contract.md` | `summarize()` is real; `get_table()` reads mock data until **D09-BE**; `search()` returns mock data until **D10-BE** |
+| `api.py` | The 3 functions everyone calls, with the exact shapes in `docs/contract.md` | `summarize()` and `get_table()` are real; `search()` returns mock data until **D10-BE** |
 | `config.py` | Reads every setting from environment variables into one frozen `Settings` | in use |
 | `cache.py` | Remembers answers by question (JSON files, or in memory with `@memo`) | built, **not used yet** (D11-BE "Cache repeats") |
 | `store.py` | Saves/loads the search index as `embeddings.npz` + `chunks.json` | used by the AI scripts and `ingest.py` |
@@ -111,10 +112,10 @@ The app (`app/streamlit_app.py`) belongs to FE and only calls `api.py`.
   image. Fine while the app doesn't load PyTorch. Once real search (D10) loads the embedding
   model, watch Community Cloud's 2.7 GB memory limit. A CPU-only PyTorch would help both, but
   it changes `uv.lock` for everyone, so it's a team decision.
-- **Contract v1.0 is out of date with `data/master.csv`** (#126): oxygen, pressure and airflow
-  are now `_min`/`_max` pairs, `outcome` is new, the experiments are FLEX-2 / Saffire-II / FLEX
-  (not BASS), and some cells are empty. That's D09-BE (see `data_notes.md`, "Changes compared to
-  contract v1.0").
+- **The app's charts are built for the old mock data** (FE's file). Since D09 they get real rows,
+  but `spread_rate_mm_s` is filled for only 2 of 290 rows, so "Flame spread vs. oxygen" and
+  "Riskiest materials" are nearly empty, and the "Riskiest materials" caption still says "Fake
+  numbers". The real data is mostly in `outcome` (273 FLEX tests). A chart redesign is FE's call.
 - **`numpy` and `httpx` are imported but not listed in `pyproject.toml`**; they only arrive
   through other packages. They are listed in `app/requirements.txt`.
 - **`summarize()` never sees the user's question**, only the passages. Changing that is a
@@ -137,22 +138,36 @@ The app (`app/streamlit_app.py`) belongs to FE and only calls `api.py`.
   (mostly loading the model). A second run skips both steps, and touching a report rebuilds both.
   Rebuilding `chunks.jsonl` gives the same content, so Git sees no change.
 
-## 6. Where the next ticket starts (FIF-D09-BE: real `get_table()`)
+### Real `get_table()` (D09)
 
-The plan: *1) Read `master.csv`. 2) Filter in pandas. 3) Validate inputs. Done when: function
-returns right rows.*
+- **Reads `data/master.csv` with pandas** on every call (290 rows, so it's fast). The columns are
+  in `docs/contract.md` §3 (v1.2).
+- **Filters:** `experiment`, `material` and the new `material_category` match exactly. For oxygen,
+  a row matches when its range overlaps the filter's range, so FLEX-2's 17–30 % rows still show for
+  a 20–25 % filter.
+- **Validated:** unknown keys, blank text, a non-number oxygen value (`True` included) and
+  `oxygen_min > oxygen_max` raise `ValueError`. An unknown value (e.g. `"BASS"`) just gives `[]`.
+- **Empty cells come back as `None`**, never `NaN`.
+- **The app had to change in the same PR:** it read `oxygen_pct`, which no longer exists, and
+  `tests/test_app.py` would have failed. Only the slider range and the scatter chart's column names
+  changed (FE's file, agreed with FE). Chart design stays with FE (§5).
 
-- **`data/master.csv` has 12 columns now** (`data_notes.md`): `experiment`, `material`,
-  `material_category`, `oxygen_pct_min`/`_max`, `pressure_kpa_min`/`_max`, `flow_cm_s_min`/`_max`,
-  `spread_rate_mm_s`, `spread_rate_per_flow`, `outcome`. Contract v1.0 still lists the old 6, so
-  `docs/contract.md` needs a version bump.
-- **Empty cells are normal** (e.g. Saffire-II has no pressure, only FLEX has an outcome). The mock
-  version runs `float()` on every number and would crash on them.
-- **Oxygen filters on ranges:** FLEX-2 rows hold a range (17–30 %). Decide whether a row matches
-  `oxygen_min`/`oxygen_max` when its range only overlaps the filter (suggested: yes).
-- **The app reads `oxygen_pct` directly** (`app/streamlit_app.py`, FE's file). Switching
-  `get_table()` to `master.csv` makes the app crash, and `tests/test_app.py` will fail on exactly
-  that. Agree with FE how to change both together.
+## 6. Where the next ticket starts (FIF-D10-BE: real `search()`)
+
+The plan: *1) Load embeddings. 2) Wire AI retrieval. 3) Return text, source, page, score. Done
+when: returns real passages.*
+
+- **The pieces exist:** `retrieval.find_passages(query, k)` already returns
+  `{id, text, source, page, score}` (contract §1) from `artifacts/index/`, which
+  `ingest.py` builds. `search()` mostly needs to call it.
+- **Decide how the live app gets its index first** (§5): build it on first use (call
+  `ingest.run()` when it's missing) or commit it. Without one, `find_passages` raises
+  `FileNotFoundError`, and the app's search would show its error box.
+- **Loading the model takes seconds**, and `embedding.py` keeps it in memory after the first
+  question. Watch Community Cloud's 2.7 GB memory limit once PyTorch actually loads (§5).
+- **Chunks now carry `experiment`** (Day 12). D12-AI adds an experiment filter to search, so keep
+  the field in `search()` results.
+- `cache.py`'s `@memo` could remember repeated questions; that's D11-BE ("Cache repeats").
 
 ## 7. Rules to keep
 

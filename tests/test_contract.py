@@ -35,10 +35,12 @@ def test_summarize_no_passages():
 
 
 def test_get_table_filters():
-    assert len(get_table()) == 5
-    bass = get_table({"experiment": "BASS"})
-    assert bass and all(r["experiment"] == "BASS" for r in bass)
-    assert all(isinstance(r["spread_rate_mm_s"], float) for r in bass)
+    # Contract v1.2: real rows from data/master.csv, numbers as float, empty cells as None.
+    assert len(get_table()) == 290
+    flex2 = get_table({"experiment": "FLEX-2"})
+    assert flex2 and all(r["experiment"] == "FLEX-2" for r in flex2)
+    assert all(isinstance(r["oxygen_pct_min"], float) for r in flex2)
+    assert all(r["spread_rate_mm_s"] is None for r in flex2)  # FLEX-2 has no spread rate
 
 
 def test_get_table_unknown_filter():
