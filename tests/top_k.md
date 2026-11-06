@@ -9,9 +9,7 @@ Compares returning the top **3, 5 and 8** chunks for the same 10 questions as Da
 per question. k = 8 finds no more questions than 5. It adds 440 more words, and nearly half of
 what it returns comes from the wrong experiment.
 
-**Not changed in code yet:** `search(query, k=3)` in `docs/contract.md` and `api.search` both
-default to 3. Changing the default is a contract change, so it needs the BE owner's agreement
-(see `ai_notes.md` §5).
+**Done:** `find_passages`, `api.search` and `docs/contract.md` (now v1.1) default to k = 5.
 
 ## How it was scored
 

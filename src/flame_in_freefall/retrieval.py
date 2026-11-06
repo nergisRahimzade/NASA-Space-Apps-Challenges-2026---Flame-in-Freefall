@@ -2,7 +2,10 @@
 
 The question is embedded the same way as the chunks (Day 3), then compared with every chunk
 vector by cosine similarity: 1 = same direction (same meaning), near 0 = unrelated.
-FIF-D10-BE wires find_passages into api.search(); until then api.search() returns mock data."""
+FIF-D10-BE wires find_passages into api.search(); until then api.search() returns mock data.
+Day 12 (AI): find_passages can keep only one experiment's chunks before ranking, using the
+`experiment` tag DAT added to every chunk (FLEX-2, Saffire-II or FLEX).
+Day 11 (AI): find_passages returns 5 chunks by default, not 3 (tests/top_k.md)."""
 
 from pathlib import Path
 
@@ -37,13 +40,44 @@ def top_k(query_vec: np.ndarray, chunk_vecs: np.ndarray, k: int = 3) -> list[tup
     return [(int(i), float(scores[i])) for i in order]
 
 
-def find_passages(query: str, k: int = 3, folder: str | Path = DEFAULT_FOLDER) -> list[dict]:
+def rows_for_experiment(chunks: list[dict], experiment: str | None = None) -> list[int]:
+    """Row numbers of the chunks tagged with `experiment`, in saved order. None = every row.
+
+    Raises ValueError for an experiment no chunk has (a typo would otherwise return nothing)
+    and for chunks with no tag (an index built before Day 12: rebuild it)."""
+    if experiment is None:
+        return list(range(len(chunks)))
+    untagged = [c.get("id", i) for i, c in enumerate(chunks) if not c.get("experiment")]
+    if untagged:
+        raise ValueError(
+            f"{len(untagged)} chunk(s) have no experiment tag (e.g. {untagged[0]}); "
+            "rebuild chunks.jsonl and the index"
+        )
+    rows = [i for i, c in enumerate(chunks) if c["experiment"] == experiment]
+    if not rows:
+        known = sorted({c["experiment"] for c in chunks})
+        raise ValueError(f"unknown experiment {experiment!r}; choose one of {known}")
+    return rows
+
+
+def find_passages(
+    query: str,
+    k: int = 5,  # D11: 5 finds 7 of 8 answerable questions, 3 finds 6
+    folder: str | Path = DEFAULT_FOLDER,
+    experiment: str | None = None,
+) -> list[dict]:
     """The k best chunks for a question, best first, shaped like search() in docs/contract.md:
-    {"id", "text", "source", "page", "score"}."""
+    {"id", "text", "source", "page", "score"} (plus `experiment` when the index has it).
+
+    `experiment` (e.g. "FLEX-2") keeps only that experiment's chunks *before* ranking, so the
+    k results all come from it. None (the default) searches every chunk, as before."""
     # Fail loudly on a blank question instead of running an empty search.
     if not query.strip():
         raise ValueError("query must not be empty")
     vectors, chunks = load_index(folder)  # FileNotFoundError if the index wasn't built yet
+    rows = rows_for_experiment(chunks, experiment)
     query_vec = embed_texts([query])[0]
-    # Row i of vectors belongs to chunks[i] (store.py), so the row number finds the chunk.
-    return [{**chunks[i], "score": score} for i, score in top_k(query_vec, vectors, k)]
+    # Rank only the kept rows. top_k numbers them 0..len(rows)-1, so map back with rows[j];
+    # row i of vectors still belongs to chunks[i] (store.py).
+    ranked = top_k(query_vec, vectors[rows], k)
+    return [{**chunks[rows[j]], "score": score} for j, score in ranked]

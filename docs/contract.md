@@ -1,11 +1,13 @@
-# Flame in Freefall — Contract v1.0
+# Flame in Freefall — Contract v1.1
 
 Everyone codes against these shapes. Change them only by pull request, and bump the version.
+
+**v1.1:** `search()` returns 5 chunks by default instead of 3 (FIF-D11-AI, `tests/top_k.md`).
 
 ## 1. Functions (in `src/flame_in_freefall/api.py`)
 
 ```python
-def search(query: str, k: int = 3) -> list[dict]:
+def search(query: str, k: int = 5) -> list[dict]:
     """Return the k best-matching chunks for a question, best first.
     Each item: {"id", "text", "source", "page", "score"}  (score: float, higher = better)
     Empty or blank query -> ValueError."""
