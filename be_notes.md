@@ -1,4 +1,4 @@
-# BE notes: what's built and how it runs (Days 1–10, FIF-D01-BE … FIF-D10-BE)
+# BE notes: what's built and how it runs (Days 1–11, FIF-D01-BE … FIF-D11-BE)
 
 For anyone reviewing BE PRs, and for teammates whose code calls the backend. Like
 `data_notes.md` and `ai_notes.md`, this file records what exists, the decisions behind it, and
@@ -22,7 +22,8 @@ the open questions.
 | D07-BE | Repeatable deploy: Dockerfile, health checks, merge deploys | `Dockerfile`, `.dockerignore`, `tests/test_app.py` | #129 |
 | D08-BE | One command to ingest: reports → chunks → index, skipping finished steps | `ingest.py`, `tests/test_ingest.py` | #139 |
 | D09-BE | Real `get_table()` from `data/master.csv`; contract v1.2 | `api.py`, `docs/contract.md`, `tests/test_get_table.py`, `tests/test_contract.py`, 2 small edits in `app/streamlit_app.py` (FE's file) | #143 |
-| D10-BE | Real `search()`; builds the index on first search; contract v1.3 | `api.py`, `docs/contract.md`, `tests/test_search.py`, `tests/conftest.py` (fake model for all tests) | FIF-D10-BE PR |
+| D10-BE | Real `search()`; builds the index on first search; contract v1.3 | `api.py`, `docs/contract.md`, `tests/test_search.py`, `tests/conftest.py` (fake model for all tests) | #144 |
+| D11-BE | Measure speed: every call timed, repeated questions cached, slowest-calls report | `speed.py`, `api.py`, `cache.py` (`is_cached`), `tests/test_speed.py`, 3 lines in `app/streamlit_app.py` (FE's file) | FIF-D11-BE PR |
 
 ## 2. What each BE file does
 
@@ -32,7 +33,8 @@ All code is in `src/flame_in_freefall/`.
 |---|---|---|
 | `api.py` | The 3 functions everyone calls, with the exact shapes in `docs/contract.md` | all 3 are real (`search()` since D10) |
 | `config.py` | Reads every setting from environment variables into one frozen `Settings` | in use |
-| `cache.py` | Remembers answers by question (JSON files, or in memory with `@memo`) | built, **not used yet** (D11-BE "Cache repeats") |
+| `cache.py` | Remembers answers by question (JSON files, or in memory with `@memo`) | `@memo` used by `search()` since D11; `QueryCache` (files) not used |
+| `speed.py` | Times every backend call into `artifacts/speed.log`; `uv run python -m flame_in_freefall.speed` lists the slowest | in use since D11 |
 | `store.py` | Saves/loads the search index as `embeddings.npz` + `chunks.json` | used by the AI scripts and `ingest.py` |
 | `ingest.py` | One command builds the search index: `uv run python -m flame_in_freefall.ingest` (`--force` redoes every step) | in use; same files as the AI scripts for Days 7–8 |
 | `summarizer.py` | Calls Gemini for takeaways; falls back to quoting passages on any failure | in use through `api.summarize()` |
@@ -168,16 +170,36 @@ The app (`app/streamlit_app.py`) belongs to FE and only calls `api.py`.
   (word counts) and a throwaway index folder, so CI needs no download and writes nothing into the
   repo. Checked by running the suite offline with an empty model cache.
 
-## 6. Where the next ticket starts (FIF-D11-BE: measure speed)
+### Speed (D11)
 
-The plan: *1) Log query time. 2) Cache repeats. 3) Report slowest. Done when: speed log visible.*
+- **Every backend call is timed:** `search()`, `get_table()` and `summarize()` each call
+  `speed.record()`, which writes a log line and one JSON line to `artifacts/speed.log`
+  (git-ignored). Questions are cut to 100 characters there. A broken log file never breaks a call.
+- **Visible to everyone (team decision):** the app shows "Searched in 0.12 s" under the results
+  (3 lines in FE's file). The report command lists the slowest calls:
+  `uv run python -m flame_in_freefall.speed` (`--top 10` for more).
+- **Repeated questions come from memory:** `search()` uses `cache.memo` (from D03), keyed by the
+  cleaned-up question (capitals and spaces ignored) and `k`. Callers get a copy, so changing one
+  result can't change what's remembered. The index check still runs first (a few file-time
+  comparisons), and a rebuild empties the cache, so an out-of-date answer is never served.
+- **The cache lives in memory** until the app restarts (every deploy). It isn't size-limited, which
+  is fine for a hackathon's traffic.
+- **Measured on 2026-11-06 (real model, existing index):** first search 8.6 s (loading the model),
+  another question 0.7 s, the same question again 0.000 s (cached), `get_table()` 0.014 s.
 
-- **Where the time goes** (§ Real `search()`): the first search after a deploy is ~15 s (model +
-  index), then searches are ~0.1 s. A summary with a Gemini key will add the Gemini call's time.
-- **Cache repeats:** `cache.py` already has `@memo` (in memory, keyed by the cleaned-up question)
-  and `QueryCache` (JSON files). Neither is used yet. `@memo` on `search()` is the simplest start.
-- **"Speed log visible":** decide where people see it: the app's log (Streamlit "Manage app" →
-  logs, Nergis only), a line in the app, or a file such as `artifacts/speed.log`.
+## 6. Where the next ticket starts (FIF-D12-BE: expose the filter)
+
+The plan: *1) Add `experiment=` to `search()`. 2) Update contract. Done when: contract updated.*
+
+- **The filter already exists one level down:** Nathan's D12-AI added
+  `find_passages(..., experiment=...)`, which keeps only that experiment's chunks *before* ranking
+  (see `tests/experiment_filter.md`). `search()` needs the parameter and to pass it through.
+- **Include it in the cache key:** call `_find(query, k, experiment)` so "flame" with and without a
+  filter are remembered separately (`memo` keys on every argument).
+- **Validate it:** blank text should raise `ValueError`, like `get_table()`'s text filters. Decide
+  whether an unknown experiment raises or returns `[]` (`get_table()` returns `[]`).
+- **Contract:** add `experiment: str | None = None` to `search()` in `docs/contract.md`, and bump
+  the version.
 
 ## 7. Rules to keep
 

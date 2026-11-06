@@ -40,14 +40,19 @@ def memo(func):
     """In-memory cache decorator keyed on the normalized query (first argument)."""
     store: dict = {}
 
-    @functools.wraps(func)
-    def wrapper(query: str, *args, **kwargs):
+    def _key(query: str, args: tuple, kwargs: dict) -> tuple:
         # The key includes the other arguments too, so search("q", k=3) and search("q", k=5)
         # are remembered separately.
-        key = (normalize(query), args, tuple(sorted(kwargs.items())))
+        return (normalize(query), args, tuple(sorted(kwargs.items())))
+
+    @functools.wraps(func)
+    def wrapper(query: str, *args, **kwargs):
+        key = _key(query, args, kwargs)
         if key not in store:  # first time: do the real work and remember the answer
             store[key] = func(query, *args, **kwargs)
         return store[key]
 
     wrapper.cache = store  # lets tests or debugging look inside (or clear) the memory
+    # Day 11: True when this call would be answered from memory, so callers can log "cached".
+    wrapper.is_cached = lambda query, *args, **kwargs: _key(query, args, kwargs) in store
     return wrapper

@@ -1,4 +1,5 @@
 import sys
+import time
 from pathlib import Path
 
 import pandas as pd
@@ -28,7 +29,9 @@ if not query.strip():
 else:
     try:
         with st.spinner("Searching the reports..."):
+            start = time.perf_counter()
             results = search(query)
+            seconds = time.perf_counter() - start  # FIF-D11-BE: shown under "Results"
     except Exception:
         st.error("Search isn't working right now. Please try again in a moment.")
     else:
@@ -36,6 +39,8 @@ else:
         st.info("Summary coming soon. This will show cited takeaways from summarize().")
 
         st.subheader(f"Results ({len(results)})")
+        # FIF-D11-BE: the first search after a deploy takes ~15 s (model + index), later ones ~0.1 s
+        st.caption(f"Searched in {seconds:.2f} s")
         if not results:
             st.info("No matching passages found. Try different words.")
         else:

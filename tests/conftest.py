@@ -5,7 +5,7 @@ import zlib
 import numpy as np
 import pytest
 
-from flame_in_freefall import api, embedding
+from flame_in_freefall import api, embedding, speed
 
 
 @pytest.fixture(autouse=True)
@@ -36,3 +36,12 @@ def _no_real_embedding_model(monkeypatch, tmp_path):
     # Tests that fake the model themselves (e.g. test_embedding.py) still override this.
     monkeypatch.setattr(embedding, "_get_model", lambda name: _WordCountModel())
     monkeypatch.setattr(api, "INDEX", tmp_path / "index")
+
+
+@pytest.fixture(autouse=True)
+def _fresh_speed_log_and_cache(monkeypatch, tmp_path):
+    # Day 11: timings go to a throwaway speed log, not artifacts/speed.log in the repo. The
+    # search cache lives for the whole test run, so empty it: each test starts with nothing
+    # remembered, and answers from another test's index can't leak in.
+    monkeypatch.setattr(speed, "SPEED_LOG", tmp_path / "speed.log")
+    api._find.cache.clear()
