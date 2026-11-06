@@ -22,7 +22,7 @@ def _load_mock_chunks() -> list[dict]:
     return [json.loads(line) for line in lines if line.strip()]
 
 
-def search(query: str, k: int = 3) -> list[dict]:
+def search(query: str, k: int = 5) -> list[dict]:  # contract v1.1: default 5 (was 3)
     # Fail loudly on a blank question instead of running an empty search.
     if not query or not query.strip():
         raise ValueError("query must not be empty")

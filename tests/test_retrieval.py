@@ -61,3 +61,59 @@ def test_find_passages_rejects_blank_query(tmp_path):
 def test_find_passages_needs_an_index(tmp_path):
     with pytest.raises(FileNotFoundError):
         retrieval.find_passages("why do flames go out?", folder=tmp_path)
+
+
+# Day 12 (AI): filter by experiment before ranking. Four tagged chunks from two experiments;
+# the question points along x, where the FLEX chunk is the closest of all.
+TAGGED = [
+    {"id": "flex-p1-c0", "text": "a", "source": "FLEX", "page": 1, "experiment": "FLEX"},
+    {"id": "flex2-p1-c0", "text": "b", "source": "FLEX-2", "page": 1, "experiment": "FLEX-2"},
+    {"id": "flex-p1-c1", "text": "c", "source": "FLEX", "page": 1, "experiment": "FLEX"},
+    {"id": "flex2-p1-c1", "text": "d", "source": "FLEX-2", "page": 1, "experiment": "FLEX-2"},
+]
+TAGGED_VECTORS = np.array([[1.0, 0.0], [0.6, 0.8], [0.0, 1.0], [0.8, 0.6]])
+
+
+@pytest.fixture
+def tagged_index(monkeypatch, tmp_path):
+    save_index(TAGGED_VECTORS, TAGGED, tmp_path)
+    monkeypatch.setattr(retrieval, "embed_texts", lambda texts: np.array([[1.0, 0.0]]))
+    return tmp_path
+
+
+def test_rows_for_experiment_keeps_saved_order():
+    assert retrieval.rows_for_experiment(TAGGED, "FLEX-2") == [1, 3]
+    assert retrieval.rows_for_experiment(TAGGED) == [0, 1, 2, 3]  # None = no filter
+
+
+def test_find_passages_without_filter_mixes_experiments(tagged_index):
+    results = retrieval.find_passages("q", k=2, folder=tagged_index)
+    assert [r["id"] for r in results] == ["flex-p1-c0", "flex2-p1-c1"]
+
+
+def test_find_passages_filter_returns_only_that_experiment(tagged_index):
+    results = retrieval.find_passages("q", k=2, folder=tagged_index, experiment="FLEX-2")
+    # The overall best match (FLEX) is gone; FLEX-2's chunks are ranked among themselves.
+    assert [r["id"] for r in results] == ["flex2-p1-c1", "flex2-p1-c0"]
+    assert all(r["experiment"] == "FLEX-2" for r in results)
+    assert results[0]["score"] == pytest.approx(0.8)  # same cosine as without the filter
+
+
+def test_find_passages_filter_returns_fewer_when_experiment_is_small(tagged_index):
+    results = retrieval.find_passages("q", k=10, folder=tagged_index, experiment="FLEX")
+    assert [r["id"] for r in results] == ["flex-p1-c0", "flex-p1-c1"]
+
+
+def test_find_passages_rejects_unknown_experiment(tagged_index):
+    # A typo (or the old BASS name) must not quietly return nothing.
+    with pytest.raises(ValueError, match="unknown experiment"):
+        retrieval.find_passages("q", folder=tagged_index, experiment="flex-2")
+
+
+def test_find_passages_filter_needs_tagged_chunks(monkeypatch, tmp_path):
+    save_index(VECTORS, CHUNKS, tmp_path)  # untagged: an index built before Day 12
+    monkeypatch.setattr(retrieval, "embed_texts", lambda texts: np.array([[1.0, 0.0]]))
+    with pytest.raises(ValueError, match="no experiment tag"):
+        retrieval.find_passages("q", folder=tmp_path, experiment="FLEX")
+    # Without a filter the old index still works.
+    assert len(retrieval.find_passages("q", folder=tmp_path)) == 3

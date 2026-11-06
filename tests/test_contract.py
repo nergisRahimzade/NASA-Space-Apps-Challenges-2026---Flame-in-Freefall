@@ -7,7 +7,7 @@ CHUNK_KEYS = {"id", "text", "source", "page", "score"}
 
 def test_search_shape():
     results = search("which materials are riskiest?")
-    assert results and len(results) <= 3
+    assert results and len(results) <= 5  # contract v1.1 default k
     for r in results:
         assert CHUNK_KEYS <= r.keys()
         assert isinstance(r["page"], int) and isinstance(r["score"], float)

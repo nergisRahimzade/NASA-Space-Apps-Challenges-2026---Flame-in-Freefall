@@ -1,4 +1,6 @@
+
 # AI notes: what's built and where to pick up (Days 1–11, FIF-D01-AI … FIF-D11-AI)
+
 
 For whoever takes over the AI role, and for anyone reviewing AI PRs. Like `data_notes.md`,
 this file records what exists, the decisions behind it, and the open questions.
@@ -28,6 +30,7 @@ with a citation for every claim.
 | D10-AI | Compare chunk sizes and overlaps, score each, choose one | `src/flame_in_freefall/retrieval_eval.py`, `scripts/day10_compare_chunk_sizes.py`, `tests/chunk_sizes.md`, `tests/test_retrieval_eval.py` | FIF-D10-AI PR |
 | D11-AI | Compare top 3, 5 and 8 and log the failures | `scripts/day11_compare_k.py`, `tests/top_k.md`, `NAMED_EXPERIMENT` in `retrieval_eval.py`, `tests/test_retrieval_eval.py` | FIF-D11-AI PR |
 
+
 Related BE pieces the AI code uses: `store.py` saves/loads the index (D04-BE), `summarizer.py`
 calls Gemini (D05-BE), and `config.py` reads the settings (D03-BE).
 
@@ -37,7 +40,7 @@ calls Gemini (D05-BE), and `config.py` reads the settings (D03-BE).
 report text ──chunk_document()──> chunks {id, text, source, page}      chunking.py
 chunks ──embed_texts()──> vectors (384 numbers each, length 1)           embedding.py
 vectors + chunks ──save_index()/load_index()──> artifacts/<folder>/      store.py
-question ──find_passages()──> top 3 chunks + score                       retrieval.py
+question (+ experiment) ──find_passages()──> top 3 chunks + score       retrieval.py
 top chunks ──summarize_passages()──> takeaways citing chunk_id           summarizer.py + prompt
 summary ──check_summary()──> [] if every claim cites a real passage      summary_check.py
 ```
@@ -62,6 +65,7 @@ uv run python scripts/day8_embed_chunks.py       # real chunks -> artifacts/inde
 uv run python scripts/day9_test_search.py        # 10 real questions -> artifacts/retrieval_draft.md
 uv run python scripts/day10_compare_chunk_sizes.py  # 15 chunk settings, scored -> artifacts/chunk_sizes_draft.md
 uv run python scripts/day11_compare_k.py         # top 3, 5 and 8, scored -> artifacts/top_k_draft.md
+
 ```
 
 The first embedding run downloads the model (~90 MB) from Hugging Face. After that it's cached.
@@ -135,6 +139,7 @@ For Gemini: put `GEMINI_API_KEY=...` in `.env` (git-ignored, see `.env.example`)
   question instead of 423. k = 8 finds no more questions, sends 1,147 words, and 14 of 32 chunks
   for questions that name an experiment come from the wrong one. Full log: `tests/top_k.md`. The
   default stays 3 until BE agrees, because it's in `docs/contract.md`.
+
 - **Wrong-experiment chunks are counted now (D11):** `NAMED_EXPERIMENT` in `retrieval_eval.py` maps
   Q2, Q4, Q5 and Q7 to the experiment they name, and `score_results` returns `wrong_experiment`
   out of `named_returned`, using each chunk's `experiment` tag.
@@ -178,7 +183,7 @@ For Gemini: put `GEMINI_API_KEY=...` in `.env` (git-ignored, see `.env.example`)
 - **Search can return the wrong experiment (D09).** For Q4, about FLEX-2's oxygen and pressure, the
   top result was FLEX with a pressure range that isn't FLEX-2's, and the right chunk ranked 4th of 18.
   A summary could repeat those wrong numbers. Possible cause, untested: that chunk never names FLEX-2,
-  and the experiment name isn't embedded with it.
+  and the experiment name isn't embedded with it. With the D12 filter on FLEX-2 it ranks 2nd.
 - **A strongly worded match can still rank near the bottom (D09).** For Q6, `saffire2-p1-c0` ranked
   17th of 18. Possible cause, untested: the chunk mixes the objective with a lot of hardware detail.
 - **Chunk boundaries can cut off answers (D09).** For Q7, the top result stops just before the airflow
@@ -208,7 +213,8 @@ For Gemini: put `GEMINI_API_KEY=...` in `.env` (git-ignored, see `.env.example`)
   relevant, random baseline and wrong-experiment counts. `day11_compare_k.py` shows how to call it.
 - **Check with the D08-BE owner:** `be_notes.md` asks both roles to agree where `chunks.jsonl` and
   the index live, so `make ingest` writes the same files. We use `data/processed/chunks.jsonl` and
-  `artifacts/index/`; that hasn't been confirmed with them yet.
+  `artifacts/index/`; that hasn't been confirmed with them yet. Rebuild the index after any change
+  to `chunks.jsonl`, or the filter raises on untagged chunks.
 - **Real search isn't in the app yet:** `api.search()` returns mock data until **FIF-D10-BE** connects
   `find_passages`. The live app also needs a way to build its index, since it isn't committed.
 - **D14-AI** records the checkpoint (goal: 8 of 10 relevant). The team still has to decide whether
