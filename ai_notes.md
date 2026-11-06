@@ -1,4 +1,4 @@
-# AI notes: what's built and where to pick up (Days 1–10, FIF-D01-AI … FIF-D10-AI)
+# AI notes: what's built and where to pick up (Days 1–11, FIF-D01-AI … FIF-D11-AI)
 
 For whoever takes over the AI role, and for anyone reviewing AI PRs. Like `data_notes.md`,
 this file records what exists, the decisions behind it, and the open questions.
@@ -26,6 +26,7 @@ with a citation for every claim.
 | D08-AI | Embed the real chunks, save the search index, and time it | `scripts/day8_embed_chunks.py`, `artifacts/index/` (git-ignored) | FIF-D08-AI PR |
 | D09-AI | Test real search with 10 questions and judge the top 3 | `scripts/day9_test_search.py`, `tests/retrieval.md` | FIF-D09-AI PR |
 | D10-AI | Compare chunk sizes and overlaps, score each, choose one | `src/flame_in_freefall/retrieval_eval.py`, `scripts/day10_compare_chunk_sizes.py`, `tests/chunk_sizes.md`, `tests/test_retrieval_eval.py` | FIF-D10-AI PR |
+| D11-AI | Compare top 3, 5 and 8 and log the failures | `scripts/day11_compare_k.py`, `tests/top_k.md`, `NAMED_EXPERIMENT` in `retrieval_eval.py`, `tests/test_retrieval_eval.py` | FIF-D11-AI PR |
 
 Related BE pieces the AI code uses: `store.py` saves/loads the index (D04-BE), `summarizer.py`
 calls Gemini (D05-BE), and `config.py` reads the settings (D03-BE).
@@ -60,6 +61,7 @@ uv run python scripts/day7_chunk_reports.py      # real reports -> data/processe
 uv run python scripts/day8_embed_chunks.py       # real chunks -> artifacts/index/, prints the time
 uv run python scripts/day9_test_search.py        # 10 real questions -> artifacts/retrieval_draft.md
 uv run python scripts/day10_compare_chunk_sizes.py  # 15 chunk settings, scored -> artifacts/chunk_sizes_draft.md
+uv run python scripts/day11_compare_k.py         # top 3, 5 and 8, scored -> artifacts/top_k_draft.md
 ```
 
 The first embedding run downloads the model (~90 MB) from Hugging Face. After that it's cached.
@@ -128,6 +130,17 @@ For Gemini: put `GEMINI_API_KEY=...` in `.env` (git-ignored, see `.env.example`)
 - **The comparison runs in memory (D10):** `day10_compare_chunk_sizes.py` doesn't touch
   `chunks.jsonl` or `artifacts/index/`. `chunk_reports` now takes `size` and `overlap`.
 
+- **Recommended k is 5, but the code still defaults to 3 (D11).** At k = 5, 7 of 8 answerable
+  questions have a relevant chunk, up from 6 (Q4 is the new one), for about 705 words per
+  question instead of 423. k = 8 finds no more questions, sends 1,147 words, and 14 of 32 chunks
+  for questions that name an experiment come from the wrong one. Full log: `tests/top_k.md`. The
+  default stays 3 until BE agrees, because it's in `docs/contract.md`.
+- **Wrong-experiment chunks are counted now (D11):** `NAMED_EXPERIMENT` in `retrieval_eval.py` maps
+  Q2, Q4, Q5 and Q7 to the experiment they name, and `score_results` returns `wrong_experiment`
+  out of `named_returned`, using each chunk's `experiment` tag.
+- **The k comparison uses the committed chunks (D11):** `day11_compare_k.py` reads
+  `data/processed/chunks.jsonl` and embeds it in memory, so it needs no built index.
+
 ## 5. Open questions and known issues
 
 - **Embedding model not confirmed by the team.** Nergis tried Gemini embeddings
@@ -143,10 +156,21 @@ For Gemini: put `GEMINI_API_KEY=...` in `.env` (git-ignored, see `.env.example`)
 - **Larger chunks would need a different embedding model (D10).** MiniLM cuts off at about 200
   words, so 400 and 600 were measured but can't be used as they are. Not worth it on this corpus:
   big chunks also make the index too small to rank in a useful way.
-- **Q6 isn't a chunk-size problem (D10).** Its relevant chunk ranked 12th or lower at every size
-  up to 200 words. Q4's rank swings from 2nd to 18th with the settings. Both still unexplained.
+- **Q6 isn't a chunk-size or k problem (D10, D11).** Its relevant chunk ranked 12th or lower at
+  every size up to 200 words, and 17th of 18 at 150/30, so no k up to 8 finds it. 7 of its top 8
+  are FLEX droplet chunks; maybe "large fire" matches "relatively large droplets". Untested.
+- **Change the default k from 3 to 5? (D11)** It's `search(query, k=3)` in `docs/contract.md` and
+  `api.search`, so BE has to agree. Also check that the summary still fits the timeout with 5
+  passages, since it's untested on the real Gemini.
+- **Bigger k sends wrong-experiment numbers to the summary (D11).** At k = 5, Q4 gets FLEX-2's
+  pressure range (4th) and FLEX's (1st). `summarize()` never sees the question, so it can't drop
+  FLEX's. On paper, filtering chunks by the named experiment puts Q4's answer 2nd with no
+  wrong-experiment chunks, even at k = 3 (`tests/top_k.md`). Not built or tested.
 - **The evidence phrases miss paraphrases.** They match exact wording, so a passage that
-  paraphrases the answer counts as a miss. Hand-check a few results whenever the scores jump.
+  paraphrases the answer counts as a miss. Hand-check a few results whenever the scores jump. On
+  D11 the only one found was Q6's `saffire2-p1-c3` at rank 8 ("flame growth", weak).
+- **Overlap repeats inflate "relevant" counts (D11).** Q8's two hits at k = 5 are the same sentence,
+  copied by the 30-word overlap. A bigger k looks better on "Relevant / returned" than it is.
 - **`summarize()` never sees the user's question**, only the passages, so takeaways can't focus
   on what was asked. It's a contract change (BE) if we want it.
 - **Worst-case wait for a summary is about 95 s** (3 tries × 30 s timeout + waits between
@@ -167,24 +191,28 @@ For Gemini: put `GEMINI_API_KEY=...` in `.env` (git-ignored, see `.env.example`)
 - **The corpus is small:** 3 reports, about 2,100 words in total. Keep that in mind for
   the "8 of 10 relevant" goal in D14-AI.
 
-## 6. Where the next ticket starts (FIF-D11-AI: try top 3, 5 and 8, log failures)
+## 6. Where the next ticket starts (FIF-D12-AI and on, then the D14-AI checkpoint)
 
-- **The ticket:** compare `k` = 3, 5 and 8 and log the failures. Chunk settings stay 150/30 (D10).
-- **Scoring is ready:** `score_results(results, chunks, k)` in `retrieval_eval.py` already takes
-  `k`. `day10_compare_chunk_sizes.py` ranks every chunk for every question, so changing its `K`
-  (or looping over 3, 5 and 8 at 150/30) gives the numbers without new scoring code.
-- **Remember the cost of a bigger k:** every extra chunk is about 150 more words for the summary to
-  read, and more room for wrong-experiment passages like Q4's. Watch "Relevant / returned".
-- **Failures to log:** Q4 (wrong experiment ranks first), Q6 (relevant chunk near the bottom at
-  every size), and Q9/Q10 (no "not found" from search). `tests/chunk_sizes.md` has the ranks.
-- **Ideas beyond k, not yet tested:** embed the experiment name with each chunk (the Day 12 DAT
-  `experiment` tag is now on every chunk) for Q4, and keyword matching (BM25) for rare terms (Q3).
+- **Where search stands:** chunks 150/30 (D10). Best result 7 of 8 answerable at k = 5, which is
+  7 of 10 overall. Remaining misses: Q6 (answer ranks 17th of 18) and Q9/Q10 (not in the reports).
+  The D14-AI goal is 8 of 10, so k and chunk size alone don't get there.
+- **Ask BE about k = 5:** the default is in `docs/contract.md`. Until they agree, leave the code at 3.
+- **Most promising next change: filter by experiment.** Every chunk has an `experiment` tag (Day 12
+  DAT). On paper, filtering moves Q4's answer from 4th to 2nd and removes all wrong-experiment
+  chunks (`tests/top_k.md`). Open part: how search learns the experiment (the user picks it in the
+  app, or the code spots the name in the question). Only 4 of the 10 questions name one.
+- **Q6 needs its own fix:** try keyword matching (BM25) alongside the embeddings, or embed the
+  experiment name and title with each chunk. Measure with `score_results` and compare to
+  `tests/top_k.md`.
+- **Scoring is ready for any of these:** `score_results(results, chunks, k)` gives first, top-k,
+  relevant, random baseline and wrong-experiment counts. `day11_compare_k.py` shows how to call it.
 - **Check with the D08-BE owner:** `be_notes.md` asks both roles to agree where `chunks.jsonl` and
   the index live, so `make ingest` writes the same files. We use `data/processed/chunks.jsonl` and
   `artifacts/index/`; that hasn't been confirmed with them yet.
 - **Real search isn't in the app yet:** `api.search()` returns mock data until **FIF-D10-BE** connects
   `find_passages`. The live app also needs a way to build its index, since it isn't committed.
-- **Next after that:** D14-AI records the checkpoint (goal: 8 of 10 relevant).
+- **D14-AI** records the checkpoint (goal: 8 of 10 relevant). The team still has to decide whether
+  the two uncovered questions stay in the set (§5).
 
 ## 7. Rules to keep
 

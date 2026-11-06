@@ -1,4 +1,5 @@
 """Day 10 (AI): the answer key reproduces the Day 9 hand judgments, and scoring adds up.
+Day 11 (AI): wrong-experiment chunks are counted for questions that name an experiment.
 
 No model needed: these tests only read text."""
 
@@ -10,6 +11,7 @@ import pytest
 from flame_in_freefall.chunking import chunk_reports
 from flame_in_freefall.retrieval_eval import (
     ANSWERABLE,
+    NAMED_EXPERIMENT,
     QUESTIONS,
     chance_of_a_hit,
     is_relevant,
@@ -77,3 +79,25 @@ def test_score_results_counts_first_and_top_k():
     assert (s["first"], s["top_k"], s["relevant"], s["returned"]) == (1, 1, 1, 8)
     s = score_results(results, chunks, k=2)
     assert (s["first"], s["top_k"], s["relevant"]) == (1, 1, 1)
+
+
+def test_named_experiments_match_the_chunk_tags():
+    # A misspelled name would count every returned chunk as the wrong experiment.
+    tags = {c["experiment"] for c in chunk_reports(SOURCES, REPORTS)}
+    assert set(NAMED_EXPERIMENT.values()) <= tags
+    for n, name in NAMED_EXPERIMENT.items():
+        assert name.lower() in QUESTIONS[n - 1].lower(), n
+
+
+def test_score_results_counts_wrong_experiment_chunks():
+    chunks = [
+        {"id": "a", "text": "nothing useful", "experiment": "FLEX"},
+        {"id": "b", "text": "nothing useful", "experiment": "FLEX-2"},
+        {"id": "c", "text": "nothing useful"},  # no tag: not counted either way
+    ]
+    results = {n: ["a", "b", "c"] for n in range(1, 11)}
+    s = score_results(results, chunks, k=3)
+    # Q2 names FLEX (b is wrong), Q4 and Q5 name FLEX-2 (a is wrong), Q7 names Saffire-II (both).
+    assert (s["wrong_experiment"], s["named_returned"]) == (5, 8)
+    s = score_results(results, chunks, k=1)
+    assert (s["wrong_experiment"], s["named_returned"]) == (3, 4)
