@@ -1,4 +1,6 @@
-# AI notes: what's built and where to pick up (Days 1–12, FIF-D01-AI … FIF-D12-AI)
+
+# AI notes: what's built and where to pick up (Days 1–11, FIF-D01-AI … FIF-D11-AI)
+
 
 For whoever takes over the AI role, and for anyone reviewing AI PRs. Like `data_notes.md`,
 this file records what exists, the decisions behind it, and the open questions.
@@ -27,7 +29,7 @@ with a citation for every claim.
 | D09-AI | Test real search with 10 questions and judge the top 3 | `scripts/day9_test_search.py`, `tests/retrieval.md` | FIF-D09-AI PR |
 | D10-AI | Compare chunk sizes and overlaps, score each, choose one | `src/flame_in_freefall/retrieval_eval.py`, `scripts/day10_compare_chunk_sizes.py`, `tests/chunk_sizes.md`, `tests/test_retrieval_eval.py` | FIF-D10-AI PR |
 | D11-AI | Compare top 3, 5 and 8 and log the failures | `scripts/day11_compare_k.py`, `tests/top_k.md`, `NAMED_EXPERIMENT` in `retrieval_eval.py`, `tests/test_retrieval_eval.py` | FIF-D11-AI PR |
-| D12-AI | Filter search by experiment before ranking, test it, measure it | `experiment=` and `rows_for_experiment` in `src/flame_in_freefall/retrieval.py`, `tests/test_retrieval.py`, `scripts/day12_filter_by_experiment.py`, `tests/experiment_filter.md` | FIF-D12-AI PR |
+
 
 Related BE pieces the AI code uses: `store.py` saves/loads the index (D04-BE), `summarizer.py`
 calls Gemini (D05-BE), and `config.py` reads the settings (D03-BE).
@@ -63,7 +65,7 @@ uv run python scripts/day8_embed_chunks.py       # real chunks -> artifacts/inde
 uv run python scripts/day9_test_search.py        # 10 real questions -> artifacts/retrieval_draft.md
 uv run python scripts/day10_compare_chunk_sizes.py  # 15 chunk settings, scored -> artifacts/chunk_sizes_draft.md
 uv run python scripts/day11_compare_k.py         # top 3, 5 and 8, scored -> artifacts/top_k_draft.md
-uv run python scripts/day12_filter_by_experiment.py  # with vs without the filter -> artifacts/experiment_filter_draft.md
+
 ```
 
 The first embedding run downloads the model (~90 MB) from Hugging Face. After that it's cached.
@@ -132,28 +134,17 @@ For Gemini: put `GEMINI_API_KEY=...` in `.env` (git-ignored, see `.env.example`)
 - **The comparison runs in memory (D10):** `day10_compare_chunk_sizes.py` doesn't touch
   `chunks.jsonl` or `artifacts/index/`. `chunk_reports` now takes `size` and `overlap`.
 
-- **Search returns 5 chunks by default (D11).** At k = 5, 7 of 8 answerable questions have a
-  relevant chunk, up from 6 (Q4 is the new one), for about 705 words per question instead of 423.
-  k = 8 finds no more questions, sends 1,147 words, and 14 of 32 chunks for questions that name an
-  experiment come from the wrong one. Full log: `tests/top_k.md`. Changed in `find_passages`,
-  `api.search` and `docs/contract.md` (v1.1). Scripts that pass `k=3` explicitly (Day 4, Day 9)
-  still use 3, so their logs stay reproducible.
+- **Recommended k is 5, but the code still defaults to 3 (D11).** At k = 5, 7 of 8 answerable
+  questions have a relevant chunk, up from 6 (Q4 is the new one), for about 705 words per
+  question instead of 423. k = 8 finds no more questions, sends 1,147 words, and 14 of 32 chunks
+  for questions that name an experiment come from the wrong one. Full log: `tests/top_k.md`. The
+  default stays 3 until BE agrees, because it's in `docs/contract.md`.
+
 - **Wrong-experiment chunks are counted now (D11):** `NAMED_EXPERIMENT` in `retrieval_eval.py` maps
   Q2, Q4, Q5 and Q7 to the experiment they name, and `score_results` returns `wrong_experiment`
   out of `named_returned`, using each chunk's `experiment` tag.
 - **The k comparison uses the committed chunks (D11):** `day11_compare_k.py` reads
   `data/processed/chunks.jsonl` and embeds it in memory, so it needs no built index.
-
-- **Search can be filtered by experiment (D12):** `find_passages(..., experiment="FLEX-2")` keeps
-  only chunks with that `experiment` tag *before* ranking, so all k results come from it. `None`
-  (the default) searches everything, as before. Scores don't change, only the competition does.
-- **The filter fails loudly (D12):** an experiment no chunk has (a typo, `"flex-2"`, the old
-  `"BASS"`) or an index whose chunks have no tag raises `ValueError`, instead of returning nothing.
-  The tag must match exactly: `FLEX-2`, `Saffire-II`, `FLEX` (as in `master.csv`).
-- **Filter result (D12):** when the question's experiment is picked, k = 3 finds 7 of 8 answerable
-  questions (Q4's answer moves from 4th to 2nd) with 0 of 12 wrong-experiment chunks, against 6 of
-  8 and 4 of 12 without it. Same coverage as k = 5 unfiltered, about 280 fewer words per question.
-  Full log: `tests/experiment_filter.md`.
 
 ## 5. Open questions and known issues
 
@@ -173,15 +164,13 @@ For Gemini: put `GEMINI_API_KEY=...` in `.env` (git-ignored, see `.env.example`)
 - **Q6 isn't a chunk-size or k problem (D10, D11).** Its relevant chunk ranked 12th or lower at
   every size up to 200 words, and 17th of 18 at 150/30, so no k up to 8 finds it. 7 of its top 8
   are FLEX droplet chunks; maybe "large fire" matches "relatively large droplets". Untested.
-- **k = 5 is untested on the real Gemini (D11).** Check that a summary of 5 passages still fits the
-  30 s timeout once there's a key. BE should confirm the contract v1.1 change in review.
+- **Change the default k from 3 to 5? (D11)** It's `search(query, k=3)` in `docs/contract.md` and
+  `api.search`, so BE has to agree. Also check that the summary still fits the timeout with 5
+  passages, since it's untested on the real Gemini.
 - **Bigger k sends wrong-experiment numbers to the summary (D11).** At k = 5, Q4 gets FLEX-2's
-  pressure range (4th) and FLEX's (1st). The D12 filter fixes this, but only when an experiment is
-  picked. With "All experiments" the problem is still there.
-- **Who supplies the experiment? (D12)** The plan has the user pick it from a dropdown (D12-FE) and
-  `search(query, experiment=...)` pass it on (D12-BE, contract v1.2). Spotting the name in the
-  question isn't built. Only 4 of the 10 test questions name one. A wrong pick hides the answer
-  completely, so the app should default to no filter.
+  pressure range (4th) and FLEX's (1st). `summarize()` never sees the question, so it can't drop
+  FLEX's. On paper, filtering chunks by the named experiment puts Q4's answer 2nd with no
+  wrong-experiment chunks, even at k = 3 (`tests/top_k.md`). Not built or tested.
 - **The evidence phrases miss paraphrases.** They match exact wording, so a passage that
   paraphrases the answer counts as a miss. Hand-check a few results whenever the scores jump. On
   D11 the only one found was Q6's `saffire2-p1-c3` at rank 8 ("flame growth", weak).
@@ -207,26 +196,21 @@ For Gemini: put `GEMINI_API_KEY=...` in `.env` (git-ignored, see `.env.example`)
 - **The corpus is small:** 3 reports, about 2,100 words in total. Keep that in mind for
   the "8 of 10 relevant" goal in D14-AI.
 
-## 6. Where the next ticket starts (FIF-D13-AI and on, then the D14-AI checkpoint)
+## 6. Where the next ticket starts (FIF-D12-AI and on, then the D14-AI checkpoint)
 
-- **Where search stands:** chunks 150/30 (D10). Best result 7 of 8 answerable, which is 7 of 10
-  overall: at k = 5 without a filter, or at k = 3 with the experiment filter (D12). Remaining
-  misses: Q6 (answer ranks 17th of 18) and Q9/Q10 (not in the reports). The D14-AI goal is 8 of 10.
-- **D13-AI (re-test and record):** run the 10 questions again for a pass/fail table with reasons.
-  `scripts/day12_filter_by_experiment.py` already gives both setups (filter / no filter) side by
-  side. Decide with the team whether named questions count as "filtered" in the checkpoint, since
-  that only holds if the user picks the experiment.
-- **Hand-off to BE (D12-BE):** `api.search(query, k, experiment=None)` can pass `experiment`
-  straight to `find_passages`. Contract v1.2 should list the allowed values (`FLEX-2`,
-  `Saffire-II`, `FLEX`) and say that an unknown one raises `ValueError`. `data/mock/chunks.mock.jsonl`
-  still has no `experiment` field (`data_notes.md` §8).
-- **Hand-off to FE (D12-FE):** the dropdown should send exactly those strings, and "All
-  experiments" should send nothing (no filter).
-- **k is 5 now (contract v1.1).** With the filter, k = 3 would be enough for the named questions,
-  but with "All experiments" (the default) 5 is needed for Q4.
+- **Where search stands:** chunks 150/30 (D10). Best result 7 of 8 answerable at k = 5, which is
+  7 of 10 overall. Remaining misses: Q6 (answer ranks 17th of 18) and Q9/Q10 (not in the reports).
+  The D14-AI goal is 8 of 10, so k and chunk size alone don't get there.
+- **Ask BE about k = 5:** the default is in `docs/contract.md`. Until they agree, leave the code at 3.
+- **Most promising next change: filter by experiment.** Every chunk has an `experiment` tag (Day 12
+  DAT). On paper, filtering moves Q4's answer from 4th to 2nd and removes all wrong-experiment
+  chunks (`tests/top_k.md`). Open part: how search learns the experiment (the user picks it in the
+  app, or the code spots the name in the question). Only 4 of the 10 questions name one.
 - **Q6 needs its own fix:** try keyword matching (BM25) alongside the embeddings, or embed the
   experiment name and title with each chunk. Measure with `score_results` and compare to
-  `tests/experiment_filter.md`.
+  `tests/top_k.md`.
+- **Scoring is ready for any of these:** `score_results(results, chunks, k)` gives first, top-k,
+  relevant, random baseline and wrong-experiment counts. `day11_compare_k.py` shows how to call it.
 - **Check with the D08-BE owner:** `be_notes.md` asks both roles to agree where `chunks.jsonl` and
   the index live, so `make ingest` writes the same files. We use `data/processed/chunks.jsonl` and
   `artifacts/index/`; that hasn't been confirmed with them yet. Rebuild the index after any change

@@ -58,11 +58,33 @@ def _run_search(**patch) -> AppTest:
     return at
 
 
-def test_result_card_shows_exact_text_source_and_page():
+def test_result_card_shows_badge_source_and_snippet():
     at = _run_search(return_value=[RESULT])
     _assert_healthy(at)
-    assert [t.value for t in at.text] == [PASSAGE]
-    assert "BASS report · page 3 · score 0.81" in [c.value for c in at.caption]
+    cards = [m.value for m in at.markdown]
+    # An unknown source gets no link, just its name and page
+    assert ":orange-badge[Match 0.81] BASS report · page 3" in cards
+    # "spread" from the question is highlighted, and $ and * are escaped
+    assert any("**:orange-background[Spread]**" in c and r"\$5" in c for c in cards)
+    # The snippet already shows this short passage in full, so there's no "Full passage"
+    assert not at.expander
+    assert not at.text
+
+
+def test_long_passage_offers_the_full_text_exactly():
+    long_text = PASSAGE + " " + " ".join(f"word{i}" for i in range(50))
+    at = _run_search(return_value=[{**RESULT, "text": long_text}])
+    _assert_healthy(at)
+    assert [e.label for e in at.expander] == ["Full passage"]
+    assert [t.value for t in at.text] == [long_text]
+
+
+def test_known_source_links_to_its_report():
+    flex = {**RESULT, "source": "FLEX (Flame Extinguishment Experiment) investigation description"}
+    at = _run_search(return_value=[flex])
+    _assert_healthy(at)
+    link = "](https://psi.nasa.gov/physci/repo/data/investigations/PSI-69)"
+    assert any(link in m.value for m in at.markdown)
 
 
 def test_no_results_shows_a_message():
