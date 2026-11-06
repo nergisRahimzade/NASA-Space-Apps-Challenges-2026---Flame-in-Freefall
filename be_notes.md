@@ -1,4 +1,4 @@
-# BE notes: what's built and how it runs (Days 1–9, FIF-D01-BE … FIF-D09-BE)
+# BE notes: what's built and how it runs (Days 1–10, FIF-D01-BE … FIF-D10-BE)
 
 For anyone reviewing BE PRs, and for teammates whose code calls the backend. Like
 `data_notes.md` and `ai_notes.md`, this file records what exists, the decisions behind it, and
@@ -21,7 +21,8 @@ the open questions.
 | D06-BE | First deploy on Streamlit Community Cloud | `app/requirements.txt`, `app/streamlit_app.py` (Nergis, #123); this file | #123 + #128 |
 | D07-BE | Repeatable deploy: Dockerfile, health checks, merge deploys | `Dockerfile`, `.dockerignore`, `tests/test_app.py` | #129 |
 | D08-BE | One command to ingest: reports → chunks → index, skipping finished steps | `ingest.py`, `tests/test_ingest.py` | #139 |
-| D09-BE | Real `get_table()` from `data/master.csv`; contract v1.2 | `api.py`, `docs/contract.md`, `tests/test_get_table.py`, `tests/test_contract.py`, 2 small edits in `app/streamlit_app.py` (FE's file) | FIF-D09-BE PR |
+| D09-BE | Real `get_table()` from `data/master.csv`; contract v1.2 | `api.py`, `docs/contract.md`, `tests/test_get_table.py`, `tests/test_contract.py`, 2 small edits in `app/streamlit_app.py` (FE's file) | #143 |
+| D10-BE | Real `search()`; builds the index on first search; contract v1.3 | `api.py`, `docs/contract.md`, `tests/test_search.py`, `tests/conftest.py` (fake model for all tests) | FIF-D10-BE PR |
 
 ## 2. What each BE file does
 
@@ -29,7 +30,7 @@ All code is in `src/flame_in_freefall/`.
 
 | File | Job | Status |
 |---|---|---|
-| `api.py` | The 3 functions everyone calls, with the exact shapes in `docs/contract.md` | `summarize()` and `get_table()` are real; `search()` returns mock data until **D10-BE** |
+| `api.py` | The 3 functions everyone calls, with the exact shapes in `docs/contract.md` | all 3 are real (`search()` since D10) |
 | `config.py` | Reads every setting from environment variables into one frozen `Settings` | in use |
 | `cache.py` | Remembers answers by question (JSON files, or in memory with `@memo`) | built, **not used yet** (D11-BE "Cache repeats") |
 | `store.py` | Saves/loads the search index as `embeddings.npz` + `chunks.json` | used by the AI scripts and `ingest.py` |
@@ -98,10 +99,9 @@ The app (`app/streamlit_app.py`) belongs to FE and only calls `api.py`.
 
 ## 5. Open questions and known issues
 
-- **The live app has no search index yet.** `artifacts/index/` is git-ignored, so Community
-  Cloud never gets one. Before real search (D10-BE) goes live, the app must build it on first use
-  (e.g. call `ingest.run()` when the index is missing; about 10 s plus the model download) or the
-  index must be committed. To decide in D10-BE.
+- **Check the live app's memory after D10 merges.** Real search loads PyTorch and the embedding
+  model on Community Cloud for the first time. Its limit is about 2.7 GB. If the app restarts or
+  shows "Oh no" after the first search, that's the likely cause (see the PyTorch item below).
 - **Two package lists:** `pyproject.toml` + `uv.lock` (laptops, CI, Docker) and
   `app/requirements.txt` (live app). Since D07, a test fails if a `pyproject.toml` package is
   missing from `app/requirements.txt`. Versions can still differ: `requirements.txt` uses `>=`,
@@ -109,9 +109,9 @@ The app (`app/streamlit_app.py`) belongs to FE and only calls `api.py`.
   from the lock file if that ever causes trouble.
 - **PyTorch is huge on Linux:** it pulls in ~4.4 GB of NVIDIA GPU libraries that neither
   Community Cloud nor our Docker image can use (no GPU), and it's most of the ~20 GB Docker
-  image. Fine while the app doesn't load PyTorch. Once real search (D10) loads the embedding
-  model, watch Community Cloud's 2.7 GB memory limit. A CPU-only PyTorch would help both, but
-  it changes `uv.lock` for everyone, so it's a team decision.
+  image. Since D10 the live app loads PyTorch for search, so watch Community Cloud's 2.7 GB
+  memory limit. A CPU-only PyTorch would help both, but it changes `uv.lock` for everyone, so
+  it's a team decision.
 - **The app's charts are built for the old mock data** (FE's file). Since D09 they get real rows,
   but `spread_rate_mm_s` is filled for only 2 of 290 rows, so "Flame spread vs. oxygen" and
   "Riskiest materials" are nearly empty, and the "Riskiest materials" caption still says "Fake
@@ -152,29 +152,39 @@ The app (`app/streamlit_app.py`) belongs to FE and only calls `api.py`.
   `tests/test_app.py` would have failed. Only the slider range and the scatter chart's column names
   changed (FE's file, agreed with FE). Chart design stays with FE (§5).
 
-## 6. Where the next ticket starts (FIF-D10-BE: real `search()`)
+### Real `search()` (D10)
 
-The plan: *1) Load embeddings. 2) Wire AI retrieval. 3) Return text, source, page, score. Done
-when: returns real passages.*
+- **`search()` calls `retrieval.find_passages`** on `artifacts/index/` and returns the top 5
+  (contract v1.3), each with its chunk's `experiment`.
+- **The index is built on first search** (team decision): if it's missing (every fresh deploy,
+  since `artifacts/` isn't in Git) or older than `chunks.jsonl`, `search()` embeds the committed
+  `chunks.jsonl` once. Nothing generated is committed, and the index can't fall behind the chunks.
+- **A lock makes sure two visitors searching at once build it only once.** The test for it was
+  checked: without the lock it fails every time.
+- **Timing (2026-11-06, real model, fresh index):** first search 14.4 s (loading the model +
+  building the index), the next one 0.1 s. The app shows its "Searching the reports..." spinner
+  meanwhile.
+- **Tests never load the real model:** `tests/conftest.py` gives every test a small fake model
+  (word counts) and a throwaway index folder, so CI needs no download and writes nothing into the
+  repo. Checked by running the suite offline with an empty model cache.
 
-- **The pieces exist:** `retrieval.find_passages(query, k)` already returns
-  `{id, text, source, page, score}` (contract §1) from `artifacts/index/`, which
-  `ingest.py` builds. `search()` mostly needs to call it.
-- **Decide how the live app gets its index first** (§5): build it on first use (call
-  `ingest.run()` when it's missing) or commit it. Without one, `find_passages` raises
-  `FileNotFoundError`, and the app's search would show its error box.
-- **Loading the model takes seconds**, and `embedding.py` keeps it in memory after the first
-  question. Watch Community Cloud's 2.7 GB memory limit once PyTorch actually loads (§5).
-- **Chunks now carry `experiment`** (Day 12). D12-AI adds an experiment filter to search, so keep
-  the field in `search()` results.
-- `cache.py`'s `@memo` could remember repeated questions; that's D11-BE ("Cache repeats").
+## 6. Where the next ticket starts (FIF-D11-BE: measure speed)
+
+The plan: *1) Log query time. 2) Cache repeats. 3) Report slowest. Done when: speed log visible.*
+
+- **Where the time goes** (§ Real `search()`): the first search after a deploy is ~15 s (model +
+  index), then searches are ~0.1 s. A summary with a Gemini key will add the Gemini call's time.
+- **Cache repeats:** `cache.py` already has `@memo` (in memory, keyed by the cleaned-up question)
+  and `QueryCache` (JSON files). Neither is used yet. `@memo` on `search()` is the simplest start.
+- **"Speed log visible":** decide where people see it: the app's log (Streamlit "Manage app" →
+  logs, Nergis only), a line in the app, or a file such as `artifacts/speed.log`.
 
 ## 7. Rules to keep
 
 - **Run `uv run ruff check .`, `uv run ruff format --check .` and `uv run pytest -q` before
   every PR**, the same steps as CI.
-- **No real API keys or network in tests.** `tests/conftest.py` removes `GEMINI_API_KEY` for
-  every test, and tests swap in fake clients.
+- **No real API keys or network in tests.** `tests/conftest.py` removes `GEMINI_API_KEY` and
+  swaps in a fake embedding model for every test, and tests swap in fake clients.
 - **Secrets** go in `.env` locally (git-ignored, see `.env.example`) and in Streamlit's Secrets on
   the live app, never in the repo.
 - **One ticket = one branch (`feature/<TICKET-ID>`) = one small PR into `main`.** Put
