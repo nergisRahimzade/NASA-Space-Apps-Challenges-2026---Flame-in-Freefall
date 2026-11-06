@@ -1,0 +1,79 @@
+"""Day 10 (AI): the answer key reproduces the Day 9 hand judgments, and scoring adds up.
+
+No model needed: these tests only read text."""
+
+import re
+from pathlib import Path
+
+import pytest
+
+from flame_in_freefall.chunking import chunk_reports
+from flame_in_freefall.retrieval_eval import (
+    ANSWERABLE,
+    QUESTIONS,
+    chance_of_a_hit,
+    is_relevant,
+    score_results,
+)
+
+ROOT = Path(__file__).resolve().parents[1]
+SOURCES = ROOT / "data" / "sources.csv"
+REPORTS = ROOT / "docs" / "reports"
+DAY9_LOG = ROOT / "tests" / "retrieval.md"
+
+
+def _day9_judgments() -> list[tuple[int, str, bool]]:
+    """(question number, chunk id, judged relevant) for every row of the Day 9 results table."""
+    rows = []
+    for line in DAY9_LOG.read_text(encoding="utf-8").splitlines():
+        m = re.match(r"\| (\d+) \|.*?\| \d \| [\d.]+ \| `([\w-]+)` \| (yes|no)", line)
+        if m:
+            rows.append((int(m[1]), m[2], m[3] == "yes"))
+    return rows
+
+
+def test_answer_key_matches_day9_hand_judgments():
+    # Day 9 was judged with 150-word chunks and 30 words of overlap.
+    text_by_id = {c["id"]: c["text"] for c in chunk_reports(SOURCES, REPORTS, 150, 30)}
+    rows = _day9_judgments()
+    assert len(rows) == 30  # 10 questions x top 3
+    for n, chunk_id, judged in rows:
+        assert is_relevant(n, text_by_id[chunk_id]) == judged, (n, chunk_id)
+
+
+def test_every_answerable_question_has_an_answer_in_the_reports():
+    # A phrase with a typo would never match, and the question would always look like a miss.
+    chunks = chunk_reports(SOURCES, REPORTS, 150, 30)
+    assert len(QUESTIONS) == 10 and ANSWERABLE == [1, 2, 3, 4, 5, 6, 7, 8]
+    for n in ANSWERABLE:
+        assert any(is_relevant(n, c["text"]) for c in chunks), n
+
+
+def test_relevance_ignores_line_breaks():
+    assert is_relevant(7, "an air flow velocity of either 20 or\n30   cm/s")
+    assert not is_relevant(7, "an air flow velocity of 25 cm/s")
+    assert not is_relevant(9, "CO2, He, and SF6")  # uncovered: nothing is relevant
+
+
+def test_unknown_question_fails_loudly():
+    with pytest.raises(ValueError):
+        is_relevant(11, "some text")
+
+
+def test_chance_of_a_hit():
+    assert chance_of_a_hit(10, 0) == 0
+    assert chance_of_a_hit(5, 1, k=5) == 1  # every chunk is picked
+    assert chance_of_a_hit(10, 1) == pytest.approx(0.3)  # 3 picks from 10, 1 relevant
+
+
+def test_score_results_counts_first_and_top_k():
+    chunks = [
+        {"id": "a", "text": "the gases were CO2, He, and SF6"},  # answers Q1
+        {"id": "b", "text": "nothing useful here"},
+    ]
+    # Q1's best result is relevant; the other answerable questions get nothing relevant.
+    results = {n: ["a", "b"] if n == 1 else ["b", "a"] for n in range(1, 11)}
+    s = score_results(results, chunks, k=1)
+    assert (s["first"], s["top_k"], s["relevant"], s["returned"]) == (1, 1, 1, 8)
+    s = score_results(results, chunks, k=2)
+    assert (s["first"], s["top_k"], s["relevant"]) == (1, 1, 1)
