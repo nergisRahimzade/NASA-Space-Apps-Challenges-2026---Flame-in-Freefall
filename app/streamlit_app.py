@@ -72,9 +72,10 @@ if all_rows.empty:
     st.info("No experiment data has been loaded yet.")
     st.stop()
 
-# Widen the slider if the data goes past 15-30%, so no rows are hidden by default
-oxygen_low = min(15.0, float(all_rows["oxygen_pct"].min()))
-oxygen_high = max(30.0, float(all_rows["oxygen_pct"].max()))
+# Widen the slider if the data goes past 15-30%, so no rows are hidden by default.
+# master.csv stores oxygen as a range per row (FIF-D09-BE), so use the lowest min and highest max.
+oxygen_low = min(15.0, float(all_rows["oxygen_pct_min"].min()))
+oxygen_high = max(30.0, float(all_rows["oxygen_pct_max"].max()))
 
 with st.sidebar:
     st.header("Filters")
@@ -101,12 +102,13 @@ else:
     st.subheader("Flame spread vs. oxygen")
     fig = px.scatter(
         table,
-        x="oxygen_pct",
+        # The low end of each row's oxygen range (FIF-D09-BE: master.csv has min/max columns)
+        x="oxygen_pct_min",
         y="spread_rate_mm_s",
         color="material",
-        hover_data=["experiment", "pressure_kpa", "flow_cm_s"],
+        hover_data=["experiment", "oxygen_pct_max", "pressure_kpa_min", "flow_cm_s_min"],
         labels={
-            "oxygen_pct": "Oxygen (%)",
+            "oxygen_pct_min": "Oxygen (%)",
             "spread_rate_mm_s": "Flame spread rate (mm/s)",
             "material": "Material",
         },
