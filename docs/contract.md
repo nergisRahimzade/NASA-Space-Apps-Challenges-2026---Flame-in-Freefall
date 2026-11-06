@@ -1,4 +1,4 @@
-# Flame in Freefall — Contract v1.2
+# Flame in Freefall — Contract v1.3
 
 Everyone codes against these shapes. Change them only by pull request, and bump the version.
 
@@ -8,13 +8,19 @@ Everyone codes against these shapes. Change them only by pull request, and bump 
 are min/max pairs, `material_category`, `spread_rate_per_flow` and `outcome` are new, empty cells are
 `None`, and there is a `material_category` filter. Chunks also carry their `experiment` (Day 12).
 
+**v1.3 (FIF-D10-BE):** `search()` is real: it ranks the report chunks (`data/processed/chunks.jsonl`)
+and each result also has the chunk's `experiment`. The first search after a deploy builds the index
+(about 15 s); later searches take well under a second.
+
 ## 1. Functions (in `src/flame_in_freefall/api.py`)
 
 ```python
 def search(query: str, k: int = 5) -> list[dict]:
-    """Return the k best-matching chunks for a question, best first.
-    Each item: {"id", "text", "source", "page", "score"}  (score: float, higher = better)
-    Empty or blank query -> ValueError."""
+    """Return the k best-matching report chunks for a question, best first.
+    Each item: {"id", "text", "source", "page", "score", "experiment"}
+    (score: cosine similarity as a float, higher = better; experiment: FLEX-2, Saffire-II or FLEX)
+    Empty or blank query -> ValueError. The first call builds the search index if it's missing
+    or older than chunks.jsonl, so it can take ~15 s."""
 
 
 def summarize(passages: list[dict]) -> dict:
@@ -61,6 +67,7 @@ def get_table(filters: dict | None = None) -> list[dict]:
 | outcome | — | `Extinction`, `Completion` or `Disruption` | FLEX-2 and Saffire-II |
 
 ## 4. Mock files
-- `data/mock/chunks.mock.jsonl` — 3 fake chunks (`search()` returns these until FIF-D10-BE)
+- `data/mock/chunks.mock.jsonl` — 3 fake chunks. No longer used by `search()` since v1.3; kept for
+  `tests/test_mock_data.py`.
 - `data/mock/master.mock.csv` — 5 fake rows with the v1.0 columns. No longer used by `get_table()`
   since v1.2; kept for `tests/test_mock_data.py`.
