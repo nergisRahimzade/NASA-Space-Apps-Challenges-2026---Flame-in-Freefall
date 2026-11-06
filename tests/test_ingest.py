@@ -19,8 +19,11 @@ def paths(tmp_path, monkeypatch) -> dict:
     (reports / "alpha_abstract.txt").write_text("Flames spread slowly in microgravity.")
     (reports / "beta_abstract.txt").write_text("Droplets burned for two seconds.")
     sources = tmp_path / "sources.csv"
+    # Same columns chunk_reports reads from the real data/sources.csv (experiment is required).
     sources.write_text(
-        "file_name,title\nalpha_abstract.txt,Alpha report\nbeta_abstract.txt,Beta report\n"
+        "file_name,title,experiment\n"
+        "alpha_abstract.txt,Alpha report,FLEX\n"
+        "beta_abstract.txt,Beta report,FLEX-2\n"
     )
     # Fake embedding: one 384-number row per text, so no model is downloaded.
     monkeypatch.setattr(ingest, "embed_texts", lambda texts: np.ones((len(texts), 384)))
