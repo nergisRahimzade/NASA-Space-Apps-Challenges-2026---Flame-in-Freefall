@@ -9,6 +9,13 @@ import streamlit as st
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from flame_in_freefall.api import get_table, search  # noqa: E402
+from flame_in_freefall.result_cards import (  # noqa: E402
+    SNIPPET_WORDS,
+    load_source_links,
+    score_badge,
+    snippet,
+    source_line,
+)
 
 st.set_page_config(page_title="Flame in Freefall", layout="wide")
 st.title("Flame in Freefall")
@@ -32,12 +39,23 @@ else:
         if not results:
             st.info("No matching passages found. Try different words.")
         else:
-            st.caption("The closest passages, best first. They may not answer your question.")
+            st.caption(
+                "The closest passages, best first. They may not answer your question. "
+                "Match is how close the wording and meaning are, from 0 to 1."
+            )
+        links = load_source_links()
         for r in results:
             with st.container(border=True):
-                # st.text, not st.write: report text can have $ or * that Markdown would mangle
-                st.text(r["text"])
-                st.caption(f"{r['source']} · page {r['page']} · score {r['score']:.2f}")
+                st.markdown(
+                    f"{score_badge(r['score'])} {source_line(r['source'], r['page'], links)}"
+                )
+                # The snippet is escaped, so $ or * in a report can't turn into math or bold
+                st.markdown(snippet(r["text"], query))
+                # Only offer the full passage when the snippet had to cut some of it off
+                if len(r["text"].split()) > SNIPPET_WORDS:
+                    with st.expander("Full passage"):
+                        # st.text, not st.write: shows the passage exactly as written
+                        st.text(r["text"])
 
 st.divider()
 st.subheader("Experiment data")
