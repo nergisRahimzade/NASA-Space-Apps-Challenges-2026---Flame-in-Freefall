@@ -43,24 +43,31 @@ def _ensure_index() -> None:
             _find.cache.clear()  # answers from the old index could be out of date
 
 
-@memo  # cache.py: the same question (ignoring capitals and spaces) and k are answered once
-def _find(query: str, k: int) -> list[dict]:
+@memo  # cache.py: the same question (ignoring capitals and spaces), k and filter run once
+def _find(query: str, k: int, experiment: str | None) -> list[dict]:
     # {id, text, source, page, score} best first, plus each chunk's experiment (Day 12).
-    return find_passages(query, k, folder=INDEX)
+    # An unknown experiment raises ValueError (retrieval.py), and errors are never cached.
+    return find_passages(query, k, folder=INDEX, experiment=experiment)
 
 
-def search(query: str, k: int = 5) -> list[dict]:  # contract v1.1: default 5 (was 3)
+def search(query: str, k: int = 5, experiment: str | None = None) -> list[dict]:
+    # Contract v1.1: k defaults to 5. Day 12 (v1.4): experiment="FLEX-2" (or "Saffire-II",
+    # "FLEX") searches only that experiment's chunks; None searches all of them.
     # Fail loudly on a blank question instead of running an empty search.
     if not query or not query.strip():
         raise ValueError("query must not be empty")
+    # None means "no filter"; blank text is a mistake, not a way to say "no filter".
+    if experiment is not None and (not isinstance(experiment, str) or not experiment.strip()):
+        raise ValueError("experiment must be a non-empty string, or None for every experiment")
     start = time.perf_counter()
     # Check the index first, even for a remembered question: it only compares file times, and
     # a rebuild empties the cache, so an out-of-date answer can't be served from memory.
     _ensure_index()
-    cached = _find.is_cached(query, k)
+    cached = _find.is_cached(query, k, experiment)
     # A copy, so a caller changing its results can't change what's remembered for others.
-    results = copy.deepcopy(_find(query, k))
-    speed.record("search", query, time.perf_counter() - start, cached)
+    results = copy.deepcopy(_find(query, k, experiment))
+    detail = query if experiment is None else f"{query} [{experiment}]"
+    speed.record("search", detail, time.perf_counter() - start, cached)
     return results
 
 

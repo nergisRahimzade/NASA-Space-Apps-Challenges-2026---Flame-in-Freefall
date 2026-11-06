@@ -1,4 +1,4 @@
-# BE notes: what's built and how it runs (Days 1–11, FIF-D01-BE … FIF-D11-BE)
+# BE notes: what's built and how it runs (Days 1–12, FIF-D01-BE … FIF-D12-BE)
 
 For anyone reviewing BE PRs, and for teammates whose code calls the backend. Like
 `data_notes.md` and `ai_notes.md`, this file records what exists, the decisions behind it, and
@@ -23,7 +23,8 @@ the open questions.
 | D08-BE | One command to ingest: reports → chunks → index, skipping finished steps | `ingest.py`, `tests/test_ingest.py` | #139 |
 | D09-BE | Real `get_table()` from `data/master.csv`; contract v1.2 | `api.py`, `docs/contract.md`, `tests/test_get_table.py`, `tests/test_contract.py`, 2 small edits in `app/streamlit_app.py` (FE's file) | #143 |
 | D10-BE | Real `search()`; builds the index on first search; contract v1.3 | `api.py`, `docs/contract.md`, `tests/test_search.py`, `tests/conftest.py` (fake model for all tests) | #144 |
-| D11-BE | Measure speed: every call timed, repeated questions cached, slowest-calls report | `speed.py`, `api.py`, `cache.py` (`is_cached`), `tests/test_speed.py`, 3 lines in `app/streamlit_app.py` (FE's file) | FIF-D11-BE PR |
+| D11-BE | Measure speed: every call timed, repeated questions cached, slowest-calls report | `speed.py`, `api.py`, `cache.py` (`is_cached`), `tests/test_speed.py`, 3 lines in `app/streamlit_app.py` (FE's file) | #145 |
+| D12-BE | `search()` takes an `experiment` filter; contract v1.4 | `api.py`, `docs/contract.md`, `tests/test_search.py` | FIF-D12-BE PR |
 
 ## 2. What each BE file does
 
@@ -101,9 +102,16 @@ The app (`app/streamlit_app.py`) belongs to FE and only calls `api.py`.
 
 ## 5. Open questions and known issues
 
-- **Check the live app's memory after D10 merges.** Real search loads PyTorch and the embedding
-  model on Community Cloud for the first time. Its limit is about 2.7 GB. If the app restarts or
-  shows "Oh no" after the first search, that's the likely cause (see the PyTorch item below).
+- **The live app kept running old backend code after merges** (found 2026-11-06): the page was
+  new, but `search()` still gave the mock results and `get_table()` the mock table, so the page
+  crashed with `KeyError: 'oxygen_pct_min'`. Community Cloud updates the files in place, but
+  Python modules already loaded (our `src/` code) can stay in memory. **For now: after merging
+  changes to `src/`, Nergis reboots the app** (Manage app → ⋮ → Reboot app). A lasting fix is
+  still open; check whether the reboot alone fixed it first.
+- **Check the live app's memory once it runs the new backend.** Real search loads PyTorch and the
+  embedding model on Community Cloud for the first time. Its limit is about 2.7 GB. If the app
+  restarts or shows "Oh no" after the first search, that's the likely cause (see the PyTorch item
+  below).
 - **Two package lists:** `pyproject.toml` + `uv.lock` (laptops, CI, Docker) and
   `app/requirements.txt` (live app). Since D07, a test fails if a `pyproject.toml` package is
   missing from `app/requirements.txt`. Versions can still differ: `requirements.txt` uses `>=`,
@@ -187,19 +195,30 @@ The app (`app/streamlit_app.py`) belongs to FE and only calls `api.py`.
 - **Measured on 2026-11-06 (real model, existing index):** first search 8.6 s (loading the model),
   another question 0.7 s, the same question again 0.000 s (cached), `get_table()` 0.014 s.
 
-## 6. Where the next ticket starts (FIF-D12-BE: expose the filter)
+### Experiment filter (D12)
 
-The plan: *1) Add `experiment=` to `search()`. 2) Update contract. Done when: contract updated.*
+- **`search(query, k=5, experiment=None)`** (contract v1.4) passes the filter to Nathan's
+  `find_passages`, which keeps only that experiment's chunks *before* ranking, so all k results
+  come from it. Without a filter it works exactly as before.
+- **An unknown experiment raises `ValueError`** and lists the valid names (from `retrieval.py`), so
+  a typo like `"Saffire"` doesn't look like "no results". `get_table()` returns `[]` for unknown
+  values instead, because "no rows" is a normal table answer. Blank or non-text values raise too.
+- **The filter is part of the cache key**, so filtered and unfiltered answers are remembered
+  separately (checked in `tests/test_search.py` with the speed log).
+- **The app doesn't use it yet.** Connecting the sidebar's Experiment choice to search is FE's call.
 
-- **The filter already exists one level down:** Nathan's D12-AI added
-  `find_passages(..., experiment=...)`, which keeps only that experiment's chunks *before* ranking
-  (see `tests/experiment_filter.md`). `search()` needs the parameter and to pass it through.
-- **Include it in the cache key:** call `_find(query, k, experiment)` so "flame" with and without a
-  filter are remembered separately (`memo` keys on every argument).
-- **Validate it:** blank text should raise `ValueError`, like `get_table()`'s text filters. Decide
-  whether an unknown experiment raises or returns `[]` (`get_table()` returns `[]`).
-- **Contract:** add `experiment: str | None = None` to `search()` in `docs/contract.md`, and bump
-  the version.
+## 6. Where the next ticket starts (FIF-D13-BE: test all three functions)
+
+The plan: *1) pytest for each. 2) Edge cases: empty query, no match. Done when: tests green.*
+
+- **Much is already covered:** `tests/test_contract.py` (shapes), `tests/test_search.py`,
+  `tests/test_get_table.py`, `tests/test_summarizer.py` and `tests/test_summary_check.py`. Start by
+  listing which edge cases each function still misses.
+- **"No match" means something different per function:** `get_table()` returns `[]` and
+  `summarize([])` returns `not_found: True`, but `search()` *always* returns its top k, however
+  weak (cosine similarity ranks everything). Decide whether `search()` needs a minimum score, so an
+  off-topic question ("pizza recipes") can return "no match". That would be a contract change.
+- **Empty query:** `search()` rejects `""` and `"   "`; check `None` too.
 
 ## 7. Rules to keep
 

@@ -16,9 +16,9 @@ def finds(monkeypatch) -> list:
     calls = []
     real_find = api.find_passages
 
-    def counting_find(query, k, folder):
+    def counting_find(query, k, folder, experiment=None):
         calls.append(query)
-        return real_find(query, k, folder=folder)
+        return real_find(query, k, folder=folder, experiment=experiment)
 
     monkeypatch.setattr(api, "find_passages", counting_find)
     return calls
