@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 from flame_in_freefall.api import get_table, search  # noqa: E402
 from flame_in_freefall.result_cards import (  # noqa: E402
     SNIPPET_WORDS,
+    load_experiments,
     load_source_links,
     score_badge,
     snippet,
@@ -22,7 +23,48 @@ st.set_page_config(page_title="Flame in Freefall", layout="wide")
 st.title("Flame in Freefall")
 st.write("Explore microgravity combustion experiments.")
 
+ALL = "All"
+
+# The table loads first: its experiments fill the sidebar, and search reads the same Experiment
+# choice (FIF-D12-FE). If it fails, search still works, unfiltered.
+try:
+    # The unfiltered rows fill the sidebar, so its choices don't shrink as filters change
+    all_rows = pd.DataFrame(get_table())
+    table_error = False
+except Exception:
+    all_rows = pd.DataFrame()
+    table_error = True
+
+experiment = ALL
+if not all_rows.empty:
+    # Widen the slider if the data goes past 15-30%, so no rows are hidden by default.
+    # master.csv stores oxygen as a range per row (FIF-D09-BE), so use the lowest min and highest
+    # max.
+    oxygen_low = min(15.0, float(all_rows["oxygen_pct_min"].min()))
+    oxygen_high = max(30.0, float(all_rows["oxygen_pct_max"].max()))
+
+    with st.sidebar:
+        st.header("Filters")
+        # Single choice, because the contract's get_table() and search() take one experiment
+        experiment = st.selectbox(
+            "Experiment",
+            [ALL, *sorted(all_rows["experiment"].unique())],
+            help="Filters the search results and the experiment data.",
+        )
+        material = st.selectbox("Material", [ALL, *sorted(all_rows["material"].unique())])
+        oxygen_min, oxygen_max = st.slider(
+            "Oxygen %", oxygen_low, oxygen_high, (oxygen_low, oxygen_high), step=0.5
+        )
+
 query = st.text_input("Search the research reports")
+# Only experiments with reports can be searched; search() rejects any other name
+searchable = experiment in load_experiments()
+if experiment != ALL:
+    if searchable:
+        st.caption(f"Searching {experiment} reports only. Choose All in the sidebar to search all.")
+    else:
+        st.caption(f"There are no {experiment} reports to search, so search covers all of them.")
+search_experiment = experiment if searchable else None
 
 if not query.strip():
     st.caption("Try a question like: What gases were tested as fire suppressants in microgravity?")
@@ -30,7 +72,10 @@ else:
     try:
         with st.spinner("Searching the reports..."):
             start = time.perf_counter()
-            results = search(query)
+            if search_experiment is None:
+                results = search(query)
+            else:
+                results = search(query, experiment=search_experiment)
             seconds = time.perf_counter() - start  # FIF-D11-BE: shown under "Results"
     except Exception:
         st.error("Search isn't working right now. Please try again in a moment.")
@@ -38,10 +83,16 @@ else:
         st.subheader("Summary")
         st.info("Summary coming soon. This will show cited takeaways from summarize().")
 
-        st.subheader(f"Results ({len(results)})")
+        from_text = f" from {search_experiment}" if search_experiment else ""
+        st.subheader(f"Results ({len(results)}){from_text}")
         # FIF-D11-BE: the first search after a deploy takes ~15 s (model + index), later ones ~0.1 s
         st.caption(f"Searched in {seconds:.2f} s")
-        if not results:
+        if not results and search_experiment:
+            st.info(
+                f"No {search_experiment} passages match. "
+                "Try different words, or choose All in the sidebar."
+            )
+        elif not results:
             st.info("No matching passages found. Try different words.")
         else:
             st.caption(
@@ -65,31 +116,12 @@ else:
 st.divider()
 st.subheader("Experiment data")
 
-ALL = "All"
-
-try:
-    # The unfiltered rows fill the sidebar, so its choices don't shrink as filters change
-    all_rows = pd.DataFrame(get_table())
-except Exception:
+if table_error:
     st.error("Experiment data isn't available right now. Please try again in a moment.")
     st.stop()
 if all_rows.empty:
     st.info("No experiment data has been loaded yet.")
     st.stop()
-
-# Widen the slider if the data goes past 15-30%, so no rows are hidden by default.
-# master.csv stores oxygen as a range per row (FIF-D09-BE), so use the lowest min and highest max.
-oxygen_low = min(15.0, float(all_rows["oxygen_pct_min"].min()))
-oxygen_high = max(30.0, float(all_rows["oxygen_pct_max"].max()))
-
-with st.sidebar:
-    st.header("Filters")
-    # Single choice, because the contract's get_table() filters take one experiment and material
-    experiment = st.selectbox("Experiment", [ALL, *sorted(all_rows["experiment"].unique())])
-    material = st.selectbox("Material", [ALL, *sorted(all_rows["material"].unique())])
-    oxygen_min, oxygen_max = st.slider(
-        "Oxygen %", oxygen_low, oxygen_high, (oxygen_low, oxygen_high), step=0.5
-    )
 
 filters = {"oxygen_min": oxygen_min, "oxygen_max": oxygen_max}
 if experiment != ALL:

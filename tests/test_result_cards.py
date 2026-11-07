@@ -2,6 +2,7 @@
 
 from flame_in_freefall.result_cards import (
     escape_markdown,
+    load_experiments,
     load_source_links,
     query_terms,
     score_badge,
@@ -85,3 +86,20 @@ def test_load_source_links_drops_non_web_links_and_missing_file(tmp_path):
     )
     assert load_source_links(csv_file) == {"Good": "https://example.org"}
     assert load_source_links(tmp_path / "missing.csv") == {}
+
+
+def test_load_experiments_reads_real_sources_csv():
+    assert load_experiments() == ["FLEX", "FLEX-2", "Saffire-II"]
+
+
+def test_load_experiments_skips_blanks_and_missing_file(tmp_path):
+    csv_file = tmp_path / "sources.csv"
+    csv_file.write_text(
+        "file_name,title,experiment,source_url,retrieved_date\n"
+        "a.txt,A,FLEX,https://example.org,2026-11-01\n"
+        "b.txt,B, ,https://example.org,2026-11-01\n"
+        "c.txt,C,FLEX,https://example.org,2026-11-01\n",
+        encoding="utf-8",
+    )
+    assert load_experiments(csv_file) == ["FLEX"]
+    assert load_experiments(tmp_path / "missing.csv") == []
