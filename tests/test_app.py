@@ -104,6 +104,74 @@ def test_search_failure_shows_an_error_not_a_crash():
     assert len(at.error) == 1
 
 
+# FIF-D12-FE: the sidebar's Experiment choice filters search as well as the table.
+
+
+def _search_in(experiment: str, **patch) -> tuple[AppTest, mock.MagicMock]:
+    with mock.patch("flame_in_freefall.api.search", **patch) as fake_search:
+        at = AppTest.from_file(str(APP), default_timeout=30).run()
+        at.sidebar.selectbox[0].select(experiment).run()
+        at.text_input[0].input("flame spread").run()
+    return at, fake_search
+
+
+def test_experiment_dropdown_lists_the_real_experiments(app):
+    box = app.sidebar.selectbox[0]
+    assert box.label == "Experiment"
+    assert box.options == ["All", "FLEX", "FLEX-2", "Saffire-II"]
+
+
+def test_chosen_experiment_is_passed_to_search():
+    at, fake_search = _search_in("FLEX-2", return_value=[{**RESULT, "experiment": "FLEX-2"}])
+    _assert_healthy(at)
+    fake_search.assert_called_with("flame spread", experiment="FLEX-2")
+    assert "Results (1) from FLEX-2" in [h.value for h in at.subheader]
+    assert any(c.value.startswith("Searching FLEX-2 reports only") for c in at.caption)
+
+
+def test_chosen_experiment_also_filters_the_table():
+    at, _ = _search_in("Saffire-II", return_value=[RESULT])
+    assert set(at.dataframe[0].value["experiment"]) == {"Saffire-II"}
+
+
+def test_all_searches_every_experiment():
+    at, fake_search = _search_in("All", return_value=[RESULT])
+    _assert_healthy(at)
+    fake_search.assert_called_with("flame spread")
+    assert "Results (1)" in [h.value for h in at.subheader]
+
+
+def test_no_results_in_one_experiment_suggests_all():
+    at, _ = _search_in("FLEX", return_value=[])
+    assert "No FLEX passages match. Try different words, or choose All in the sidebar." in [
+        i.value for i in at.info
+    ]
+
+
+def test_experiment_without_reports_searches_everything():
+    # search() rejects an experiment no chunk has, so the app mustn't pass one along
+    with mock.patch("flame_in_freefall.result_cards.load_experiments", return_value=["FLEX"]):
+        at, fake_search = _search_in("FLEX-2", return_value=[RESULT])
+    _assert_healthy(at)
+    fake_search.assert_called_with("flame spread")
+    assert any(c.value.startswith("There are no FLEX-2 reports") for c in at.caption)
+
+
+def test_search_still_works_when_the_table_fails():
+    with (
+        mock.patch("flame_in_freefall.api.get_table", side_effect=RuntimeError("no csv")),
+        mock.patch("flame_in_freefall.api.search", return_value=[RESULT]) as fake_search,
+    ):
+        at = AppTest.from_file(str(APP), default_timeout=30).run()
+        at.text_input[0].input("flame spread").run()
+    assert not at.exception
+    fake_search.assert_called_with("flame spread")
+    assert "Results (1)" in [h.value for h in at.subheader]
+    assert [e.value for e in at.error] == [
+        "Experiment data isn't available right now. Please try again in a moment."
+    ]
+
+
 def _package_names(lines: list[str]) -> set[str]:
     # "sentence-transformers>=6.2.0" -> "sentence-transformers". Lowercase and - vs _ don't
     # matter in package names, so both are normalized.

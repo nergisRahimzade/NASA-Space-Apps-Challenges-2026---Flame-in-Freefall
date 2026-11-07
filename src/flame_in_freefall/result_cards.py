@@ -106,6 +106,17 @@ def load_source_links(path: str | Path = SOURCES_CSV) -> dict[str, str]:
     }
 
 
+def load_experiments(path: str | Path = SOURCES_CSV) -> list[str]:
+    """The experiments that have reports, so they can be searched (FIF-D12-FE). Read from the
+    `experiment` column of sources.csv, which is where the chunks get their tag."""
+    try:
+        with open(path, newline="", encoding="utf-8") as f:
+            rows = list(csv.DictReader(f))
+    except FileNotFoundError:
+        return []
+    return sorted({r["experiment"].strip() for r in rows if (r.get("experiment") or "").strip()})
+
+
 def source_line(source: str, page: int, links: dict[str, str]) -> str:
     """Markdown for "Source title · page N", with the title linked when we know its page."""
     title = escape_markdown(source)
