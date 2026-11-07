@@ -1,4 +1,4 @@
-# BE notes: what's built and how it runs (Days 1–12, FIF-D01-BE … FIF-D12-BE)
+# BE notes: what's built and how it runs (Days 1–13, FIF-D01-BE … FIF-D13-BE)
 
 For anyone reviewing BE PRs, and for teammates whose code calls the backend. Like
 `data_notes.md` and `ai_notes.md`, this file records what exists, the decisions behind it, and
@@ -24,7 +24,8 @@ the open questions.
 | D09-BE | Real `get_table()` from `data/master.csv`; contract v1.2 | `api.py`, `docs/contract.md`, `tests/test_get_table.py`, `tests/test_contract.py`, 2 small edits in `app/streamlit_app.py` (FE's file) | #143 |
 | D10-BE | Real `search()`; builds the index on first search; contract v1.3 | `api.py`, `docs/contract.md`, `tests/test_search.py`, `tests/conftest.py` (fake model for all tests) | #144 |
 | D11-BE | Measure speed: every call timed, repeated questions cached, slowest-calls report | `speed.py`, `api.py`, `cache.py` (`is_cached`), `tests/test_speed.py`, 3 lines in `app/streamlit_app.py` (FE's file) | #145 |
-| D12-BE | `search()` takes an `experiment` filter; contract v1.4 | `api.py`, `docs/contract.md`, `tests/test_search.py` | FIF-D12-BE PR |
+| D12-BE | `search()` takes an `experiment` filter; contract v1.4 | `api.py`, `docs/contract.md`, `tests/test_search.py` | #146 |
+| D13-BE | Edge cases for all three functions; `search()` "no match" (min score 0.30); contract v1.5 | `api.py`, `docs/contract.md`, `tests/test_api_edge_cases.py`, `tests/conftest.py` | FIF-D13-BE PR |
 
 ## 2. What each BE file does
 
@@ -102,16 +103,15 @@ The app (`app/streamlit_app.py`) belongs to FE and only calls `api.py`.
 
 ## 5. Open questions and known issues
 
-- **The live app kept running old backend code after merges** (found 2026-11-06): the page was
+- **The live app keeps running old backend code after merges** (found 2026-11-06): the page was
   new, but `search()` still gave the mock results and `get_table()` the mock table, so the page
   crashed with `KeyError: 'oxygen_pct_min'`. Community Cloud updates the files in place, but
-  Python modules already loaded (our `src/` code) can stay in memory. **For now: after merging
-  changes to `src/`, Nergis reboots the app** (Manage app → ⋮ → Reboot app). A lasting fix is
-  still open; check whether the reboot alone fixed it first.
-- **Check the live app's memory once it runs the new backend.** Real search loads PyTorch and the
-  embedding model on Community Cloud for the first time. Its limit is about 2.7 GB. If the app
-  restarts or shows "Oh no" after the first search, that's the likely cause (see the PyTorch item
-  below).
+  Python modules already loaded (our `src/` code) stay in memory. **A reboot fixed it**
+  (confirmed 2026-11-06), so **after merging changes to `src/`, Nergis reboots the app**
+  (Manage app → ⋮ → Reboot app). A lasting fix, so a merge alone is enough, is still open.
+- **Memory on the live app is fine:** after the reboot, the first real search took 43.6 s on
+  Community Cloud (model download + index build) and the app didn't crash. Later searches are
+  fast.
 - **Two package lists:** `pyproject.toml` + `uv.lock` (laptops, CI, Docker) and
   `app/requirements.txt` (live app). Since D07, a test fails if a `pyproject.toml` package is
   missing from `app/requirements.txt`. Versions can still differ: `requirements.txt` uses `>=`,
@@ -205,20 +205,36 @@ The app (`app/streamlit_app.py`) belongs to FE and only calls `api.py`.
   values instead, because "no rows" is a normal table answer. Blank or non-text values raise too.
 - **The filter is part of the cache key**, so filtered and unfiltered answers are remembered
   separately (checked in `tests/test_search.py` with the speed log).
-- **The app doesn't use it yet.** Connecting the sidebar's Experiment choice to search is FE's call.
+- **The app uses it since D12-FE (#147):** the sidebar's Experiment choice also filters search.
 
-## 6. Where the next ticket starts (FIF-D13-BE: test all three functions)
+### Edge cases and "no match" (D13)
 
-The plan: *1) pytest for each. 2) Edge cases: empty query, no match. Done when: tests green.*
+- **Probing found crashes instead of clear errors:** `search(5)` gave `AttributeError`,
+  `search(k="3")` a `TypeError`, `search(k=True)` was accepted as k=1, `summarize(None)` or a
+  passage without `"text"` gave `TypeError`/`KeyError`, and `get_table("FLEX")` complained about
+  unknown filters `E`, `F`, `L`, `X`. All now raise `ValueError` with a plain message.
+- **"No match" for search (team decision):** `search()` leaves out results scoring under
+  `api.MIN_SCORE = 0.30`, so an off-topic question returns `[]` and the app says "No matching
+  passages found". Measured with the real model on 16 questions: answerable ones scored 0.42–0.69,
+  clearly off-topic ones −0.01–0.26 (pizza, World Cup, rocket thrust…). "How do batteries catch
+  fire in phones" scored 0.39 and still gets results, which is fine (it's about fire). **Retune
+  `MIN_SCORE` if the embedding model or the chunking changes**, since the scores move with them.
+- **Tests turn the cutoff off** (`tests/conftest.py`), because the fake test model scores
+  differently. The "no match" tests turn it on themselves.
+- **All edge cases in one place:** `tests/test_api_edge_cases.py`, grouped by function.
 
-- **Much is already covered:** `tests/test_contract.py` (shapes), `tests/test_search.py`,
-  `tests/test_get_table.py`, `tests/test_summarizer.py` and `tests/test_summary_check.py`. Start by
-  listing which edge cases each function still misses.
-- **"No match" means something different per function:** `get_table()` returns `[]` and
-  `summarize([])` returns `not_found: True`, but `search()` *always* returns its top k, however
-  weak (cosine similarity ranks everything). Decide whether `search()` needs a minimum score, so an
-  off-topic question ("pizza recipes") can return "no match". That would be a contract change.
-- **Empty query:** `search()` rejects `""` and `"   "`; check `None` too.
+## 6. Where the next ticket starts (FIF-D14-BE: end-to-end test)
+
+The plan: *1) Script: ingest → search → table. 2) Tag v0.2. Done when: test green.*
+
+- **The pieces exist:** `ingest.run()` (D08), `api.search()` (D10–D13) and `api.get_table()` (D09).
+  The test would build chunks and the index into a temporary folder, search a real question, then
+  load the table rows for the experiment of the top result, checking that each step's output
+  feeds the next.
+- **Fake or real model:** CI must stay offline, so the pytest version uses the fake model. A
+  separate script (like the `scripts/dayN_*.py` ones) can run the same steps with the real model.
+- **Tag v0.2:** a Git tag marks the commit that passed the test (`git tag v0.2`, then
+  `git push origin v0.2`). Pushing a tag is visible to the whole team, so agree on it first.
 
 ## 7. Rules to keep
 
