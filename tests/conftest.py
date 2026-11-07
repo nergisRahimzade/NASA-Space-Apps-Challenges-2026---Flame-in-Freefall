@@ -36,6 +36,9 @@ def _no_real_embedding_model(monkeypatch, tmp_path):
     # Tests that fake the model themselves (e.g. test_embedding.py) still override this.
     monkeypatch.setattr(embedding, "_get_model", lambda name: _WordCountModel())
     monkeypatch.setattr(api, "INDEX", tmp_path / "index")
+    # Day 13: MIN_SCORE was measured on the real model; the fake one scores differently, so the
+    # cutoff is off by default. Tests about "no match" set it themselves.
+    monkeypatch.setattr(api, "MIN_SCORE", float("-inf"))
 
 
 @pytest.fixture(autouse=True)

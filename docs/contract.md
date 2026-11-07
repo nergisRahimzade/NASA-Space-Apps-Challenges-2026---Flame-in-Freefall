@@ -1,4 +1,4 @@
-# Flame in Freefall — Contract v1.4
+# Flame in Freefall — Contract v1.5
 
 Everyone codes against these shapes. Change them only by pull request, and bump the version.
 
@@ -15,24 +15,35 @@ and each result also has the chunk's `experiment`. The first search after a depl
 **v1.4 (FIF-D12-BE):** `search()` takes an optional `experiment` filter, so results can come from
 one experiment only. Calls without it work exactly as before.
 
+**v1.5 (FIF-D13-BE):** `search()` leaves out results scoring under 0.30, so an off-topic question
+returns `[]` ("no match") and can return fewer than k. All three functions reject malformed input
+(non-text query, a k that isn't a whole number above 0, passages that aren't chunk dicts, filters
+that aren't a dict) with `ValueError`.
+
 ## 1. Functions (in `src/flame_in_freefall/api.py`)
 
 ```python
 def search(query: str, k: int = 5, experiment: str | None = None) -> list[dict]:
-    """Return the k best-matching report chunks for a question, best first.
+    """Return up to k best-matching report chunks for a question, best first.
     Each item: {"id", "text", "source", "page", "score", "experiment"}
     (score: cosine similarity as a float, higher = better; experiment: FLEX-2, Saffire-II or FLEX)
+    Only results scoring at least 0.30 (api.MIN_SCORE) are returned, so fewer than k is normal,
+    and no match (an off-topic question) -> [].
     experiment: "FLEX-2", "Saffire-II" or "FLEX" keeps only that experiment's chunks (before
-    ranking, so all k results come from it); None (the default) searches every experiment.
-    Empty or blank query, a blank experiment, or an unknown experiment -> ValueError
-    (the message lists the valid experiments). The first call builds the search index if it's
-    missing or older than chunks.jsonl, so it can take ~15 s."""
+    ranking, so all results come from it); None (the default) searches every experiment.
+    Empty, blank or non-text query, k that isn't a whole number above 0, a blank experiment,
+    or an unknown experiment -> ValueError (the message lists the valid experiments).
+    The first call builds the search index if it's missing or older than chunks.jsonl,
+    so it can take ~15 s."""
 
 
 def summarize(passages: list[dict]) -> dict:
     """Turn found passages into takeaways that cite their chunk.
+    passages: a list of chunk dicts with at least "id", "text", "source" and "page"
+    (search() results work as they are; extra fields are fine).
     Returns {"takeaways": [{"text": str, "source": str, "chunk_id": str}], "not_found": bool}
-    No passages -> {"takeaways": [], "not_found": True}."""
+    No passages -> {"takeaways": [], "not_found": True}.
+    Not a list, or a passage that isn't a dict or misses a field -> ValueError."""
 
 
 def get_table(filters: dict | None = None) -> list[dict]:
@@ -41,8 +52,9 @@ def get_table(filters: dict | None = None) -> list[dict]:
     "material_category" (str), "oxygen_min" (float), "oxygen_max" (float).
     Text filters match exactly. A row matches the oxygen filters when its oxygen range
     (oxygen_pct_min..oxygen_pct_max) overlaps the filter's range.
-    Empty cells are None. No matching rows -> [].
-    Unknown key, blank text, a non-number oxygen value, or oxygen_min > oxygen_max -> ValueError."""
+    Empty cells are None. No matching rows -> []. None or {} -> every row.
+    filters that aren't a dict, an unknown key, blank text, a non-number oxygen value, or
+    oxygen_min > oxygen_max -> ValueError."""
 ```
 
 ## 2. Chunk fields (`chunks.jsonl`, one JSON object per line)

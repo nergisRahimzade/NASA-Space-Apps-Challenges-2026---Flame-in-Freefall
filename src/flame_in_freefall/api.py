@@ -28,6 +28,13 @@ INDEX = ingest.INDEX  # artifacts/index/ (git-ignored, so the live app starts wi
 TEXT_FILTERS = {"experiment", "material", "material_category"}
 NUMBER_FILTERS = {"oxygen_min", "oxygen_max"}
 ALLOWED_FILTERS = TEXT_FILTERS | NUMBER_FILTERS
+# Day 13: search() leaves out results scoring under this, so an off-topic question returns []
+# ("no match") instead of 5 unrelated passages. Measured with all-MiniLM-L6-v2 on 2026-11-07:
+# answerable questions scored 0.42-0.69, clearly off-topic ones -0.01-0.26. Retune it if the
+# embedding model or the chunking changes (the scores move with them).
+MIN_SCORE = 0.30
+# The fields summarize() needs in every passage (chunk fields, docs/contract.md section 2).
+PASSAGE_KEYS = {"id", "text", "source", "page"}
 
 # Two people searching at the same moment must not both build the index (Streamlit runs
 # each visitor in its own thread).
@@ -53,9 +60,12 @@ def _find(query: str, k: int, experiment: str | None) -> list[dict]:
 def search(query: str, k: int = 5, experiment: str | None = None) -> list[dict]:
     # Contract v1.1: k defaults to 5. Day 12 (v1.4): experiment="FLEX-2" (or "Saffire-II",
     # "FLEX") searches only that experiment's chunks; None searches all of them.
-    # Fail loudly on a blank question instead of running an empty search.
-    if not query or not query.strip():
-        raise ValueError("query must not be empty")
+    # Fail loudly on a blank (or non-text) question instead of running an empty search.
+    if not isinstance(query, str) or not query.strip():
+        raise ValueError("query must be non-empty text")
+    # bool is a kind of int in Python, so True would pass as k=1 without this check.
+    if isinstance(k, bool) or not isinstance(k, int) or k <= 0:
+        raise ValueError("k must be a whole number above 0")
     # None means "no filter"; blank text is a mistake, not a way to say "no filter".
     if experiment is not None and (not isinstance(experiment, str) or not experiment.strip()):
         raise ValueError("experiment must be a non-empty string, or None for every experiment")
@@ -65,14 +75,28 @@ def search(query: str, k: int = 5, experiment: str | None = None) -> list[dict]:
     _ensure_index()
     cached = _find.is_cached(query, k, experiment)
     # A copy, so a caller changing its results can't change what's remembered for others.
-    results = copy.deepcopy(_find(query, k, experiment))
+    # Weak matches are left out (MIN_SCORE); none left = no match, so [] (never invented).
+    results = [r for r in copy.deepcopy(_find(query, k, experiment)) if r["score"] >= MIN_SCORE]
     detail = query if experiment is None else f"{query} [{experiment}]"
     speed.record("search", detail, time.perf_counter() - start, cached)
     return results
 
 
+def _check_passages(passages: list[dict]) -> None:
+    # Fail loudly with a clear message, instead of a KeyError or TypeError deep in summarizer.py.
+    if not isinstance(passages, list):
+        raise ValueError("passages must be a list (e.g. the results of search())")
+    for n, p in enumerate(passages, start=1):
+        if not isinstance(p, dict):
+            raise ValueError(f"passage {n} must be a dict, got {type(p).__name__}")
+        missing = PASSAGE_KEYS - set(p)
+        if missing:
+            raise ValueError(f"passage {n} is missing {sorted(missing)}")
+
+
 def summarize(passages: list[dict]) -> dict:
     # Thin wrapper: the contract signature stays here, the Gemini call lives in summarizer.py.
+    _check_passages(passages)
     start = time.perf_counter()
     summary = summarize_passages(passages)
     speed.record("summarize", f"{len(passages)} passages", time.perf_counter() - start)
@@ -96,7 +120,10 @@ def _check_filters(filters: dict) -> None:
 
 
 def get_table(filters: dict | None = None) -> list[dict]:
-    filters = filters or {}  # None means "no filters"
+    # Without this, get_table("FLEX") would complain about unknown filters 'E', 'F', 'L', 'X'.
+    if filters is not None and not isinstance(filters, dict):
+        raise ValueError('filters must be a dict like {"experiment": "FLEX"}, or None')
+    filters = filters or {}  # None (or {}) means "no filters"
     _check_filters(filters)
     start = time.perf_counter()
     table = pd.read_csv(MASTER_CSV)
