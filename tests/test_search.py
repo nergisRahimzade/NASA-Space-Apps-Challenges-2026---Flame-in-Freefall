@@ -10,7 +10,7 @@ import time
 
 import pytest
 
-from flame_in_freefall import api, ingest
+from flame_in_freefall import api, ingest, speed
 
 KEYS = {"id", "text", "source", "page", "score", "experiment"}
 
@@ -83,3 +83,36 @@ def test_two_searches_at_once_build_the_index_only_once(builds, monkeypatch):
     for t in threads:
         t.join()
     assert len(builds) == 1
+
+
+# --- Day 12 (BE): the experiment filter -----------------------------------------------------
+
+
+def test_experiment_filter_returns_only_that_experiment():
+    results = api.search("flame", experiment="FLEX-2")
+    assert results and all(r["experiment"] == "FLEX-2" for r in results)
+
+
+def test_no_experiment_searches_every_experiment():
+    experiments = {r["experiment"] for r in api.search("flame", k=18)}  # 18 = every chunk
+    assert experiments == {"FLEX", "FLEX-2", "Saffire-II"}
+
+
+def test_unknown_experiment_is_rejected():
+    # A typo would otherwise look like "no results"; the error lists the valid names.
+    with pytest.raises(ValueError, match="unknown experiment"):
+        api.search("flame", experiment="Flex2")
+
+
+@pytest.mark.parametrize("bad", ["", "  ", 5])
+def test_blank_or_non_text_experiment_is_rejected(bad):
+    with pytest.raises(ValueError):
+        api.search("flame", experiment=bad)
+
+
+def test_filtered_and_unfiltered_are_cached_separately():
+    # The filter is part of the cache key, so the unfiltered answer is never reused for it.
+    api.search("flame")
+    filtered = api.search("flame", experiment="FLEX")
+    assert all(r["experiment"] == "FLEX" for r in filtered)
+    assert [e["cached"] for e in speed.read_log()] == [False, False]

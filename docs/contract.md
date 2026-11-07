@@ -1,4 +1,4 @@
-# Flame in Freefall — Contract v1.3
+# Flame in Freefall — Contract v1.4
 
 Everyone codes against these shapes. Change them only by pull request, and bump the version.
 
@@ -12,15 +12,21 @@ are min/max pairs, `material_category`, `spread_rate_per_flow` and `outcome` are
 and each result also has the chunk's `experiment`. The first search after a deploy builds the index
 (about 15 s); later searches take well under a second.
 
+**v1.4 (FIF-D12-BE):** `search()` takes an optional `experiment` filter, so results can come from
+one experiment only. Calls without it work exactly as before.
+
 ## 1. Functions (in `src/flame_in_freefall/api.py`)
 
 ```python
-def search(query: str, k: int = 5) -> list[dict]:
+def search(query: str, k: int = 5, experiment: str | None = None) -> list[dict]:
     """Return the k best-matching report chunks for a question, best first.
     Each item: {"id", "text", "source", "page", "score", "experiment"}
     (score: cosine similarity as a float, higher = better; experiment: FLEX-2, Saffire-II or FLEX)
-    Empty or blank query -> ValueError. The first call builds the search index if it's missing
-    or older than chunks.jsonl, so it can take ~15 s."""
+    experiment: "FLEX-2", "Saffire-II" or "FLEX" keeps only that experiment's chunks (before
+    ranking, so all k results come from it); None (the default) searches every experiment.
+    Empty or blank query, a blank experiment, or an unknown experiment -> ValueError
+    (the message lists the valid experiments). The first call builds the search index if it's
+    missing or older than chunks.jsonl, so it can take ~15 s."""
 
 
 def summarize(passages: list[dict]) -> dict:
