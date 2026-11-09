@@ -115,3 +115,36 @@ Found while checking (left as-is, to confirm in the reports):
 - `tests/test_chunking.py` checks that every chunk has the right experiment, that the names match `master.csv`, and that an untagged report fails.
 - **For AI (D12-AI):** the tag is in the chunk metadata saved with the index. Filter on `chunk["experiment"]` before ranking.
 - **For BE (D12-BE, contract v1.1):** contract section 2 should list `experiment` (str, `FLEX-2` / `Saffire-II` / `FLEX`) as a chunk field. `search()` results will then include it too. `data/mock/chunks.mock.jsonl` doesn't have the field yet and still uses BASS names. Its test (`tests/test_mock_data.py`) needs the field added when the mock gets it.
+
+## 9. Riskiness ranking table (Day 13, FIF-D13-DAT)
+
+- Saved at `data/ranking.csv`: one row per experiment + material + oxygen level, with spread-rate stats, outcome counts and a rank (1 = riskiest). 30 rows: Saffire-II 4, FLEX 26. Columns are in `docs/column_dictionary.md` section 5.
+- Rebuild (after `build_master`): `uv run python -m flame_in_freefall.build_ranking`. It prints the top 5 of each experiment.
+- **Grouping by oxygen:** each row's oxygen is the middle of its min and max, rounded to a whole percent (0.5 rounds up). FLEX tests sit at whole percents already. Saffire-II's 21.5-22.1% all become 22%. The report calls those values approximate, so they count as one level.
+- **Pressure is not a group key** (the ticket asks for material and oxygen). FLEX groups mix tests at about 50, 70 and 100 kPa, so a group's result can hide a pressure effect.
+
+**Why the spread-rate stats alone weren't enough:** `master.csv` has a measured spread rate for only 2 rows (the SIBAL samples, 2.1 and 2.6 mm/s). They are kept as `spread_rate_mm_s_min/mean/max`, but a ranking built only on them would hold one material. So each experiment is ranked on the best measure it has:
+
+| Experiment | Ranked by | Riskiest | Least risky |
+|---|---|---|---|
+| Saffire-II (solid sheets) | `burn_spread_mm_s_mean` = burn length / burn time, in mm/s | SIBAL 2.26 mm/s | Silicone 0 (never spread) |
+| FLEX (fuel droplets) | `kept_burning_share` = completion / (completion + extinction) | Heptane 30% and Methanol 34% (1.0) | 12 groups at 0, mostly Methanol at 12-20% |
+
+- **Burn length / burn time** comes from `data/clean/saffire2.csv` (master leaves those columns out), joined on experiment + material + oxygen level. For SIBAL, which also has a measured rate, it gives 2.0 and 2.5 mm/s against a measured 2.1 and 2.6, so it is a fair stand-in. A test checks they agree within 0.15 mm/s. Silicone burned 0 cm with an "Insignificant" burn time, so its spread is 0, not empty. Saffire-II order: SIBAL 2.26 > PMMA & Nomex 0.36 > PMMA 0.14 > Silicone 0.
+- **Kept-burning share** counts only tests that finished. `Disruption` (test cut short) is left out, because we don't know if that flame would have gone out. Three FLEX groups have only disruptions (Heptane 25% and 34%, Methanol 25%: 10 tests). They have nothing to rank on, so they are not in the table.
+- **FLEX-2 is not in the table**: its 8 rows are planned ranges with no spread rate and no outcome.
+- **Ranks are within one experiment only.** A spread speed in mm/s and a share of tests can't go on one scale, so Saffire-II rank 1 and FLEX rank 1 mean different things. `risk_value` holds the number behind the rank so one chart column works for both, but it needs one panel or colour per experiment.
+
+What the table shows (for the question in `docs/the_question.md`):
+- FLEX: more oxygen means more flames keep burning. Below 17% no Methanol flame and only 3 of 14 finished Heptane tests kept burning. At 30% and above, 4 of 6 finished tests kept burning. Heptane keeps burning more often than Methanol at the same oxygen (for example at 18%: 4 of 16 vs 1 of 19).
+- Saffire-II: at about 22% oxygen and 20 cm/s airflow, the cotton-fiberglass fabric (SIBAL) spread about 6x faster than PMMA with Nomex and 16x faster than PMMA. Silicone did not spread.
+
+Caveats (the app should show them next to the chart):
+- Small groups. Heptane 30% ranks 1st on 1 finished test (6 were disruptions). Every group's `tests`, `completion`, `extinction` and `disruption` are in the table, so the chart can show them on hover.
+- Saffire-II is 9 samples at one oxygen level (about 22%) and one airflow, so it ranks materials but says nothing about oxygen.
+- Burn time may include the time to ignite, which would make `burn_spread_mm_s_mean` a little low. For SIBAL it is only 0.1 mm/s below the measured rate.
+
+Tests: `tests/test_ranking.py` checks the columns, one row per group, the oxygen rounding, the burn-spread estimate against the measured rate, the Saffire-II order, the share leaving out disruptions, ties sharing a rank, and that the saved `data/ranking.csv` matches a fresh build. Re-run `build_ranking` after any change to cleaning or `master.csv`.
+
+- **For FE (D13-FE, ranking chart from real data):** read `data/ranking.csv`. Plot `risk_value` by material with one panel (or facet) per `experiment` and label the axis from `risk_basis`. Saffire-II: "Average flame spread (mm/s)". FLEX: "Share of tests where the flame kept burning", with `oxygen_pct` on the x axis or as colour. Put `tests` and the outcome counts on hover. This replaces the "Riskiest materials" chart, which still says "Fake numbers" and is nearly empty on real data (be_notes.md).
+- **For BE:** `data/ranking.csv` is a new data file next to `master.csv`. It is not a contract function. If FE would rather get it through the API, a small `get_ranking()` would be a contract change.

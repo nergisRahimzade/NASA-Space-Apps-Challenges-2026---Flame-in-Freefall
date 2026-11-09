@@ -1,0 +1,31 @@
+experiment,material,material_category,oxygen_pct,tests,spread_rate_n,spread_rate_mm_s_min,spread_rate_mm_s_mean,spread_rate_mm_s_max,burn_spread_mm_s_mean,completion,extinction,disruption,kept_burning_share,risk_basis,risk_value,risk_rank
+Saffire-II,Cotton-Fiberglass (SIBAL),fabric,22.0,2,2,2.1,2.35,2.6,2.261,,,,,burn_spread_mm_s_mean,2.261,1
+Saffire-II,PMMA & Nomex,plastic + fabric,22.0,1,0,,,,0.357,,,,,burn_spread_mm_s_mean,0.357,2
+Saffire-II,PMMA,plastic,22.0,2,0,,,,0.139,,,,,burn_spread_mm_s_mean,0.139,3
+Saffire-II,Silicone,silicone,22.0,4,0,,,,0.0,,,,,burn_spread_mm_s_mean,0.0,4
+FLEX,Heptane,hydrocarbon,30.0,7,0,,,,,1,0,6,1.0,kept_burning_share,1.0,1
+FLEX,Methanol,alcohol,34.0,5,0,,,,,1,0,4,1.0,kept_burning_share,1.0,1
+FLEX,Heptane,hydrocarbon,15.0,4,0,,,,,2,2,0,0.5,kept_burning_share,0.5,3
+FLEX,Methanol,alcohol,30.0,8,0,,,,,2,2,4,0.5,kept_burning_share,0.5,3
+FLEX,Heptane,hydrocarbon,14.0,3,0,,,,,1,2,0,0.333,kept_burning_share,0.333,5
+FLEX,Heptane,hydrocarbon,24.0,15,0,,,,,2,4,9,0.333,kept_burning_share,0.333,5
+FLEX,Heptane,hydrocarbon,18.0,17,0,,,,,4,12,1,0.25,kept_burning_share,0.25,7
+FLEX,Heptane,hydrocarbon,21.0,25,0,,,,,4,12,9,0.25,kept_burning_share,0.25,7
+FLEX,Heptane,hydrocarbon,23.0,5,0,,,,,1,3,1,0.25,kept_burning_share,0.25,7
+FLEX,Heptane,hydrocarbon,17.0,10,0,,,,,2,7,1,0.222,kept_burning_share,0.222,10
+FLEX,Heptane,hydrocarbon,20.0,13,0,,,,,2,8,3,0.2,kept_burning_share,0.2,11
+FLEX,Methanol,alcohol,23.0,14,0,,,,,2,8,4,0.2,kept_burning_share,0.2,11
+FLEX,Methanol,alcohol,21.0,29,0,,,,,2,22,5,0.083,kept_burning_share,0.083,13
+FLEX,Methanol,alcohol,18.0,19,0,,,,,1,18,0,0.053,kept_burning_share,0.053,14
+FLEX,Heptane,hydrocarbon,13.0,3,0,,,,,0,3,0,0.0,kept_burning_share,0.0,15
+FLEX,Heptane,hydrocarbon,16.0,4,0,,,,,0,4,0,0.0,kept_burning_share,0.0,15
+FLEX,Heptane,hydrocarbon,19.0,4,0,,,,,0,2,2,0.0,kept_burning_share,0.0,15
+FLEX,Methanol,alcohol,12.0,8,0,,,,,0,8,0,0.0,kept_burning_share,0.0,15
+FLEX,Methanol,alcohol,13.0,6,0,,,,,0,6,0,0.0,kept_burning_share,0.0,15
+FLEX,Methanol,alcohol,14.0,8,0,,,,,0,8,0,0.0,kept_burning_share,0.0,15
+FLEX,Methanol,alcohol,15.0,15,0,,,,,0,15,0,0.0,kept_burning_share,0.0,15
+FLEX,Methanol,alcohol,16.0,6,0,,,,,0,6,0,0.0,kept_burning_share,0.0,15
+FLEX,Methanol,alcohol,17.0,11,0,,,,,0,11,0,0.0,kept_burning_share,0.0,15
+FLEX,Methanol,alcohol,19.0,3,0,,,,,0,3,0,0.0,kept_burning_share,0.0,15
+FLEX,Methanol,alcohol,20.0,17,0,,,,,0,16,1,0.0,kept_burning_share,0.0,15
+FLEX,Methanol,alcohol,24.0,4,0,,,,,0,3,1,0.0,kept_burning_share,0.0,15
