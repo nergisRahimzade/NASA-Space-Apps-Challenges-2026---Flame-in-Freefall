@@ -1,4 +1,4 @@
-# BE notes: what's built and how it runs (Days 1–13, FIF-D01-BE … FIF-D13-BE)
+# BE notes: what's built and how it runs (Days 1–14, FIF-D01-BE … FIF-D14-BE)
 
 For anyone reviewing BE PRs, and for teammates whose code calls the backend. Like
 `data_notes.md` and `ai_notes.md`, this file records what exists, the decisions behind it, and
@@ -25,7 +25,8 @@ the open questions.
 | D10-BE | Real `search()`; builds the index on first search; contract v1.3 | `api.py`, `docs/contract.md`, `tests/test_search.py`, `tests/conftest.py` (fake model for all tests) | #144 |
 | D11-BE | Measure speed: every call timed, repeated questions cached, slowest-calls report | `speed.py`, `api.py`, `cache.py` (`is_cached`), `tests/test_speed.py`, 3 lines in `app/streamlit_app.py` (FE's file) | #145 |
 | D12-BE | `search()` takes an `experiment` filter; contract v1.4 | `api.py`, `docs/contract.md`, `tests/test_search.py` | #146 |
-| D13-BE | Edge cases for all three functions; `search()` "no match" (min score 0.30); contract v1.5 | `api.py`, `docs/contract.md`, `tests/test_api_edge_cases.py`, `tests/conftest.py` | FIF-D13-BE PR |
+| D13-BE | Edge cases for all three functions; `search()` "no match" (min score 0.30); contract v1.5 | `api.py`, `docs/contract.md`, `tests/test_api_edge_cases.py`, `tests/conftest.py` | #148 |
+| D14-BE | End-to-end check: ingest → search → table | `tests/test_end_to_end.py`, `scripts/day14_end_to_end.py` | FIF-D14-BE PR |
 
 ## 2. What each BE file does
 
@@ -223,18 +224,36 @@ The app (`app/streamlit_app.py`) belongs to FE and only calls `api.py`.
   differently. The "no match" tests turn it on themselves.
 - **All edge cases in one place:** `tests/test_api_edge_cases.py`, grouped by function.
 
-## 6. Where the next ticket starts (FIF-D14-BE: end-to-end test)
+### End-to-end check (D14)
 
-The plan: *1) Script: ingest → search → table. 2) Tag v0.2. Done when: test green.*
+- **Two versions of the same path.** `tests/test_end_to_end.py` runs in CI with the fake model.
+  `uv run python scripts/day14_end_to_end.py` uses the real model (about 18 s once the model is
+  downloaded) and is the only one that exercises `MIN_SCORE`. Both write only to temporary folders.
+- **What the tests guard is the joins between steps:** `search()` uses the index ingest built
+  instead of building its own, and every experiment name in `sources.csv` has rows in
+  `master.csv`, so renaming one in only one file now fails CI.
+- **No row counts or scores in the tests,** so DAT can add rows without breaking them.
+- **Each check was confirmed to fail when broken** (on a scratch copy): an experiment renamed only
+  in `master.csv`, `search()` always rebuilding, and the script with the cutoff turned off.
+- **Known, not a BE bug:** "What oxygen levels and pressures were used in the FLEX-2 chamber?"
+  ranks a FLEX chunk first with no filter, so following its experiment shows FLEX rows. It's Q4 in
+  `tests/retrieval.md` (AI's retrieval work, D14-AI). The check only proves the path works, not
+  that the top passage is the right one.
 
-- **The pieces exist:** `ingest.run()` (D08), `api.search()` (D10–D13) and `api.get_table()` (D09).
-  The test would build chunks and the index into a temporary folder, search a real question, then
-  load the table rows for the experiment of the top result, checking that each step's output
-  feeds the next.
-- **Fake or real model:** CI must stay offline, so the pytest version uses the fake model. A
-  separate script (like the `scripts/dayN_*.py` ones) can run the same steps with the real model.
-- **Tag v0.2:** a Git tag marks the commit that passed the test (`git tag v0.2`, then
-  `git push origin v0.2`). Pushing a tag is visible to the whole team, so agree on it first.
+## 6. Where the next ticket starts (FIF-D15-BE: sources in output)
+
+**Still to do for D14 after its PR merges:** tag the merge commit `v0.2` once the team agrees
+(`git tag v0.2 <commit>`, then `git push origin v0.2`). Pushing a tag is visible to everyone.
+
+The D15 plan: *1) Return `{takeaways: [{text, source}]}`. 2) Validate shape. Done when: shape
+tested.*
+
+- **Mostly there already:** `summarize()` returns `{"takeaways": [{"text", "source", "chunk_id"}],
+  "not_found": bool}` (`docs/contract.md`), on both the Gemini path and the fallback. That's the
+  plan's shape plus `chunk_id` and `not_found`, so keep those and flag the difference in the PR.
+- **Where to start:** D13 validates what goes *into* `summarize()` (`_check_passages`). D15 is about
+  what comes *out*, so check what `tests/test_contract.py` and `tests/test_summarizer.py` already
+  cover and add only what's missing.
 
 ## 7. Rules to keep
 
