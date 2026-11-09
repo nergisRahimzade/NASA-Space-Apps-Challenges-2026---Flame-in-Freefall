@@ -112,6 +112,26 @@ Rules:
 
 Why spread / airflow and not a 0-1 scale: with only 2 spread rates, a 0-1 scale would just turn them into 0 and 1. The ratio keeps its meaning, and it can still be compared if tests at other airflow speeds are added.
 
+## 5. Riskiness ranking: `data/ranking.csv` (Day 13, FIF-D13-DAT)
+
+Built by `src/flame_in_freefall/build_ranking.py` from `data/master.csv` and `data/clean/saffire2.csv`. One row = one experiment + material + oxygen level. 30 rows: Saffire-II 4, FLEX 26. Rules and reasons: `data_notes.md` section 9.
+
+| Column | Type | Unit | Meaning |
+|---|---|---|---|
+| `experiment` | text | n/a | `Saffire-II` or `FLEX`. FLEX-2 is left out (no results, only planned ranges). |
+| `material` | text | n/a | Same spelling as `master.csv`. |
+| `material_category` | text | n/a | Same as `master.csv` (section 4). |
+| `oxygen_pct` | number | % | Oxygen level of the group: middle of `oxygen_pct_min`/`max`, rounded to a whole percent (0.5 rounds up). |
+| `tests` | integer | count | Rows of `master.csv` in the group (Saffire-II samples or FLEX tests). |
+| `spread_rate_n` | integer | count | How many of those rows have a measured `spread_rate_mm_s`. Only SIBAL (2). |
+| `spread_rate_mm_s_min` / `_mean` / `_max` | number | mm/s | Smallest, average and largest measured spread rate. Empty when `spread_rate_n` is 0. |
+| `burn_spread_mm_s_mean` | number | mm/s | Saffire-II only. Average spread over the whole burn: microgravity burn length / burn time, averaged over the samples. 0 when the flame did not spread (burn length 0). Empty for FLEX. |
+| `completion` / `extinction` / `disruption` | integer | count | FLEX only. How many tests ended each way (`master.csv` `outcome`). Empty for Saffire-II, which has no outcome. |
+| `kept_burning_share` | number | 0-1 | FLEX only. `completion / (completion + extinction)`: of the tests that finished, the share where the flame burned until the fuel was gone instead of going out. Disruptions are left out. |
+| `risk_basis` | text | n/a | Name of the column that decides the rank: `burn_spread_mm_s_mean` (Saffire-II) or `kept_burning_share` (FLEX). |
+| `risk_value` | number | as `risk_basis` | Copy of that column, so a chart can plot one column for both experiments. |
+| `risk_rank` | integer | n/a | 1 = riskiest **within the experiment**. Ties share a rank (two groups at 1.0 are both 1, the next is 3). Do not compare ranks across experiments. |
+
 ## Gaps and risks for the project
 
 - **Airflow** exists only as a range in FLEX-2 and as a constant in Saffire-II; FLEX has none. A "which airflow" answer will be thin.
