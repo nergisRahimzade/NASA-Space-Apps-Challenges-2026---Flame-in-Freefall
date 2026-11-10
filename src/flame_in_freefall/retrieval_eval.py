@@ -45,6 +45,55 @@ ANSWERABLE = [n for n, phrases in EVIDENCE.items() if phrases]
 # summary (Day 9's Q4 got FLEX's pressure range). A bigger k returns more of these.
 NAMED_EXPERIMENT: dict[int, str] = {2: "FLEX", 4: "FLEX-2", 5: "FLEX-2", 7: "Saffire-II"}
 
+# Day 14: 10 NEW questions, held out. The ranking changes in scripts/day14_checkpoint.py were
+# chosen by looking at the 10 questions above, so a change that only fits those would show up
+# here. Written in different words from the reports on purpose. Each entry: question, evidence
+# phrases copied word for word from docs/reports/, and the experiment it names (or None).
+HELD_OUT: list[tuple[str, list[str], str | None]] = [
+    (
+        "Which materials were burned in Saffire-II?",
+        ["SIBAL, silicone, structure PMMA"],
+        "Saffire-II",
+    ),
+    ("How big was each Saffire-II sample?", ["each 5 cm x 29 cm"], "Saffire-II"),
+    (
+        "How long did the gas sit in the chamber before a FLEX-2 test started?",
+        ["settling time of approximately 2 minutes"],
+        "FLEX-2",
+    ),
+    (
+        "Which settings did FLEX-2 change on purpose?",
+        ["independently varied experimental"],
+        "FLEX-2",
+    ),
+    ("How small is the first droplet in the LOI tests?", ["Select a smaller droplet size"], None),
+    (
+        "What instruments recorded data during the burn?",
+        ["two radiometers recorded flame radiation", "thermocouples provided flow"],
+        None,
+    ),
+    (
+        "Which vehicle carried the fire experiment after it left the space station?",
+        ["Cygnus resupply vehicle"],
+        None,
+    ),
+    (
+        "How could this research help car engines on Earth?",
+        ["design of advanced combustion engines", "cleaner combustion technologies"],
+        None,
+    ),
+    (
+        "What did the scientists expect weightlessness to change about burning droplets?",
+        ["microgravity conditions fundamentally alter"],
+        None,
+    ),
+    (
+        "Why run a big fire test on a spacecraft with nobody on board?",
+        ["without risk to a crew", "the risks are too high"],
+        None,
+    ),
+]
+
 # Day 13: questions whose evidence only mentions the topic without answering it in full. They can
 # still pass, but the reason says "weak", as in the Day 9 hand judgments.
 WEAK = {3: "cool flames are mentioned but never defined"}
@@ -55,25 +104,25 @@ def _squash(text: str) -> str:
     return " ".join(text.split())
 
 
+def contains_evidence(phrases: list[str], text: str) -> bool:
+    """True if the passage contains any of the phrases (whitespace doesn't matter)."""
+    passage = _squash(text)
+    return any(_squash(p) in passage for p in phrases)
+
+
 def is_relevant(question_num: int, text: str) -> bool:
     """True if the passage contains any evidence phrase for that question."""
     if question_num not in EVIDENCE:
         raise ValueError(f"no question number {question_num}")
-    passage = _squash(text)
-    return any(_squash(p) in passage for p in EVIDENCE[question_num])
+    return contains_evidence(EVIDENCE[question_num], text)
 
 
-def judge(question_num: int, results: list[dict]) -> tuple[bool, str]:
-    """Pass or fail for one question, given what search() returned (best first), plus why.
-
-    Uncovered question (no evidence): passes only if search returned nothing ("no match"),
-    because any passage sent on would invite the summary to answer from unrelated text.
-    Answerable question: passes if a returned passage contains the answer, and, for a question
-    that names an experiment, nothing from another experiment came back with it (that chunk's
-    numbers could end up in the summary, as FLEX's pressure range did for Q4 on Day 9)."""
-    if question_num not in EVIDENCE:
-        raise ValueError(f"no question number {question_num}")
-    if not EVIDENCE[question_num]:
+def judge_against(
+    phrases: list[str], named: str | None, results: list[dict], weak: str | None = None
+) -> tuple[bool, str]:
+    """Pass or fail for one question, given its evidence phrases, the experiment it names (or
+    None), and what search() returned (best first), plus why. judge() explains the rule."""
+    if not phrases:
         if not results:
             return True, "no match returned, as it should be (the reports don't answer it)"
         return False, (
@@ -82,10 +131,9 @@ def judge(question_num: int, results: list[dict]) -> tuple[bool, str]:
         )
     if not results:
         return False, "nothing returned: every passage scored under the cutoff"
-    hits = [r for r, p in enumerate(results, start=1) if is_relevant(question_num, p["text"])]
+    hits = [r for r, p in enumerate(results, start=1) if contains_evidence(phrases, p["text"])]
     if not hits:
         return False, f"none of the {len(results)} returned passages contains the answer"
-    named = NAMED_EXPERIMENT.get(question_num)
     wrong = [p["id"] for p in results if named and p.get("experiment", named) != named]
     if wrong:
         return False, (
@@ -93,9 +141,27 @@ def judge(question_num: int, results: list[dict]) -> tuple[bool, str]:
             f"came too ({', '.join(wrong)}), so wrong numbers could reach the summary"
         )
     reason = f"answer at rank {hits[0]} ({results[hits[0] - 1]['id']})"
-    if question_num in WEAK:
-        reason += f"; weak: {WEAK[question_num]}"
+    if weak:
+        reason += f"; weak: {weak}"
     return True, reason
+
+
+def judge(question_num: int, results: list[dict]) -> tuple[bool, str]:
+    """Pass or fail for one of the 10 questions, given what search() returned, plus why.
+
+    Uncovered question (no evidence): passes only if search returned nothing ("no match"),
+    because any passage sent on would invite the summary to answer from unrelated text.
+    Answerable question: passes if a returned passage contains the answer, and, for a question
+    that names an experiment, nothing from another experiment came back with it (that chunk's
+    numbers could end up in the summary, as FLEX's pressure range did for Q4 on Day 9)."""
+    if question_num not in EVIDENCE:
+        raise ValueError(f"no question number {question_num}")
+    return judge_against(
+        EVIDENCE[question_num],
+        NAMED_EXPERIMENT.get(question_num),
+        results,
+        WEAK.get(question_num),
+    )
 
 
 def chance_of_a_hit(n_chunks: int, n_relevant: int, k: int = 3) -> float:

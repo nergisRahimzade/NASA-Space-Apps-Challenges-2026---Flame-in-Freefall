@@ -5,8 +5,11 @@ vector by cosine similarity: 1 = same direction (same meaning), near 0 = unrelat
 FIF-D10-BE wires find_passages into api.search(); until then api.search() returns mock data.
 Day 12 (AI): find_passages can keep only one experiment's chunks before ranking, using the
 `experiment` tag DAT added to every chunk (FLEX-2, Saffire-II or FLEX).
-Day 11 (AI): find_passages returns 5 chunks by default, not 3 (tests/top_k.md)."""
+Day 11 (AI): find_passages returns 5 chunks by default, not 3 (tests/top_k.md).
+Day 14 (AI): experiment_in_question reads the experiment name out of a question, so search can be
+filtered even when nobody picked one in the app (tests/checkpoint.md)."""
 
+import re
 from pathlib import Path
 
 import numpy as np
@@ -58,6 +61,21 @@ def rows_for_experiment(chunks: list[dict], experiment: str | None = None) -> li
         known = sorted({c["experiment"] for c in chunks})
         raise ValueError(f"unknown experiment {experiment!r}; choose one of {known}")
     return rows
+
+
+def experiment_in_question(query: str, experiments: list[str]) -> str | None:
+    """The one experiment the question names, spelled as in `experiments`, or None.
+
+    Case is ignored, but the name must stand alone: "FLEX" doesn't match inside "FLEX-2", and
+    "Saffire" alone doesn't match "Saffire-II". A question naming two experiments ("compare FLEX
+    and FLEX-2") gives None, since one filter would hide the other's chunks."""
+    named = {
+        e
+        for e in experiments
+        # (?<![\w-]) and (?![\w-]): no letter, digit or hyphen right before or after the name.
+        if re.search(rf"(?<![\w-]){re.escape(e)}(?![\w-])", query, flags=re.IGNORECASE)
+    }
+    return named.pop() if len(named) == 1 else None
 
 
 def find_passages(

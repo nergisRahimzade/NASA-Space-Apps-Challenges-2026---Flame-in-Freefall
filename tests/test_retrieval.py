@@ -117,3 +117,22 @@ def test_find_passages_filter_needs_tagged_chunks(monkeypatch, tmp_path):
         retrieval.find_passages("q", folder=tmp_path, experiment="FLEX")
     # Without a filter the old index still works.
     assert len(retrieval.find_passages("q", folder=tmp_path)) == 3
+
+
+EXPERIMENTS = ["FLEX", "FLEX-2", "Saffire-II"]
+
+
+@pytest.mark.parametrize(
+    ("query", "expected"),
+    [
+        ("What oxygen levels were used in the FLEX-2 chamber?", "FLEX-2"),
+        ("How did FLEX measure the LOI?", "FLEX"),  # not FLEX-2
+        ("what airflow speeds were used in saffire-ii?", "Saffire-II"),  # case is ignored
+        ("What is a cool flame?", None),  # no experiment named
+        ("Compare FLEX and FLEX-2", None),  # two named: can't filter to one
+        ("Was Saffire safe?", None),  # "Saffire" alone isn't "Saffire-II"
+        ("What did FLEXIBLE materials do?", None),  # name inside a longer word
+    ],
+)
+def test_experiment_in_question(query, expected):
+    assert retrieval.experiment_in_question(query, EXPERIMENTS) == expected

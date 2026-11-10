@@ -1,6 +1,7 @@
 """Day 10 (AI): the answer key reproduces the Day 9 hand judgments, and scoring adds up.
 Day 11 (AI): wrong-experiment chunks are counted for questions that name an experiment.
 Day 13 (AI): judge() gives the right pass/fail and reason.
+Day 14 (AI): the held-out questions are answerable and their experiment names are real.
 
 No model needed: these tests only read text."""
 
@@ -12,9 +13,11 @@ import pytest
 from flame_in_freefall.chunking import chunk_reports
 from flame_in_freefall.retrieval_eval import (
     ANSWERABLE,
+    HELD_OUT,
     NAMED_EXPERIMENT,
     QUESTIONS,
     chance_of_a_hit,
+    contains_evidence,
     is_relevant,
     judge,
     score_results,
@@ -146,3 +149,15 @@ def test_judge_uncovered_question_passes_only_on_no_match():
 def test_judge_unknown_question_fails_loudly():
     with pytest.raises(ValueError):
         judge(11, [])
+
+
+def test_held_out_questions_are_answerable_and_new():
+    # Like the 10 questions: a phrase with a typo, or split across 2 chunks, would never match.
+    chunks = chunk_reports(SOURCES, REPORTS, 150, 30)
+    tags = {c["experiment"] for c in chunks}
+    assert len(HELD_OUT) == 10
+    for question, phrases, named in HELD_OUT:
+        assert phrases and question not in QUESTIONS, question
+        assert any(contains_evidence(phrases, c["text"]) for c in chunks), question
+        if named:
+            assert named in tags and named.lower() in question.lower(), question
