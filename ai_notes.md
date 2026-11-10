@@ -1,5 +1,5 @@
 
-# AI notes: what's built and where to pick up (Days 1–13, FIF-D01-AI … FIF-D13-AI)
+# AI notes: what's built and where to pick up (Days 1–14, FIF-D01-AI … FIF-D14-AI)
 
 
 For whoever takes over the AI role, and for anyone reviewing AI PRs. Like `data_notes.md`,
@@ -31,6 +31,7 @@ with a citation for every claim.
 | D11-AI | Compare top 3, 5 and 8 and log the failures | `scripts/day11_compare_k.py`, `tests/top_k.md`, `NAMED_EXPERIMENT` in `retrieval_eval.py`, `tests/test_retrieval_eval.py` | FIF-D11-AI PR |
 | D12-AI | Filter search by experiment before ranking | `rows_for_experiment` and `experiment=` in `src/flame_in_freefall/retrieval.py`, `scripts/day12_filter_by_experiment.py`, `tests/experiment_filter.md`, `tests/test_retrieval.py` | #142 |
 | D13-AI | Re-run the 10 questions through the real `search()`, pass/fail with reason | `judge` and `WEAK` in `retrieval_eval.py`, `scripts/day13_retest.py`, `tests/retest.md`, `tests/test_retrieval_eval.py` | FIF-D13-AI PR |
+| D14-AI | Retrieval checkpoint: score recorded, ranking changes tried on the 10 questions and 10 held-out ones | `experiment_in_question` in `retrieval.py`, `HELD_OUT`, `contains_evidence` and `judge_against` in `retrieval_eval.py`, `scripts/day14_checkpoint.py`, `tests/checkpoint.md`, `tests/test_retrieval.py`, `tests/test_retrieval_eval.py` | FIF-D14-AI PR |
 
 
 Related BE pieces the AI code uses: `store.py` saves/loads the index (D04-BE), `summarizer.py`
@@ -69,6 +70,7 @@ uv run python scripts/day10_compare_chunk_sizes.py  # 15 chunk settings, scored 
 uv run python scripts/day11_compare_k.py         # top 3, 5 and 8, scored -> artifacts/top_k_draft.md
 uv run python scripts/day12_filter_by_experiment.py  # with/without the filter -> artifacts/experiment_filter_draft.md
 uv run python scripts/day13_retest.py           # real search(), pass/fail -> artifacts/day13_retest_draft.md
+uv run python scripts/day14_checkpoint.py       # checkpoint score + ranking changes -> artifacts/day14_checkpoint_draft.md
 
 ```
 
@@ -160,6 +162,17 @@ For Gemini: put `GEMINI_API_KEY=...` in `.env` (git-ignored, see `.env.example`)
 - **Re-test result (D13):** 7 of 10 pass with the experiment picked (Q6, Q9, Q10 fail), 4 of 10
   with the app's default "All experiments" (Q2, Q4 and Q5 also fail on wrong-experiment chunks).
 
+- **Checkpoint score (D14): 7 of 10 in the app, goal 8.** Full log: `tests/checkpoint.md`.
+  "Keywords + best sentence" ranking reaches 8 of 10 when measured in memory, and 10 of 10 on 10
+  held-out questions (today's search: 8 of 10). It's not in the app: it needs sentence vectors in
+  the index and a new meaning for `score`, both BE's.
+- **Held-out questions (D14):** `HELD_OUT` in `retrieval_eval.py` has 10 new questions that were not
+  used to choose any change. Judge every future ranking change on both sets, so a change that only
+  fits the 10 original questions shows up.
+- **Reading the experiment from the question (D14):** `experiment_in_question` returns the one
+  experiment a question names, or `None` (none, or two named). It's built and tested but nothing
+  calls it yet. With it, the default run scores 7 instead of 4.
+
 ## 5. Open questions and known issues
 
 - **Embedding model not confirmed by the team.** Nergis tried Gemini embeddings
@@ -211,27 +224,32 @@ For Gemini: put `GEMINI_API_KEY=...` in `.env` (git-ignored, see `.env.example`)
 - **No score cutoff separates good from bad (D09).** Q3's relevant chunk scored 0.427, and Q9's
   irrelevant top result scored 0.478. Search always returns k passages, so "not found" depends on
   `summarize()`.
-- **Should D14-AI reuse these 10 questions?** Two of them aren't answerable from the reports, so 8 of
-  10 would need all 8 answerable ones to pass. The team hasn't decided.
+- **Do Q9 and Q10 count toward "8 of 10"? (D9, still open after D14)** No search change can pass
+  them: they score 0.41–0.54, as high as real answers. With them in, 8 of 10 means all 8
+  answerable questions must pass. D14 reused the same 10 and added 10 held-out ones.
+- **Adopt "keywords + best sentence"? (D14)** It's the only change that reaches 8 of 10, and it
+  holds on the held-out set. Needs BE: sentence vectors in the index (120 for 18 chunks),
+  `score` becomes the best sentence's score, and `MIN_SCORE` needs retuning. The off-topic "rocket
+  thrust" question scores 0.3004 that way. Steps in `tests/checkpoint.md`.
 - **The corpus is small:** 3 reports, about 2,100 words in total. Keep that in mind for
   the "8 of 10 relevant" goal in D14-AI.
 
-## 6. Where the next ticket starts (FIF-D14-AI checkpoint, goal 8 of 10)
+## 6. Where the next ticket starts (FIF-D15-AI summary prompt v2, and the open search work)
 
-- **Where search stands (D13, `tests/retest.md`):** 7 of 10 through the real `search()` with the
-  experiment picked, 4 of 10 with the app's default "All experiments". Remaining fails: Q6 (answer
-  ranks 17th of 18), Q9 and Q10 (not in the reports, and the cutoff doesn't stop them).
-- **Re-run the checkpoint with** `uv run python scripts/day13_retest.py`. It prints pass/fail per
-  question and writes the draft to `artifacts/`. `judge()` holds the rule.
-- **Cheapest win: read the experiment name from the question** when the dropdown says "All
-  experiments". All 4 named questions spell it out, so the default run would match the picked one.
-- **Q6 needs its own fix:** keyword matching (BM25) next to the embeddings, or embed the experiment
-  name and title with each chunk. Measure with `score_results` and `judge`.
-- **Q9 and Q10 rely on `summarize()`'s `not_found`**, since no search cutoff separates them. Test
-  that on the real Gemini once there's a key. The team also has to decide whether they count
-  toward the 8 (§5).
-- **Talk to BE about `MIN_SCORE`** (0.30 now, 0.27 suggested, untested). Re-run the re-test after
-  any change, since the scores move with the model and the chunking.
+- **Where search stands (D14, `tests/checkpoint.md`):** 7 of 10 in the app with the experiment
+  picked. "Keywords + best sentence" reaches 8 of 10 (and 10 of 10 held out), measured in memory
+  only. The code is in `scripts/day14_checkpoint.py` (`best_sentence`, `bm25`, `fuse`).
+- **To put it in the app,** agree with BE first: sentence vectors saved by `make ingest`, the
+  ranking in `find_passages`, a contract note that `score` is the best sentence's score, and a new
+  `MIN_SCORE` (0.35 keeps every answer on both sets and clears the off-topic questions measured so
+  far). Then re-run `day13_retest.py` and `day14_checkpoint.py`.
+- **`experiment_in_question` is ready to wire in:** in `api.search`, when `experiment is None`, use
+  `experiment_in_question(query, <experiments in the index>)`. That's BE's file, so ask first. Or
+  FE can use it to pre-select the dropdown.
+- **D15-AI (prompt v2):** Q9 and Q10 always reach `summarize()` with unrelated passages, so prompt v2's
+  "not found" rule is their only guard. Use them as the first not-found tests. Also, with the
+  0.30 cutoff, Q2's summary gets only steps 1–6 of the LOI procedure (`tests/retest.md`).
+- **Judge every change on both question sets** (`TUNING` and `HELD` in the D14 script).
 
 ## 7. Rules to keep
 
