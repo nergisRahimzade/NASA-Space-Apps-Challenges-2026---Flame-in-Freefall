@@ -5,7 +5,8 @@ those judgments don't carry over. Instead, each answerable question gets a short
 "evidence" phrases taken from the reports: a returned chunk counts as relevant if it contains
 at least one of them. The phrases were picked so they reproduce the Day 9 hand judgments in
 tests/retrieval.md (tests/test_retrieval_eval.py checks that), then reused for every setting.
-Day 11 (AI): the same scoring compares k = 3, 5 and 8, and also counts wrong-experiment chunks."""
+Day 11 (AI): the same scoring compares k = 3, 5 and 8, and also counts wrong-experiment chunks.
+Day 13 (AI): judge() gives each question a pass or fail with a reason, for what search() returns."""
 
 from math import comb
 
@@ -44,6 +45,10 @@ ANSWERABLE = [n for n, phrases in EVIDENCE.items() if phrases]
 # summary (Day 9's Q4 got FLEX's pressure range). A bigger k returns more of these.
 NAMED_EXPERIMENT: dict[int, str] = {2: "FLEX", 4: "FLEX-2", 5: "FLEX-2", 7: "Saffire-II"}
 
+# Day 13: questions whose evidence only mentions the topic without answering it in full. They can
+# still pass, but the reason says "weak", as in the Day 9 hand judgments.
+WEAK = {3: "cool flames are mentioned but never defined"}
+
 
 def _squash(text: str) -> str:
     # Chunks join words with single spaces, so compare with all whitespace squashed the same way.
@@ -56,6 +61,41 @@ def is_relevant(question_num: int, text: str) -> bool:
         raise ValueError(f"no question number {question_num}")
     passage = _squash(text)
     return any(_squash(p) in passage for p in EVIDENCE[question_num])
+
+
+def judge(question_num: int, results: list[dict]) -> tuple[bool, str]:
+    """Pass or fail for one question, given what search() returned (best first), plus why.
+
+    Uncovered question (no evidence): passes only if search returned nothing ("no match"),
+    because any passage sent on would invite the summary to answer from unrelated text.
+    Answerable question: passes if a returned passage contains the answer, and, for a question
+    that names an experiment, nothing from another experiment came back with it (that chunk's
+    numbers could end up in the summary, as FLEX's pressure range did for Q4 on Day 9)."""
+    if question_num not in EVIDENCE:
+        raise ValueError(f"no question number {question_num}")
+    if not EVIDENCE[question_num]:
+        if not results:
+            return True, "no match returned, as it should be (the reports don't answer it)"
+        return False, (
+            f"{len(results)} unrelated passage(s) returned (top score "
+            f"{results[0]['score']:.3f}), so the no-match cutoff didn't catch it"
+        )
+    if not results:
+        return False, "nothing returned: every passage scored under the cutoff"
+    hits = [r for r, p in enumerate(results, start=1) if is_relevant(question_num, p["text"])]
+    if not hits:
+        return False, f"none of the {len(results)} returned passages contains the answer"
+    named = NAMED_EXPERIMENT.get(question_num)
+    wrong = [p["id"] for p in results if named and p.get("experiment", named) != named]
+    if wrong:
+        return False, (
+            f"answer at rank {hits[0]}, but {len(wrong)} passage(s) from another experiment "
+            f"came too ({', '.join(wrong)}), so wrong numbers could reach the summary"
+        )
+    reason = f"answer at rank {hits[0]} ({results[hits[0] - 1]['id']})"
+    if question_num in WEAK:
+        reason += f"; weak: {WEAK[question_num]}"
+    return True, reason
 
 
 def chance_of_a_hit(n_chunks: int, n_relevant: int, k: int = 3) -> float:

@@ -1,5 +1,5 @@
 
-# AI notes: what's built and where to pick up (Days 1–11, FIF-D01-AI … FIF-D11-AI)
+# AI notes: what's built and where to pick up (Days 1–13, FIF-D01-AI … FIF-D13-AI)
 
 
 For whoever takes over the AI role, and for anyone reviewing AI PRs. Like `data_notes.md`,
@@ -29,6 +29,8 @@ with a citation for every claim.
 | D09-AI | Test real search with 10 questions and judge the top 3 | `scripts/day9_test_search.py`, `tests/retrieval.md` | FIF-D09-AI PR |
 | D10-AI | Compare chunk sizes and overlaps, score each, choose one | `src/flame_in_freefall/retrieval_eval.py`, `scripts/day10_compare_chunk_sizes.py`, `tests/chunk_sizes.md`, `tests/test_retrieval_eval.py` | FIF-D10-AI PR |
 | D11-AI | Compare top 3, 5 and 8 and log the failures | `scripts/day11_compare_k.py`, `tests/top_k.md`, `NAMED_EXPERIMENT` in `retrieval_eval.py`, `tests/test_retrieval_eval.py` | FIF-D11-AI PR |
+| D12-AI | Filter search by experiment before ranking | `rows_for_experiment` and `experiment=` in `src/flame_in_freefall/retrieval.py`, `scripts/day12_filter_by_experiment.py`, `tests/experiment_filter.md`, `tests/test_retrieval.py` | #142 |
+| D13-AI | Re-run the 10 questions through the real `search()`, pass/fail with reason | `judge` and `WEAK` in `retrieval_eval.py`, `scripts/day13_retest.py`, `tests/retest.md`, `tests/test_retrieval_eval.py` | FIF-D13-AI PR |
 
 
 Related BE pieces the AI code uses: `store.py` saves/loads the index (D04-BE), `summarizer.py`
@@ -65,6 +67,8 @@ uv run python scripts/day8_embed_chunks.py       # real chunks -> artifacts/inde
 uv run python scripts/day9_test_search.py        # 10 real questions -> artifacts/retrieval_draft.md
 uv run python scripts/day10_compare_chunk_sizes.py  # 15 chunk settings, scored -> artifacts/chunk_sizes_draft.md
 uv run python scripts/day11_compare_k.py         # top 3, 5 and 8, scored -> artifacts/top_k_draft.md
+uv run python scripts/day12_filter_by_experiment.py  # with/without the filter -> artifacts/experiment_filter_draft.md
+uv run python scripts/day13_retest.py           # real search(), pass/fail -> artifacts/day13_retest_draft.md
 
 ```
 
@@ -146,6 +150,16 @@ For Gemini: put `GEMINI_API_KEY=...` in `.env` (git-ignored, see `.env.example`)
 - **The k comparison uses the committed chunks (D11):** `day11_compare_k.py` reads
   `data/processed/chunks.jsonl` and embeds it in memory, so it needs no built index.
 
+- **The re-test goes through the real `api.search()` (D13)**, not `find_passages`, so it includes
+  everything the app does: k = 5, the experiment filter and D13-BE's 0.30 score cutoff. It builds
+  `artifacts/index/` if it's missing, like the app. Full log: `tests/retest.md`.
+- **Pass/fail rule (D13, `judge` in `retrieval_eval.py`):** an answerable question passes if a
+  returned passage holds the answer *and*, when the question names an experiment, no other
+  experiment's passage comes with it. An uncovered question passes only on "no match" (`[]`).
+  The experiment rule is stricter than Days 9–12, which counted a question as found either way.
+- **Re-test result (D13):** 7 of 10 pass with the experiment picked (Q6, Q9, Q10 fail), 4 of 10
+  with the app's default "All experiments" (Q2, Q4 and Q5 also fail on wrong-experiment chunks).
+
 ## 5. Open questions and known issues
 
 - **Embedding model not confirmed by the team.** Nergis tried Gemini embeddings
@@ -164,9 +178,15 @@ For Gemini: put `GEMINI_API_KEY=...` in `.env` (git-ignored, see `.env.example`)
 - **Q6 isn't a chunk-size or k problem (D10, D11).** Its relevant chunk ranked 12th or lower at
   every size up to 200 words, and 17th of 18 at 150/30, so no k up to 8 finds it. 7 of its top 8
   are FLEX droplet chunks; maybe "large fire" matches "relatively large droplets". Untested.
-- **Change the default k from 3 to 5? (D11)** It's `search(query, k=3)` in `docs/contract.md` and
-  `api.search`, so BE has to agree. Also check that the summary still fits the timeout with 5
-  passages, since it's untested on the real Gemini.
+- **Default k is 5 now** (contract v1.1, agreed with BE). Still to check: that the summary fits
+  the timeout with 5 passages, since it's untested on the real Gemini.
+- **The 0.30 score cutoff (D13-BE) doesn't catch Q9 or Q10, and drops Q2's answer passages (D13).**
+  Q9 and Q10 score 0.39–0.48, which is above Q4's answer at 0.395, so no cutoff separates them. Q2
+  loses `flex-p1-c2` (0.295, the LOI procedure's key step) and `flex-p1-c3` (0.281). The log suggests
+  discussing 0.27 with BE. That's untested. Details: `tests/retest.md`.
+- **"All experiments" is the app's default, and it lets wrong-experiment numbers through (D13).**
+  Q2, Q4 and Q5 fail the re-test only because of this. Reading the experiment name from the
+  question when nothing is picked would fix all three. Not built.
 - **Bigger k sends wrong-experiment numbers to the summary (D11).** At k = 5, Q4 gets FLEX-2's
   pressure range (4th) and FLEX's (1st). `summarize()` never sees the question, so it can't drop
   FLEX's. On paper, filtering chunks by the named experiment puts Q4's answer 2nd with no
@@ -196,29 +216,22 @@ For Gemini: put `GEMINI_API_KEY=...` in `.env` (git-ignored, see `.env.example`)
 - **The corpus is small:** 3 reports, about 2,100 words in total. Keep that in mind for
   the "8 of 10 relevant" goal in D14-AI.
 
-## 6. Where the next ticket starts (FIF-D12-AI and on, then the D14-AI checkpoint)
+## 6. Where the next ticket starts (FIF-D14-AI checkpoint, goal 8 of 10)
 
-- **Where search stands:** chunks 150/30 (D10). Best result 7 of 8 answerable at k = 5, which is
-  7 of 10 overall. Remaining misses: Q6 (answer ranks 17th of 18) and Q9/Q10 (not in the reports).
-  The D14-AI goal is 8 of 10, so k and chunk size alone don't get there.
-- **Ask BE about k = 5:** the default is in `docs/contract.md`. Until they agree, leave the code at 3.
-- **Most promising next change: filter by experiment.** Every chunk has an `experiment` tag (Day 12
-  DAT). On paper, filtering moves Q4's answer from 4th to 2nd and removes all wrong-experiment
-  chunks (`tests/top_k.md`). Open part: how search learns the experiment (the user picks it in the
-  app, or the code spots the name in the question). Only 4 of the 10 questions name one.
-- **Q6 needs its own fix:** try keyword matching (BM25) alongside the embeddings, or embed the
-  experiment name and title with each chunk. Measure with `score_results` and compare to
-  `tests/top_k.md`.
-- **Scoring is ready for any of these:** `score_results(results, chunks, k)` gives first, top-k,
-  relevant, random baseline and wrong-experiment counts. `day11_compare_k.py` shows how to call it.
-- **Check with the D08-BE owner:** `be_notes.md` asks both roles to agree where `chunks.jsonl` and
-  the index live, so `make ingest` writes the same files. We use `data/processed/chunks.jsonl` and
-  `artifacts/index/`; that hasn't been confirmed with them yet. Rebuild the index after any change
-  to `chunks.jsonl`, or the filter raises on untagged chunks.
-- **Real search isn't in the app yet:** `api.search()` returns mock data until **FIF-D10-BE** connects
-  `find_passages`. The live app also needs a way to build its index, since it isn't committed.
-- **D14-AI** records the checkpoint (goal: 8 of 10 relevant). The team still has to decide whether
-  the two uncovered questions stay in the set (§5).
+- **Where search stands (D13, `tests/retest.md`):** 7 of 10 through the real `search()` with the
+  experiment picked, 4 of 10 with the app's default "All experiments". Remaining fails: Q6 (answer
+  ranks 17th of 18), Q9 and Q10 (not in the reports, and the cutoff doesn't stop them).
+- **Re-run the checkpoint with** `uv run python scripts/day13_retest.py`. It prints pass/fail per
+  question and writes the draft to `artifacts/`. `judge()` holds the rule.
+- **Cheapest win: read the experiment name from the question** when the dropdown says "All
+  experiments". All 4 named questions spell it out, so the default run would match the picked one.
+- **Q6 needs its own fix:** keyword matching (BM25) next to the embeddings, or embed the experiment
+  name and title with each chunk. Measure with `score_results` and `judge`.
+- **Q9 and Q10 rely on `summarize()`'s `not_found`**, since no search cutoff separates them. Test
+  that on the real Gemini once there's a key. The team also has to decide whether they count
+  toward the 8 (§5).
+- **Talk to BE about `MIN_SCORE`** (0.30 now, 0.27 suggested, untested). Re-run the re-test after
+  any change, since the scores move with the model and the chunking.
 
 ## 7. Rules to keep
 

@@ -1,5 +1,6 @@
 """Day 10 (AI): the answer key reproduces the Day 9 hand judgments, and scoring adds up.
 Day 11 (AI): wrong-experiment chunks are counted for questions that name an experiment.
+Day 13 (AI): judge() gives the right pass/fail and reason.
 
 No model needed: these tests only read text."""
 
@@ -15,6 +16,7 @@ from flame_in_freefall.retrieval_eval import (
     QUESTIONS,
     chance_of_a_hit,
     is_relevant,
+    judge,
     score_results,
 )
 
@@ -101,3 +103,46 @@ def test_score_results_counts_wrong_experiment_chunks():
     assert (s["wrong_experiment"], s["named_returned"]) == (5, 8)
     s = score_results(results, chunks, k=1)
     assert (s["wrong_experiment"], s["named_returned"]) == (3, 4)
+
+
+def _passage(chunk_id: str, text: str, experiment: str, score: float = 0.5) -> dict:
+    return {"id": chunk_id, "text": text, "experiment": experiment, "score": score}
+
+
+def test_judge_answerable_question():
+    answer = _passage("flex2-p1-c1", "from 0.5 atm to 3.0 atm", "FLEX-2")
+    other = _passage("flex2-p1-c3", "nothing useful", "FLEX-2")
+    ok, reason = judge(4, [other, answer])
+    assert ok and reason == "answer at rank 2 (flex2-p1-c1)"
+    ok, reason = judge(4, [other])
+    assert not ok and "none of the 1 returned" in reason
+    ok, reason = judge(4, [])
+    assert not ok and "under the cutoff" in reason
+
+
+def test_judge_fails_a_named_question_with_wrong_experiment_chunks():
+    # Q4 names FLEX-2; FLEX's pressure range alongside the right answer could reach the summary.
+    answer = _passage("flex2-p1-c1", "from 0.5 atm to 3.0 atm", "FLEX-2")
+    flex = _passage("flex-p1-c1", "0.5 to 1.5 atm", "FLEX")
+    ok, reason = judge(4, [flex, answer])
+    assert not ok and "answer at rank 2" in reason and "flex-p1-c1" in reason
+    # Q1 names no experiment, so any experiment is fine.
+    results = [_passage("x", "nothing", "Saffire-II"), _passage("y", "CO2, He, and SF6", "FLEX")]
+    assert judge(1, results)[0]
+
+
+def test_judge_marks_weak_passes():
+    ok, reason = judge(3, [_passage("flex-p1-c6", "cool flames", "FLEX")])
+    assert ok and "weak" in reason
+
+
+def test_judge_uncovered_question_passes_only_on_no_match():
+    ok, reason = judge(9, [])
+    assert ok and reason.startswith("no match returned")
+    ok, reason = judge(10, [_passage("flex-p1-c5", "nothing", "FLEX", score=0.411)])
+    assert not ok and "0.411" in reason
+
+
+def test_judge_unknown_question_fails_loudly():
+    with pytest.raises(ValueError):
+        judge(11, [])
