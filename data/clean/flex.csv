@@ -1,4 +1,4 @@
-experiment,test_id,test_date,material,oxygen_pct_min,oxygen_pct_max,pressure_kpa_min,pressure_kpa_max,flow_cm_s_min,flow_cm_s_max,nitrogen_pct,co_pct,helium_pct,droplet_diameter_mm,extinction_diameter_mm,burn_time_s,outcome
+experiment,test_id,test_date,material,oxygen_pct_min,oxygen_pct_max,pressure_kpa_min,pressure_kpa_max,flow_cm_s_min,flow_cm_s_max,nitrogen_pct,co2_pct,helium_pct,droplet_diameter_mm,extinction_diameter_mm,burn_time_s,outcome
 FLEX,20CAL08,2009-03-05,Methanol,21.0,21.0,101.018,101.018,0.0,0.0,79.0,0.0,0.0,1.69,0.89,4.3,Disruption
 FLEX,20CAL10,2009-03-05,Methanol,21.0,21.0,101.591,101.591,0.0,0.0,79.0,0.0,0.0,1.86,0.94,5.0,Extinction
 FLEX,20CAL12,2009-03-05,Methanol,21.0,21.0,101.885,101.885,0.0,0.0,79.0,0.0,0.0,1.61,0.92,3.2,Extinction

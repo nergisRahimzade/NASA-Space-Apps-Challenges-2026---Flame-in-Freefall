@@ -57,7 +57,7 @@ Oxygen, pressure and airflow are stored as **min and max columns**. FLEX-2 gives
 ## 3. Decisions and open assumptions
 
 - Dropped: FLEX burning-rate column, Saffire-II footnote and flow-visualization rows, camera columns, FLEX identifiers and dates (not needed for the question). FLEX-2 droplet diameter and temperature are not kept.
-- To confirm in the reports on Day 8-10: FLEX `CO` column really is CO2; FLEX `Burning rate; mm` is really mm^2/s; Saffire `?-g Spread Length` is a rate; the exact meaning of FLEX `Disruption`.
+- To confirm in the reports on Day 8-10: FLEX `CO` column really is CO2 (**confirmed on Day 14**, section 10); FLEX `Burning rate; mm` is really mm^2/s; Saffire `?-g Spread Length` is a rate; the exact meaning of FLEX `Disruption`.
 - FLEX `Disruption` tests (61) are **kept** in `master.csv`. Charts or summaries about "burned vs went out" can filter them out using `outcome`.
 - Known thin spot: only FLEX has an outcome (`Test end`), and FLEX has no airflow. FLEX-2 (the main source) holds planned ranges, not measurements. Airflow only comes from FLEX-2 and Saffire-II (one value). The app should say so.
 - Messy values to fix during Day 8 cleaning are listed per table in `docs/column_dictionary.md`. Examples: `�` and `~6` in FLEX numeric columns, the duplicate FLEX ID `193F001`, the zero pressure in `C11M201`, mixed date formats, and in Saffire-II, units inside values (`20 cm/s`), words mixed with numbers (`~ 0`, `Note 4`, `n/a (Nomex)`) and the `037 mm` typo. Material names also need one spelling across tables (FLEX-2 `Heptane (pure)` vs FLEX `Heptane`).
@@ -73,7 +73,7 @@ Oxygen, pressure and airflow are stored as **min and max columns**. FLEX-2 gives
 - FLEX dates are written as `YYYY-MM-DD`; FLEX `Test GMT` is dropped.
 - Material spelling: `(pure)` and `(mixture)` are removed, so FLEX-2 `Heptane (pure)` matches FLEX `Heptane`.
 - Saffire-II: blank materials filled from the row above; `037 mm` read as 0.37 mm; `0.85 and 0.37 mm` (PMMA & Nomex, two thicknesses) left empty; burn length `5 cm & 0 (note 2)` read as 5 cm (the PMMA part).
-- Extra columns kept in the clean tables (not all go into `master.csv`): FLEX-2 `gas_mixture`; Saffire-II `sample_id`, `thickness_mm`, `flow_direction`, `burn_length_cm`, `burn_time_s`; FLEX `test_id`, `test_date`, `nitrogen_pct`, `co_pct`, `helium_pct`, droplet and extinction diameters, `burn_time_s`.
+- Extra columns kept in the clean tables (not all go into `master.csv`): FLEX-2 `gas_mixture`; Saffire-II `sample_id`, `thickness_mm`, `flow_direction`, `burn_length_cm`, `burn_time_s`; FLEX `test_id`, `test_date`, `nitrogen_pct`, `co2_pct` (called `co_pct` until Day 14), `helium_pct`, droplet and extinction diameters, `burn_time_s`.
 
 ## 5. Building `master.csv` (Day 9, FIF-D09-DAT)
 
@@ -86,7 +86,7 @@ Oxygen, pressure and airflow are stored as **min and max columns**. FLEX-2 gives
 
 - Checks live in `src/flame_in_freefall/check_data.py`; `tests/test_data_quality.py` runs them in pytest (so CI runs them too).
 - Print a report for the saved files: `uv run python -m flame_in_freefall.check_data` (prints "No problems found", or one line per problem and exits with an error).
-- **Range checks:** each number must sit between limits that fit these experiments (listed with the real min/max in `LIMITS`). They are set to catch unit slips: a mole fraction not x100, atm or mmHg not turned into kPa, mm/s instead of cm/s. Also checked: every `_min` is at most its `_max`, `experiment` and `outcome` only use known words, FLEX dates fall in the mission years, the FLEX gas mix (O2 + N2 + CO + He) adds up to 97-102%, and no flame went out on a droplet bigger than the starting one.
+- **Range checks:** each number must sit between limits that fit these experiments (listed with the real min/max in `LIMITS`). They are set to catch unit slips: a mole fraction not x100, atm or mmHg not turned into kPa, mm/s instead of cm/s. Also checked: every `_min` is at most its `_max`, `experiment` and `outcome` only use known words, FLEX dates fall in the mission years, the FLEX gas mix (O2 + N2 + CO2 + He) adds up to 97-102%, and no flame went out on a droplet bigger than the starting one.
 - **Duplicate checks:** each FLEX-2 fuel, Saffire-II `sample_id` and FLEX `test_id` appears once.
 - `master.csv` **does** have 10 rows that are exact copies of other rows. They are not mistakes: different FLEX tests run at the same conditions, and 3 Saffire-II Silicone samples at the same conditions. Don't drop them; charts that count tests should count them.
 - The tests also plant mistakes (for example 760 in a kPa column, a repeated test id) and check they are caught.
@@ -148,3 +148,48 @@ Tests: `tests/test_ranking.py` checks the columns, one row per group, the oxygen
 
 - **For FE (D13-FE, ranking chart from real data):** read `data/ranking.csv`. Plot `risk_value` by material with one panel (or facet) per `experiment` and label the axis from `risk_basis`. Saffire-II: "Average flame spread (mm/s)". FLEX: "Share of tests where the flame kept burning", with `oxygen_pct` on the x axis or as colour. Put `tests` and the outcome counts on hover. This replaces the "Riskiest materials" chart, which still says "Fake numbers" and is nearly empty on real data (be_notes.md).
 - **For BE:** `data/ranking.csv` is a new data file next to `master.csv`. It is not a contract function. If FE would rather get it through the API, a small `get_ranking()` would be a contract change.
+
+## 10. Spot-check against the reports (Day 14, FIF-D14-DAT)
+
+Compared the numbers in the 3 reports (`docs/reports/`) with `data/master.csv` and the clean
+tables. The reports are short abstracts, so these are all the numbers they give that the tables
+also hold.
+
+| # | Value in the report | In our data | Result |
+|---|---|---|---|
+| 1 | FLEX-2 pressure "between 0.5 atm to 3.0 atm" | `pressure_kpa_min/max` 50.662 / 303.975 kPa (0.5 / 3.0 atm) | **Match** |
+| 2 | FLEX-2 O2 "between 0.1 to 0.4 mole fraction" | `oxygen_pct_min/max` 17 / 30 % | **Differs, kept.** The raw table lists the 4 levels used (0.17, 0.21, 0.25, 0.3). The report gives the chamber's whole range. 17-30 sits inside it |
+| 3 | FLEX droplet "≈ 3 mm" | `droplet_diameter_mm` median 3.01 mm (middle half 2.58-3.52) | **Match** |
+| 4 | FLEX LOI test pressure "0.5 − 1.5 atm" | 264 tests at 0.69-1.02 atm, 9 at 2.0-3.05 atm | **Differs, kept.** The 9 high ones are all one series: 21% O2, 9% N2, 70% CO2, run 2009-05-22 to 07-01. They aren't LOI tests, so the report's range doesn't cover them. No test ran at 0.5 atm |
+| 5 | FLEX suppressants "CO2, He, and SF6" | raw columns `CO` and `He` | **Fixed:** the `CO` column is CO2. Renamed `co_pct` to `co2_pct` |
+| 6 | Saffire-II airflow "either 20 or 30 cm/s" | `flow_cm_s_min/max` 20 for all 9 samples | **Match the table, kept.** The raw table runs every sample at 20 cm/s. None of the 9 is at 30 |
+| 7 | Saffire-II "9 samples, each 5 cm x 29 cm" | 9 rows; raw length 29 cm, width 5 cm (2-7: 5 + 24 cm) | **Match** |
+| 8 | Saffire-II materials: SIBAL, silicone, structure PMMA, flat PMMA, PMMA with Nomex | Silicone 4, SIBAL 2, PMMA 2, PMMA & Nomex 1 | **Differs, not changed yet** (below) |
+
+**Why the `CO` column is CO2 (fix 5):**
+- The raw headers drop every subscript: `O` is O2 and `N` is N2. So `CO` is CO2 with the "2" lost.
+- The report names CO2, not CO, as a tested suppressant.
+- Its values go up to 70%. Carbon monoxide is a toxic fuel gas, not something tested as a fire
+  suppressant, let alone at 70%.
+
+The fix touches only `data/clean/flex.csv` (header), `clean_tables.py` and `check_data.py`.
+`master.csv` and `ranking.csv` don't have the column and are byte-for-byte unchanged.
+
+**Structure vs flat PMMA (8), not changed yet:** the report names 2 PMMA types, and the table has
+exactly 2 PMMA samples (2-8 and 2-9), both labelled `PMMA`. So it's one sample each. Which is
+which is an inference: 2-8's thickness is "See Fig. 5" (a shaped sample), and 2-9's is a plain
+1 cm (a flat sheet). That suggests 2-8 = structure, 2-9 = flat. The figure is in the "Experimental
+Details" file, which we haven't downloaded. Renaming them would split the `PMMA` row in
+`ranking.csv` into 2 single-sample rows and change what FE shows, so it waits for that file or a
+team decision.
+
+**Not checkable from the reports:** Saffire-II oxygen (the reports give none), and anything about
+SF6. No FLEX test in the table used SF6.
+
+**For the app:** FLEX-2's range "17-30%" is the levels used, not the chamber's 10-40% limit. Also,
+the FLEX chart's highest pressures (2-3 atm) all come from the CO2 series, so a pressure effect
+there is mixed with a CO2 effect.
+
+Tests: `tests/test_spot_check.py` checks each row above. Each test first confirms the report still
+says what's quoted, then checks the saved tables, so a report change or cleaning change that breaks
+agreement fails CI.
