@@ -152,8 +152,10 @@ def clean_flex(path: Path = FLEX_RAW) -> pd.DataFrame:
                 "flow_cm_s_min": 0.0,  # droplet tests in still gas: no airflow
                 "flow_cm_s_max": 0.0,
                 "nitrogen_pct": raw["N initial ambient composition; mole fraction"] * 100,
-                # Header says CO; likely CO2 (unconfirmed, see data_notes.md), name kept as-is.
-                "co_pct": raw["CO initial ambient composition; mole fraction"] * 100,
+                # Header says CO, but it is CO2 (Day 14 spot-check, data_notes.md section 10):
+                # the headers drop every subscript ("O" = O2, "N" = N2) and the report names
+                # CO2 as a tested suppressant.
+                "co2_pct": raw["CO initial ambient composition; mole fraction"] * 100,
                 "helium_pct": raw["He initial ambient composition; mole fraction"] * 100,
                 # '�' (corrupted "no value") -> NaN; '~6' -> 6.
                 "droplet_diameter_mm": raw["Droplet initial diameter; mm"].map(first_number),
