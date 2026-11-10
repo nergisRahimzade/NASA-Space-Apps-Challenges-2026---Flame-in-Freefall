@@ -1,4 +1,4 @@
-# Flame in Freefall — Contract v1.5
+# Flame in Freefall — Contract v1.6
 
 Everyone codes against these shapes. Change them only by pull request, and bump the version.
 
@@ -19,6 +19,12 @@ one experiment only. Calls without it work exactly as before.
 returns `[]` ("no match") and can return fewer than k. All three functions reject malformed input
 (non-text query, a k that isn't a whole number above 0, passages that aren't chunk dicts, filters
 that aren't a dict) with `ValueError`.
+
+**v1.6 (FIF-D15-BE):** `summarize()`'s shape is unchanged, but now it's guaranteed on every path
+(Gemini, the quoting fallback, nothing found): each takeaway has exactly `text`, `source` and
+`chunk_id`, all non-empty text. A passage's `id`, `text` and `source` must be non-empty text, or
+`ValueError`. The plan asks for `{takeaways: [{text, source}]}`. We keep `chunk_id` (it's how a
+takeaway is checked against its passage) and `not_found`.
 
 ## 1. Functions (in `src/flame_in_freefall/api.py`)
 
@@ -42,8 +48,12 @@ def summarize(passages: list[dict]) -> dict:
     passages: a list of chunk dicts with at least "id", "text", "source" and "page"
     (search() results work as they are; extra fields are fine).
     Returns {"takeaways": [{"text": str, "source": str, "chunk_id": str}], "not_found": bool}
+    Every takeaway has exactly these 3 keys, each non-empty text; chunk_id is one of the
+    passages' ids and source is that passage's source. not_found is True only when there are
+    no takeaways.
     No passages -> {"takeaways": [], "not_found": True}.
-    Not a list, or a passage that isn't a dict or misses a field -> ValueError."""
+    Not a list, a passage that isn't a dict or misses a field, or a passage whose id, text or
+    source isn't non-empty text -> ValueError."""
 
 
 def get_table(filters: dict | None = None) -> list[dict]:

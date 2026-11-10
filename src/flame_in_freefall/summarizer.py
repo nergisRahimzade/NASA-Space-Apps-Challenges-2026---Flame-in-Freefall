@@ -79,6 +79,9 @@ def _quote_passages(passages: list[dict]) -> dict:
 def _parse_reply(raw: str, passages: list[dict]) -> dict:
     # Any problem here raises, and the caller falls back to quoting the passages.
     data = json.loads(raw)
+    # Day 15: "no" or 0 would be read as yes/no below. Only a real true/false is trusted.
+    if not isinstance(data["not_found"], bool):
+        raise ValueError(f"not_found must be true or false, got {data['not_found']!r}")
     by_id = {p["id"]: p for p in passages}
     takeaways = []
     for t in data["takeaways"]:

@@ -64,6 +64,21 @@ def test_wrong_keys_fail():
     assert check_summary({"takeaways": [], "not_found": True, "extra": 1}, PASSAGES)
 
 
+# Day 15 (BE): each takeaway's own shape.
+
+
+def test_takeaway_that_is_not_a_dict_is_reported_not_crashed():
+    assert check_summary({"takeaways": ["Spread was 1.2 mm/s."], "not_found": False}, PASSAGES)
+
+
+def test_takeaway_with_an_extra_key_fails():
+    assert check_summary(_summary({**_takeaway(), "page": 3}), PASSAGES)
+
+
+def test_takeaway_with_a_number_as_text_fails():
+    assert check_summary(_summary(_takeaway(text=5)), PASSAGES)
+
+
 # --- what summarize_passages really hands out -----------------------------------------
 
 
