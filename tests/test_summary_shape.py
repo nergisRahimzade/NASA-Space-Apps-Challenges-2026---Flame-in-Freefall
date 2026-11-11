@@ -102,6 +102,6 @@ def test_passage_fields_must_be_non_empty_text(key, bad):
 def test_a_broken_answer_from_our_own_code_fails_loudly(monkeypatch):
     # Stands in for a future bug in summarizer.py: the answer is missing its source.
     broken = {"takeaways": [{"text": "x", "chunk_id": "flex-p1-c0"}], "not_found": False}
-    monkeypatch.setattr(api, "summarize_passages", lambda passages: broken)
+    monkeypatch.setattr(api, "summarize_passages", lambda passages, question=None: broken)
     with pytest.raises(RuntimeError, match="broke its contract"):
         api.summarize(PASSAGES)

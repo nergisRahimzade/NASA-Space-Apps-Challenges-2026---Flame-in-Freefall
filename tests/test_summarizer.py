@@ -112,10 +112,83 @@ def test_invented_chunk_id_falls_back(use_fake):
     assert "Made up." not in texts
 
 
-def test_prompt_v1_matches_reply_fields():
+def test_prompt_matches_reply_fields():
     # Day 5 (AI): the prompt must name the same fields as REPLY_SCHEMA, or Gemini is told one
     # thing and checked against another. Fails if someone renames a field in only one place.
+    # Day 15: renamed from test_prompt_v1_matches_reply_fields; PROMPT_PATH is v2 now.
     prompt = summarizer.PROMPT_PATH.read_text(encoding="utf-8")
     assert "PLACEHOLDER" not in prompt  # the stub from FIF-D05-BE has been replaced
     for field in ("takeaways", "chunk_id", "not_found"):
         assert field in prompt
+
+
+# --- Day 15 (AI): prompt v2 gets the question --------------------------------------------
+
+
+def test_question_comes_before_the_passages(use_fake):
+    fake = use_fake(reply=_reply([], not_found=True))
+    summarize_passages(PASSAGES, question="  How fast does flame spread?  ")
+    contents = fake.calls[0]["contents"]
+    assert contents.startswith("Question: How fast does flame spread?\n\nPassages:\n\n[bass")
+    assert "[flex-002-p1-c0]" in contents
+
+
+def test_no_question_sends_only_the_passages(use_fake):
+    fake = use_fake(reply=_reply([], not_found=True))
+    summarize_passages(PASSAGES)
+    contents = fake.calls[0]["contents"]
+    assert contents.startswith("Passages:\n\n[bass-001-p3-c0]")
+    assert "Question:" not in contents
+
+
+def test_unanswered_question_is_not_found(use_fake):
+    # Gemini says the passages don't answer the question -> not found, nothing invented.
+    use_fake(reply=_reply([], not_found=True))
+    assert summarize_passages(PASSAGES, question="Lithium fires on Mars?") == {
+        "takeaways": [],
+        "not_found": True,
+    }
+
+
+def test_prompt_v2_has_the_ticket_rules():
+    # FIF-D15-AI: takeaways cite their passage, only the passages, "not found" when the
+    # passages don't answer the question, even if they are about fire.
+    assert summarizer.PROMPT_PATH.name == "summary_v2.txt"
+    prompt = summarizer.PROMPT_PATH.read_text(encoding="utf-8")
+    assert "Use only the passages" in prompt
+    assert "Put that passage's id" in prompt
+    assert "none of the passages helps answer the question, set not_found to true" in prompt
+    assert "even when the passages are about fire" in prompt
+    assert "Question:" in prompt and "Passages:" in prompt  # the layout _build_contents sends
+    # v1 stays, unchanged, for comparison (scripts/day15_compare_prompts.py)
+    assert (summarizer.PROMPT_PATH.parent / "summary_v1.txt").exists()
+
+
+class _ClosingModels:
+    def __init__(self, reply: str):
+        self.reply, self.closed = reply, False
+
+    def generate_content(self, **kwargs):
+        if self.closed:  # what httpx does once its client is closed
+            raise RuntimeError("Cannot send a request, as the client has been closed.")
+        return SimpleNamespace(text=self.reply)
+
+
+class _ClosingClient:
+    """Like the real genai.Client: cleaning it up closes the connection its .models uses."""
+
+    def __init__(self, reply: str):
+        self.models = _ClosingModels(reply)
+
+    def __del__(self):
+        self.models.closed = True
+
+
+def test_client_stays_open_for_the_whole_call(monkeypatch):
+    # Day 15 (AI): with the client written inline, Python cleaned it up before the request was
+    # sent, and every real Gemini call crashed. Each call here gets a fresh client that nothing
+    # else holds, as in production (the FakeClient above is kept alive by the test).
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    reply = _reply([{"text": "Spread is slow.", "chunk_id": "bass-001-p3-c0"}])
+    monkeypatch.setattr(summarizer, "_get_client", lambda api_key: _ClosingClient(reply))
+    assert summarize_passages(PASSAGES)["takeaways"][0]["text"] == "Spread is slow."

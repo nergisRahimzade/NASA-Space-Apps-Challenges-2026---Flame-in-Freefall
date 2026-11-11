@@ -103,11 +103,16 @@ def _check_passages(passages: list[dict]) -> None:
                 raise ValueError(f"passage {n} {key} must be non-empty text")
 
 
-def summarize(passages: list[dict]) -> dict:
+def summarize(passages: list[dict], question: str | None = None) -> dict:
     # Thin wrapper: the contract signature stays here, the Gemini call lives in summarizer.py.
+    # Contract v1.7 (FIF-D15-AI): pass the user's question, so the summary keeps only takeaways
+    # that answer it and says "not found" when none do. None works exactly as before.
     _check_passages(passages)
+    # None means "no question"; blank text is a mistake, as in search().
+    if question is not None and (not isinstance(question, str) or not question.strip()):
+        raise ValueError("question must be non-empty text, or None")
     start = time.perf_counter()
-    summary = summarize_passages(passages)
+    summary = summarize_passages(passages, question)
     # Day 15: every path (Gemini, quoting fallback, nothing found) is checked against the
     # contract. Gemini's replies are already checked inside summarizer.py, and the passages were
     # checked above, so a problem here is a bug in our code: fail loudly, don't show it.
