@@ -72,14 +72,16 @@ def test_real_reports_make_contract_chunks():
         assert set(c) == {"id", "text", "source", "page", "experiment"}
         assert c["page"] == 1 and c["text"]  # plain-text reports have no pages
     assert len({c["id"] for c in chunks}) == len(chunks)
-    assert {c["id"].split("-")[0] for c in chunks} == {"flex", "flex2", "saffire2"}
-    assert all(c["source"].split(" ")[0] in {"FLEX", "FLEX-2", "Saffire-II"} for c in chunks)
+    assert {c["id"].split("-")[0] for c in chunks} == {"flex", "flex2", "saffire2", "bass2"}
+    assert all(
+        c["source"].split(" ")[0] in {"FLEX", "FLEX-2", "Saffire-II", "BASS-II"} for c in chunks
+    )
 
 
 def test_chunks_are_tagged_with_their_experiment():
     chunks = chunk_reports(SOURCES, REPORTS)
     # Each report's chunks carry that report's experiment (doc id prefix -> experiment).
-    expected = {"flex": "FLEX", "flex2": "FLEX-2", "saffire2": "Saffire-II"}
+    expected = {"flex": "FLEX", "flex2": "FLEX-2", "saffire2": "Saffire-II", "bass2": "BASS-II"}
     for c in chunks:
         assert c["experiment"] == expected[c["id"].split("-")[0]]
         assert c["source"].startswith(c["experiment"] + " ")  # tag agrees with the title

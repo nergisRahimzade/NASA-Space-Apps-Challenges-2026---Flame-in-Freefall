@@ -12,7 +12,7 @@ from flame_in_freefall.build_ranking import (
     burn_spread_mm_s,
     oxygen_level,
 )
-from flame_in_freefall.clean_tables import clean_flex, clean_flex2, clean_saffire2
+from flame_in_freefall.clean_tables import clean_bass2, clean_flex, clean_flex2, clean_saffire2
 
 
 @pytest.fixture(scope="module")
@@ -23,7 +23,7 @@ def saffire2() -> pd.DataFrame:
 @pytest.fixture(scope="module")
 def ranking(saffire2) -> pd.DataFrame:
     # Built from the raw files, so the test does not depend on data/ being up to date.
-    master = build_master([clean_flex2(), saffire2, clean_flex()])
+    master = build_master([clean_flex2(), saffire2, clean_flex(), clean_bass2()])
     return build_ranking(master, saffire2)
 
 
@@ -36,7 +36,9 @@ def test_columns_and_one_row_per_group(ranking):
     assert not ranking.duplicated(GROUP_KEYS).any()
 
 
-def test_flex2_dropped_because_it_has_no_results(ranking):
+def test_flex2_and_bass2_are_not_ranked(ranking):
+    # FLEX-2: planned ranges, no results. BASS-II: flames were turned down until they went
+    # out on purpose, so 'went out' doesn't measure risk (data_notes.md section 13).
     assert set(ranking["experiment"]) == {"Saffire-II", "FLEX"}
 
 
@@ -111,3 +113,13 @@ def test_risk_value_is_the_column_named_in_risk_basis(ranking):
 def test_saved_ranking_loads_and_matches_a_fresh_build(ranking):
     saved = pd.read_csv(RANKING)
     pd.testing.assert_frame_equal(saved, ranking, check_dtype=False)
+
+
+def test_suppressed_tests_count_co2_and_helium(ranking):
+    # FIF-D16-DAT: groups mix tests with and without a suppressant; this shows how many had one.
+    flex = ranking[ranking["experiment"] == "FLEX"]
+    assert flex["suppressed_tests"].sum() <= 173  # 173 FLEX tests had CO2 or helium
+    assert (flex["suppressed_tests"] <= flex["tests"]).all()
+    # Every test at 30% oxygen and above burned without a suppressant.
+    assert flex.loc[flex["oxygen_pct"] >= 30, "suppressed_tests"].eq(0).all()
+    assert ranking.loc[ranking["experiment"] == "Saffire-II", "suppressed_tests"].eq(0).all()

@@ -15,13 +15,18 @@ from flame_in_freefall.check_data import (
     range_problems,
     same_time_tests,
 )
-from flame_in_freefall.clean_tables import clean_flex, clean_flex2, clean_saffire2
+from flame_in_freefall.clean_tables import clean_bass2, clean_flex, clean_flex2, clean_saffire2
 
 
 @pytest.fixture(scope="module")
 def tables() -> dict[str, pd.DataFrame]:
     # Built from the raw files, like tests/test_master.py, so data/clean/ can't be stale.
-    return {"flex2.csv": clean_flex2(), "saffire2.csv": clean_saffire2(), "flex.csv": clean_flex()}
+    return {
+        "flex2.csv": clean_flex2(),
+        "saffire2.csv": clean_saffire2(),
+        "flex.csv": clean_flex(),
+        "bass2.csv": clean_bass2(),  # Day 16
+    }
 
 
 @pytest.fixture(scope="module")
@@ -77,10 +82,18 @@ def test_only_known_flex_tests_share_a_date_and_time():
         ("outcome", "Extinguished"),  # not one of the 3 FLEX outcomes
         ("material_category", "metal"),  # not a category in MATERIAL_CATEGORY
         ("spread_rate_per_flow", 0.105),  # airflow left in cm/s, not turned into mm/s
+        ("suppressant", "SF6"),  # in the report, but no FLEX test in the table used it
     ],
 )
 def test_range_check_catches_a_bad_value(master, col, value):
     assert len(range_problems(with_value(master, col, value))) == 1
+
+
+@pytest.mark.parametrize("gas, pct", [("CO2", 0.7), ("none", 10.0)])
+def test_suppressant_check_catches_a_share_that_does_not_fit(master, gas, pct):
+    # 0.7: a mole fraction not turned into %. 10 with "none": a share with no gas named.
+    row = master.index[master["suppressant"] == gas][0]
+    assert len(range_problems(with_value(master, "suppressant_pct", pct, row))) == 1
 
 
 def test_range_check_catches_a_date_outside_flex(tables):

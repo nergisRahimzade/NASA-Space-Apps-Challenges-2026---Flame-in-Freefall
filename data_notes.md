@@ -25,7 +25,7 @@ What each raw table has (checked against the files in `data/raw/`):
 
 Note: `data/downloads.csv` still says `has_material = no` for FLEX-2 and Saffire-II, which does not match the files. It should be corrected to `yes`.
 
-BASS was in the original plan but we never downloaded it; it is **out of scope**. (Fallback rule from the sprint plan: if scope slips, stay at these experiments.)
+BASS was in the original plan but we never downloaded it; it is **out of scope**. (Fallback rule from the sprint plan: if scope slips, stay at these experiments.) **Day 16: BASS-II (PSI-25) was added as the 4th experiment, see section 13.**
 
 Reports in `docs/reports/` and their links in `data/sources.csv` are the text side (for search).
 
@@ -136,7 +136,7 @@ Found while checking (left as-is, to confirm in the reports):
 - **Ranks are within one experiment only.** A spread speed in mm/s and a share of tests can't go on one scale, so Saffire-II rank 1 and FLEX rank 1 mean different things. `risk_value` holds the number behind the rank so one chart column works for both, but it needs one panel or colour per experiment.
 
 What the table shows (for the question in `docs/the_question.md`):
-- FLEX: more oxygen means more flames keep burning. Below 17% no Methanol flame and only 3 of 14 finished Heptane tests kept burning. At 30% and above, 4 of 6 finished tests kept burning. Heptane keeps burning more often than Methanol at the same oxygen (for example at 18%: 4 of 16 vs 1 of 19).
+- FLEX: more oxygen means more flames keep burning. **Day 16: partly a suppressant effect**, because every test at 30% oxygen and above had no suppressant (section 12). Below 17% no Methanol flame and only 3 of 14 finished Heptane tests kept burning. At 30% and above, 4 of 6 finished tests kept burning. Heptane keeps burning more often than Methanol at the same oxygen (for example at 18%: 4 of 16 vs 1 of 19).
 - Saffire-II: at about 22% oxygen and 20 cm/s airflow, the cotton-fiberglass fabric (SIBAL) spread about 6x faster than PMMA with Nomex and 16x faster than PMMA. Silicone did not spread.
 
 Caveats (the app should show them next to the chart):
@@ -233,3 +233,178 @@ still works without it.
   which is out of scope (section 1).
 - **For FE:** the ranking chart (D13-FE) can use the `kept_burning_share` and `oxygen_pct`
   tooltips through `column_help(load_glossary())`, like the table does.
+
+## 12. Extra columns: added or cut (Day 16, FIF-D16-DAT)
+
+The ticket is a stretch: "extra columns or a 3rd experiment, add only if time". We already have 3
+experiments, so the question was which extra columns, if any, are worth adding before `master.csv`
+is frozen on Day 17. Rule used: add a column only if it changes an answer to the question in
+`docs/the_question.md` ("at what oxygen levels and airflow speed does a fire keep burning or go out,
+for different materials?").
+
+**Added: `suppressant` and `suppressant_pct`** (in `master.csv`, after the airflow columns), and
+`suppressed_tests` in `ranking.csv`. Definitions: `docs/column_dictionary.md` section 4.
+
+Why: FLEX replaced some nitrogen with CO2 or helium in **173 of its 273 tests** (CO2 123, helium 50),
+and it changes whether a flame keeps burning:
+
+| FLEX tests that finished | Kept burning |
+|---|---|
+| No suppressant (70 tests) | 19% |
+| Helium (46) | 13% |
+| CO2 (96) | 8% |
+
+It also mixes up the oxygen finding in section 9. Every test at 30% and 34% oxygen had no
+suppressant. At 20-21% oxygen, the tests without one kept burning 22-25% of the time, and those
+with one only 5-9%. So the ranking's "more oxygen, more flames keep burning" is partly "fewer
+suppressants". Before Day 16, `master.csv` couldn't show this at all.
+
+- **Nothing else changed:** every old column, row and value in `master.csv`, and every row and rank
+  in `ranking.csv`, is the same as before (checked against the Day 15 files).
+- **`ranking.csv` groups are not split by suppressant.** Splitting would turn groups into smaller
+  ones with the same material and oxygen, and change FE's chart (D13-FE) the day before the freeze.
+  `suppressed_tests` shows how many tests in each group had one, so the chart can show it on hover.
+  Whether to split is a team decision (below).
+- **FLEX-2 is left empty**, not guessed: its table gives "O2/N2 or O2/He" for every fuel.
+- **Checks:** `check_data.py` allows only `none`, `CO2` and `He`, keeps `suppressant_pct` within 0-100,
+  and checks that `none` means 0% and a named gas is at least 1%. A mole fraction not turned into %
+  (0.05-0.7) would pass the range but fails that last check. A test with both gases stops the build.
+- **Contract v1.8** (BE): `get_table()` rows have the 2 new columns. **Glossary:** tooltips for
+  `suppressant`, `suppressant_pct` and `suppressed_tests`.
+
+**Cut, with reasons:**
+
+| Candidate | Why cut |
+|---|---|
+| Saffire-II `thickness_mm` | Thickness affects spread, but only 9 samples, mostly one thickness per material. It can't be separated from the material. Stays in `data/clean/saffire2.csv`. |
+| Saffire-II `flow_direction` | Only 1 sample ran in opposed flow (2-4, Silicone, which never burned). Nothing to compare. Stays in the clean table. |
+| FLEX droplet and extinction diameters, burn time | Droplet physics, not about whether a fire keeps burning at an oxygen level or airflow. Stay in `data/clean/flex.csv`. |
+| FLEX-2 `gas_mixture` | The same text ("O2/N2 or O2/He") for all 8 fuels, so it tells rows apart by nothing. |
+| ~~A 4th experiment (BASS)~~ | **Reversed later on Day 16:** BASS-II was added (section 13), because it's the only data linking airflow to whether a flame goes out. |
+
+**Decisions for the team:**
+- **Split `ranking.csv` by suppressant?** It would separate the oxygen effect from the suppressant effect,
+  but makes groups smaller (many under 5 tests) and changes FE's chart. Needs FE before the D17 freeze.
+- **For FE:** show `suppressed_tests` in the FLEX chart's hover, or colour the table by `suppressant`.
+  A `suppressant` filter in `get_table()` would be a contract change (BE).
+
+## 13. BASS-II added as the 4th experiment (Day 16, FIF-D16-DAT)
+
+**Why:** none of the first 3 experiments links airflow to whether a flame keeps burning. FLEX has
+outcomes but no airflow, FLEX-2's airflow is a planned range, and Saffire-II ran every sample at
+20 cm/s. BASS-II (Burning and Suppression of Solids II, PSI-25) burned solid samples in a small
+wind tunnel on the ISS while changing **airflow (0-40 cm/s) and oxygen (lowered by adding
+nitrogen)**, which is the project question. This replaces the "cut" line for a 4th experiment
+in section 12. Decided by the data owner on Day 16; the rest of the team still needs to agree to
+move the Day 17 freeze.
+
+Files: `data/raw/PSI-25_Experimental table_BASS-II.csv`, `docs/reports/bass2_abstract.txt`
+(also in `data/sources.csv` and `data/downloads.csv`). Clean table: `data/clean/bass2.csv`,
+129 tests. `master.csv` is now **419 rows** (BASS-II 129).
+
+**What it adds:**
+
+| | BASS-II |
+|---|---|
+| Materials | PMMA rod 28, SIBAL 27, black rod 26, PMMA film 22, PMMA slab 20, Nomex 3, spherical section 2, wax candle 1 |
+| Oxygen (initial) | 13.6-22.2%; 102 tests below 21%, 32 below 17% |
+| Airflow | 0-38.5 cm/s; 86 tests have both a lowest and highest speed, 31 ran at one speed |
+| How the flame ended | 28 tests: Extinction 20, Blowoff 7, No ignition 1. **101 tests: not recorded** |
+
+PMMA and SIBAL are also in Saffire-II, so the same materials can now be seen at more than one
+oxygen level and airflow.
+
+**Cleaning rules** (`clean_bass2` in `clean_tables.py`, tested in `tests/test_bass2.py`). Most
+cells are notes typed during the test, so every rule is checked on the real cells:
+
+- **Material:** films, slabs and clear rods are PMMA (the table says so on B1, M1 and O5 "clear
+  PMMA rod"). **Black rods and spherical sections are never named** in the table or the report,
+  so they're `Black rod` and `Spherical section`, with category `unknown`, not a guess. SIBAL
+  uses Saffire-II's spelling. The original text is kept in `sample_text`.
+- **Oxygen:** `oxygen_pct_min` = `oxygen_pct_max` = the calibrated **initial** O2 (the level the
+  test was set to). Final O2 is kept as `oxygen_final_pct`, with 5 sensor glitches blanked (B2 1.6,
+  P22a 0.6, P22b 39.1, T28a 0.9, T28b 40.4).
+- **Airflow** comes from `Air display`, read as cm/s: O5b and P5 write "5 cm/s", and the report says
+  the tunnel reached 40 cm/s. Not speeds, so left out: numbers in brackets, decimals marked `pot`,
+  everything after the word `pot`, and anything over 40 (fan readings). O13a has fan readings
+  outside the brackets and speeds inside, so the bracketed ones are used. The `.5` style (no
+  leading zero) is read as 0.5.
+- **Lowest airflow is left empty (43 tests)** when the air went lower than the speeds written:
+  "down to ext", "<1", "decr", "low", fan `pot` settings after the speeds, or a start that isn't
+  written ("incr to 28"). 6 tests give no speed at all ("see fan", or blank).
+- **Outcome:** read from the words in the fan and air cells. "no ign" -> `No ignition`; "blowoff" ->
+  `Blowoff`; "ext", "extinguished", "out", "off", "would not stay lit" -> `Extinction`. **When
+  nothing is said, the outcome stays empty.** It is not assumed to be "kept burning".
+- **Dates:** T9 and T18 say 2018, but their day-of-year (175) is 2014-06-24, so the year is fixed.
+  The 3 tests from 2016 (O20-O22) are real. O10's day-of-year (213) doesn't match its date
+  (7/22/2014, day 203). The date is kept.
+- **Suppressant:** `none`. Oxygen was lowered with nitrogen, and the CO2 readings (0.2-2%) come from
+  cabin air and the burn itself, not an added gas.
+- Pressure isn't in the table, so it's empty, as for Saffire-II.
+
+**Limits (the app and data card should say these):**
+- **The airflow at which a flame went out is known in cm/s for only 3 of the 20 extinctions.** The
+  others were turned down on the fan ("down to ext", pot settings), which has no speed in this
+  table. So BASS-II shows *which* oxygen and airflow ranges flames went out in, not exact limits.
+- How the flame ended is recorded for 28 of 129 tests.
+- **BASS-II isn't in `ranking.csv`.** Crews lowered the airflow until flames went out on purpose,
+  so "went out" is what the test was for, not a measure of risk. The app says this when BASS-II is
+  picked (FE's file, small change).
+- Many tests ran the same sample twice (`sample_id` repeats, e.g. 174m in B14 and B21), so
+  `test_id` is the unique key, not the sample.
+
+**Effect on the rest of the project:**
+- `ranking.csv`: unchanged (byte-for-byte).
+- Search: 4 BASS-II chunks, 22 in all. The 10-question checkpoint is unchanged (7/10 in the app;
+  8/10 with "keywords + best sentence"; 10/10 on the held-out set), re-run on Day 16.
+- Checks (`check_data.py`): `BASS-II` and the 2 new outcomes are allowed values; dates are checked
+  per experiment (`TEST_DATES`); `oxygen_final_pct` and `width_cm` have limits.
+- Contract **v1.8** (BE), glossary tooltips (experiment, outcome, airflow, pressure, category),
+  and the row, chunk and experiment counts updated in the tests.
+
+## 14. `master.csv` v1.0 frozen (Day 17, FIF-D17-DAT)
+
+**What "frozen" means:** `master.csv` (and the files built with it) won't change for the rest of
+the sprint unless the team agrees to it. BE, FE and AI can build on its 419 rows and 14 columns
+without them shifting underneath. The data card (Day 18) describes this version.
+
+**1. Final re-run.** One command re-runs the whole pipeline from `data/raw/`, in order:
+`clean_tables` -> `build_master` -> `build_ranking` -> `check_data`.
+
+    uv run python -m flame_in_freefall.freeze_data
+
+Run on Day 17: every rebuilt file was identical to the saved one, and `check_data` found no
+problems. So the saved files are exactly what the code makes from the raw tables.
+
+**2. Version.** `data/freeze.json` records **data v1.0**:
+
+| | Recorded |
+|---|---|
+| Rows per experiment | FLEX-2 8, Saffire-II 9, FLEX 273, BASS-II 129 (419 in all) |
+| Files the pipeline writes | `master.csv`, `ranking.csv`, `data/clean/*.csv`: fingerprint (SHA-256), rows, columns |
+| Raw tables it reads | the 4 files in `data/raw/`: fingerprint |
+
+The Git tag **`data-v1.0`** goes on the commit in `main` that contains it (after the PR merges):
+
+    git checkout main && git pull
+    git tag -a data-v1.0 -m "master.csv v1.0: 419 rows, 4 experiments (FIF-D17-DAT)"
+    git push origin data-v1.0
+
+Anyone can get this exact data back later with `git checkout data-v1.0`.
+
+**How the freeze is kept:** `tests/test_freeze.py` runs in CI and fails if any recorded file
+changes, so a change can't slip in by accident. The fingerprint ignores Windows vs Unix line
+endings (pandas writes CRLF on Windows, Git stores LF), so the same table gets the same
+fingerprint on every laptop and in CI.
+
+**Changing the data after the freeze** (only if the team agrees, e.g. a bug fix):
+1. Make the change and re-run the pipeline.
+2. Record a new version: `uv run python -m flame_in_freefall.freeze_data --write --version 1.1`.
+   Reusing `1.0` for different data is refused.
+3. Note what changed and why in this file, and tag `data-v1.1` after the merge.
+
+**Notes:**
+- v1.0 includes BASS-II (section 13). If the team decides against the late addition, removing it
+  is a v1.1 change, made the way described above.
+- The report chunks (`data/processed/chunks.jsonl`) and the search index aren't part of the
+  freeze. They're built from `docs/reports/` by the ingest step (BE/AI).

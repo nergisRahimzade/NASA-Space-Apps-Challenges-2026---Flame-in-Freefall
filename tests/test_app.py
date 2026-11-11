@@ -15,6 +15,7 @@ import pandas as pd
 import pytest
 from streamlit.testing.v1 import AppTest
 
+from flame_in_freefall.api import get_table
 from flame_in_freefall.page_states import SLOW_SEARCH_NOTE
 from flame_in_freefall.summary_box import AI_LABEL, NOT_FOUND_TEXT, QUOTED_LABEL
 
@@ -166,7 +167,7 @@ def _search_in(experiment: str, **patch) -> tuple[AppTest, mock.MagicMock]:
 def test_experiment_dropdown_lists_the_real_experiments(app):
     box = app.sidebar.selectbox[0]
     assert box.label == "Experiment"
-    assert box.options == ["All", "FLEX", "FLEX-2", "Saffire-II"]
+    assert box.options == ["All", "BASS-II", "FLEX", "FLEX-2", "Saffire-II"]
 
 
 def test_chosen_experiment_is_passed_to_search():
@@ -249,6 +250,15 @@ def test_experiment_without_results_explains_why(app):
     assert "No ranking for FLEX-2: its tests have no recorded results." in [
         i.value for i in app.info
     ]
+
+
+def test_bass2_explains_why_it_has_no_ranking(app):
+    # FIF-D16-DAT: BASS-II has results, so the FLEX-2 wording ("no recorded results") is wrong.
+    app.sidebar.selectbox[0].select("BASS-II").run()
+    _assert_healthy(app)
+    infos = [i.value for i in app.info]
+    assert any(i.startswith("No ranking for BASS-II: its crews lowered the airflow") for i in infos)
+    assert app.dataframe and len(app.dataframe[0].value) == 129  # its rows are in the table
 
 
 def test_missing_ranking_file_shows_a_message():
@@ -402,4 +412,5 @@ def test_reset_filters_puts_everything_back(app):
     _assert_healthy(app)
     assert _sidebar_box(app, "Experiment").value == "All"
     assert _sidebar_box(app, "Material").value == "All"
-    assert len(app.dataframe[0].value) == 290
+    # Every row is back (compared with get_table(), so new data like BASS-II doesn't break this)
+    assert len(app.dataframe[0].value) == len(get_table())

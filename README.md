@@ -83,6 +83,8 @@ uv sync --locked
 uv run --locked streamlit run app/streamlit_app.py
 ```
 
+To rebuild the data tables from `data/raw/` and check they still match the frozen version (`data/freeze.json`), run `uv run --locked python -m flame_in_freefall.freeze_data`. Details are in `data_notes.md` section 14.
+
 Sync after pulling so your environment picks up dependency changes. If a new empty working folder is added, follow its setup instructions; Git will not create it until it contains a tracked file.
 
 ## Project structure

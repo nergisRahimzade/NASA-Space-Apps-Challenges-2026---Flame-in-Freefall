@@ -36,7 +36,7 @@ def test_summarize_no_passages():
 
 def test_get_table_filters():
     # Contract v1.2: real rows from data/master.csv, numbers as float, empty cells as None.
-    assert len(get_table()) == 290
+    assert len(get_table()) == 419
     flex2 = get_table({"experiment": "FLEX-2"})
     assert flex2 and all(r["experiment"] == "FLEX-2" for r in flex2)
     assert all(isinstance(r["oxygen_pct_min"], float) for r in flex2)

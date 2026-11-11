@@ -33,7 +33,7 @@ def test_returns_real_passages_in_contract_shape():
     results = api.search("What gases were used to put out fires?")
     assert 0 < len(results) <= 5  # contract v1.1 default k
     assert all(set(r) == KEYS for r in results)
-    assert all(r["experiment"] in {"FLEX", "FLEX-2", "Saffire-II"} for r in results)
+    assert all(r["experiment"] in {"FLEX", "FLEX-2", "Saffire-II", "BASS-II"} for r in results)
     scores = [r["score"] for r in results]
     assert scores == sorted(scores, reverse=True)  # best first
 
@@ -94,8 +94,8 @@ def test_experiment_filter_returns_only_that_experiment():
 
 
 def test_no_experiment_searches_every_experiment():
-    experiments = {r["experiment"] for r in api.search("flame", k=18)}  # 18 = every chunk
-    assert experiments == {"FLEX", "FLEX-2", "Saffire-II"}
+    experiments = {r["experiment"] for r in api.search("flame", k=22)}  # 22 = every chunk
+    assert experiments == {"FLEX", "FLEX-2", "Saffire-II", "BASS-II"}
 
 
 def test_unknown_experiment_is_rejected():

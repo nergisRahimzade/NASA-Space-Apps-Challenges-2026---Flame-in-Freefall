@@ -275,7 +275,15 @@ else:
         oxygen_min=f.oxygen_min,
         oxygen_max=f.oxygen_max,
     )
-    if f.experiment and f.experiment not in set(ranking["experiment"]):
+    if f.experiment == "BASS-II":
+        # FIF-D16-DAT: BASS-II has outcomes, but flames were turned down until they went out on
+        # purpose, so "went out" doesn't rank risk (data_notes.md section 13).
+        st.info(
+            "No ranking for BASS-II: its crews lowered the airflow until each flame went out, "
+            "so how a test ended doesn't show how risky the material is. See its rows in the "
+            "table above."
+        )
+    elif f.experiment and f.experiment not in set(ranking["experiment"]):
         st.info(f"No ranking for {f.experiment}: its tests have no recorded results.")
     elif ranked.empty:
         st.info("No ranked materials match these filters. Try widening them in the sidebar.")

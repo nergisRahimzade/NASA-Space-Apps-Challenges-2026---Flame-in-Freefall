@@ -1,6 +1,6 @@
 """Day 9 (BE): get_table() reads data/master.csv, filters it and rejects bad filters.
 
-Uses the real master.csv (290 rows, built by the data role); counts come from data_notes.md."""
+Uses the real master.csv (419 rows, built by the data role); counts come from data_notes.md."""
 
 import pytest
 
@@ -16,6 +16,8 @@ COLUMNS = {
     "pressure_kpa_max",
     "flow_cm_s_min",
     "flow_cm_s_max",
+    "suppressant",
+    "suppressant_pct",
     "spread_rate_mm_s",
     "spread_rate_per_flow",
     "outcome",
@@ -24,7 +26,7 @@ COLUMNS = {
 
 def test_all_rows_have_the_contract_columns():
     rows = get_table()
-    assert len(rows) == 290
+    assert len(rows) == 419
     assert all(set(r) == COLUMNS for r in rows)
 
 
