@@ -12,6 +12,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 from flame_in_freefall.api import get_table, search, summarize  # noqa: E402
 from flame_in_freefall.config import get_settings  # noqa: E402
 from flame_in_freefall.glossary import column_help, load_glossary  # noqa: E402
+from flame_in_freefall.page_states import (  # noqa: E402
+    SEARCH_FAILED,
+    SEARCH_SPINNER,
+    SUMMARY_FAILED,
+    TRY_AGAIN,
+    no_results_tips,
+    no_results_title,
+    slow_search_note,
+)
 from flame_in_freefall.ranking_view import axis_label, filter_ranking, load_ranking  # noqa: E402
 from flame_in_freefall.result_cards import (  # noqa: E402
     SNIPPET_WORDS,
@@ -102,7 +111,7 @@ if not query.strip():
     st.caption("Try a question like: What gases were tested as fire suppressants in microgravity?")
 else:
     try:
-        with st.spinner("Searching the reports..."):
+        with st.spinner(SEARCH_SPINNER):
             start = time.perf_counter()
             if search_experiment is None:
                 results = search(query)
@@ -110,59 +119,69 @@ else:
                 results = search(query, experiment=search_experiment)
             seconds = time.perf_counter() - start  # FIF-D11-BE: shown under "Results"
     except Exception:
-        st.error("Search isn't working right now. Please try again in a moment.")
+        st.error(SEARCH_FAILED)
+        # FIF-D16-FE: clicking reruns the page, which searches again
+        st.button(TRY_AGAIN, key="retry_search")
     else:
-        st.subheader("Summary")
-        # FIF-D14-FE: show a skeleton now, so the result cards below appear while summarize()
-        # works. The box is filled in after the cards.
-        summary_box = st.empty()
-        with summary_box.container():
-            st.caption(LOADING_TEXT)
-            st.markdown(SKELETON_HTML, unsafe_allow_html=True)
-
         from_text = f" from {search_experiment}" if search_experiment else ""
-        st.subheader(f"Results ({len(results)}){from_text}")
-        # FIF-D11-BE: the first search after a deploy takes ~15 s (model + index), later ones ~0.1 s
-        st.caption(f"Searched in {seconds:.2f} s")
-        if not results and search_experiment:
-            st.info(
-                f"No {search_experiment} passages match. "
-                "Try different words, or choose All in the sidebar."
-            )
-        elif not results:
-            st.info("No matching passages found. Try different words.")
+        if not results:
+            # FIF-D16-FE: one clear empty state instead of an empty summary and an empty list.
+            # Since contract v1.5, off-topic questions find nothing (scores under 0.30).
+            st.subheader(f"Results (0){from_text}")
+            st.caption(f"Searched in {seconds:.2f} s")
+            with st.container(border=True):
+                st.markdown(f"**{no_results_title(search_experiment)}**")
+                st.markdown(no_results_tips(search_experiment))
         else:
+            st.subheader("Summary")
+            # FIF-D14-FE: show a skeleton now, so the result cards below appear while
+            # summarize() works. The box is filled in after the cards.
+            summary_box = st.empty()
+            with summary_box.container():
+                st.caption(LOADING_TEXT)
+                st.markdown(SKELETON_HTML, unsafe_allow_html=True)
+
+            st.subheader(f"Results ({len(results)}){from_text}")
+            # FIF-D11-BE: the first search after a deploy takes ~15 s, later ones ~0.1 s
+            st.caption(f"Searched in {seconds:.2f} s")
+            note = slow_search_note(seconds)
+            if note:
+                st.caption(note)
             st.caption(
                 "The closest passages, best first. They may not answer your question. "
                 "Match is how close the wording and meaning are, from 0 to 1."
             )
-        links = load_source_links()
-        for r in results:
-            with st.container(border=True):
-                st.markdown(
-                    f"{score_badge(r['score'])} {source_line(r['source'], r['page'], links)}"
-                )
-                # The snippet is escaped, so $ or * in a report can't turn into math or bold
-                st.markdown(snippet(r["text"], query))
-                # Only offer the full passage when the snippet had to cut some of it off
-                if len(r["text"].split()) > SNIPPET_WORDS:
-                    with st.expander("Full passage"):
-                        # st.text, not st.write: shows the passage exactly as written
-                        st.text(r["text"])
+            links = load_source_links()
+            for r in results:
+                with st.container(border=True):
+                    st.markdown(
+                        f"{score_badge(r['score'])} {source_line(r['source'], r['page'], links)}"
+                    )
+                    # The snippet is escaped, so $ or * in a report can't turn into math or bold
+                    st.markdown(snippet(r["text"], query))
+                    # Only offer the full passage when the snippet had to cut some of it off
+                    if len(r["text"].split()) > SNIPPET_WORDS:
+                        with st.expander("Full passage"):
+                            # st.text, not st.write: shows the passage exactly as written
+                            st.text(r["text"])
 
-        try:
-            # FIF-D15-AI (contract v1.7): passing the question keeps only takeaways that answer
-            # it, and gives "not found" when none do. No results -> "not found", no AI call.
-            summary = summarize(results, question=query)
-        except Exception:
-            summary_box.error("The summary isn't working right now. The passages below still are.")
-        else:
-            with summary_box.container():
-                if summary["not_found"]:
-                    st.info(NOT_FOUND_TEXT)
-                else:
-                    st.caption(summary_label(ai_available=bool(get_settings().gemini_api_key)))
-                    st.markdown(takeaway_markdown(summary, results, links))
+            try:
+                # FIF-D15-AI (contract v1.7): passing the question keeps only takeaways that
+                # answer it, and gives "not found" when none do.
+                summary = summarize(results, question=query)
+            except Exception:
+                with summary_box.container():
+                    st.error(SUMMARY_FAILED)
+                    # FIF-D16-FE: clicking reruns the page, which asks for the summary again
+                    st.button(TRY_AGAIN, key="retry_summary")
+            else:
+                with summary_box.container():
+                    if summary["not_found"]:
+                        st.info(NOT_FOUND_TEXT)
+                    else:
+                        ai = bool(get_settings().gemini_api_key)
+                        st.caption(summary_label(ai_available=ai))
+                        st.markdown(takeaway_markdown(summary, results, links))
 
 # FIF-D15-DAT: words like LOI come up in the reports but not in the table, so list them all here.
 if glossary:
