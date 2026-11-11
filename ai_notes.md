@@ -1,5 +1,5 @@
 
-# AI notes: what's built and where to pick up (Days 1–14, FIF-D01-AI … FIF-D14-AI)
+# AI notes: what's built and where to pick up (Days 1–15, FIF-D01-AI … FIF-D15-AI)
 
 
 For whoever takes over the AI role, and for anyone reviewing AI PRs. Like `data_notes.md`,
@@ -32,6 +32,7 @@ with a citation for every claim.
 | D12-AI | Filter search by experiment before ranking | `rows_for_experiment` and `experiment=` in `src/flame_in_freefall/retrieval.py`, `scripts/day12_filter_by_experiment.py`, `tests/experiment_filter.md`, `tests/test_retrieval.py` | #142 |
 | D13-AI | Re-run the 10 questions through the real `search()`, pass/fail with reason | `judge` and `WEAK` in `retrieval_eval.py`, `scripts/day13_retest.py`, `tests/retest.md`, `tests/test_retrieval_eval.py` | FIF-D13-AI PR |
 | D14-AI | Retrieval checkpoint: score recorded, ranking changes tried on the 10 questions and 10 held-out ones | `experiment_in_question` in `retrieval.py`, `HELD_OUT`, `contains_evidence` and `judge_against` in `retrieval_eval.py`, `scripts/day14_checkpoint.py`, `tests/checkpoint.md`, `tests/test_retrieval.py`, `tests/test_retrieval_eval.py` | FIF-D14-AI PR |
+| D15-AI | Summary prompt v2: gets the question, says "not found" when the passages don't answer it; fixed the closed-client crash | `src/prompts/summary_v2.txt`, `question=` in `summarizer.py` and `api.summarize` (contract v1.7), `scripts/day15_compare_prompts.py`, `tests/prompt_v2.md`, `tests/test_summarizer.py`, `tests/test_api_edge_cases.py` | FIF-D15-AI PR |
 
 
 Related BE pieces the AI code uses: `store.py` saves/loads the index (D04-BE), `summarizer.py`
@@ -71,6 +72,7 @@ uv run python scripts/day11_compare_k.py         # top 3, 5 and 8, scored -> art
 uv run python scripts/day12_filter_by_experiment.py  # with/without the filter -> artifacts/experiment_filter_draft.md
 uv run python scripts/day13_retest.py           # real search(), pass/fail -> artifacts/day13_retest_draft.md
 uv run python scripts/day14_checkpoint.py       # checkpoint score + ranking changes -> artifacts/day14_checkpoint_draft.md
+GEMINI_MODEL=gemini-flash-lite-latest uv run --env-file .env python scripts/day15_compare_prompts.py  # prompt v1 vs v2, real Gemini (~20 calls)
 
 ```
 
@@ -173,15 +175,31 @@ For Gemini: put `GEMINI_API_KEY=...` in `.env` (git-ignored, see `.env.example`)
   experiment a question names, or `None` (none, or two named). It's built and tested but nothing
   calls it yet. With it, the default run scores 7 instead of 4.
 
+- **Prompt v2 (D15, `src/prompts/summary_v2.txt`):** gets the user's question, keeps only
+  takeaways that answer it, and sets `not_found` when no passage does, even if the passages are
+  about fire. It also keeps each experiment's numbers with that experiment, and keeps "planned" or
+  "studied" from turning into results. v1 stays in the repo for comparison.
+- **v2 on the real Gemini (D15, `tests/prompt_v2.md`):** 10 takeaways, all citing a passage with the
+  answer; "not found" for Q6, Q9 and Q10 (none of their passages answers them). v1: 34 takeaways,
+  10 citing the answer, and it summarized Q9 and Q10 anyway.
+- **Real Gemini calls crashed before D15:** the client was created inline and cleaned up before the
+  request, so it failed with "client has been closed", which the fallback didn't catch. Fixed in
+  `summarizer.py`, with a test that fails on the old code.
+
 ## 5. Open questions and known issues
 
 - **Embedding model not confirmed by the team.** Nergis tried Gemini embeddings
   (`gemini-embedding-001`) on Day 2. Switching means a key for search too, rebuilding the index,
   and rethinking chunk size. Only `embedding.py` would change; `top_k` refuses vectors of the
   wrong size.
-- **Prompt v1 is untested on the real Gemini.** We have no key yet. When there is one, run
-  `summarize()` on some passages and check the rules hold (checkbox in #122). Also confirm
-  `gemini-flash-latest` accepts our `response_json_schema`.
+- **Prompt v2 was tested on `gemini-flash-lite-latest` only (D15).** The default
+  `gemini-flash-latest` was overloaded on 2026-11-10 (every call 503 or 504), so the app would show
+  the quoting fallback. Re-run `day15_compare_prompts.py` on the default model, or ask BE whether
+  the host should set `GEMINI_MODEL=gemini-flash-lite-latest`. The lite model accepts our
+  `response_json_schema`.
+- **v2 can under-answer, and slips on "planned" vs "found" (D15).** Q2 got the LOI goal but not the
+  procedure steps that were in its passage. Q1 says FLEX "measures" (passage: "aims to measure"), and
+  Q8 says "states" (passage: "hypothesizes"). For D16-AI to check and fix (`tests/prompt_v2.md`).
 - **Search misses on the fake questions:** 3/5 ranked first, 4/5 in the top 3. "What is a cool
   flame?" missed completely: a small meaning-based model can lose rare exact terms. Plan B for
   the tuning days: add keyword matching (hybrid BM25).
@@ -209,8 +227,9 @@ For Gemini: put `GEMINI_API_KEY=...` in `.env` (git-ignored, see `.env.example`)
   D11 the only one found was Q6's `saffire2-p1-c3` at rank 8 ("flame growth", weak).
 - **Overlap repeats inflate "relevant" counts (D11).** Q8's two hits at k = 5 are the same sentence,
   copied by the 30-word overlap. A bigger k looks better on "Relevant / returned" than it is.
-- **`summarize()` never sees the user's question**, only the passages, so takeaways can't focus
-  on what was asked. It's a contract change (BE) if we want it.
+- **`summarize()` sees the question now (D15, contract v1.7)**, but only if the caller passes it.
+  The app's summary box is still a placeholder: FE should call
+  `summarize(search(query), question=query)`.
 - **Worst-case wait for a summary is about 95 s** (3 tries × 30 s timeout + waits between
   retries) before the fallback kicks in. Worth lowering if it feels slow in the app.
 - **Search can return the wrong experiment (D09).** For Q4, about FLEX-2's oxygen and pressure, the
@@ -234,7 +253,7 @@ For Gemini: put `GEMINI_API_KEY=...` in `.env` (git-ignored, see `.env.example`)
 - **The corpus is small:** 3 reports, about 2,100 words in total. Keep that in mind for
   the "8 of 10 relevant" goal in D14-AI.
 
-## 6. Where the next ticket starts (FIF-D15-AI summary prompt v2, and the open search work)
+## 6. Where the next ticket starts (FIF-D16-AI test 8+ questions, and the open search work)
 
 - **Where search stands (D14, `tests/checkpoint.md`):** 7 of 10 in the app with the experiment
   picked. "Keywords + best sentence" reaches 8 of 10 (and 10 of 10 held out), measured in memory
@@ -246,9 +265,13 @@ For Gemini: put `GEMINI_API_KEY=...` in `.env` (git-ignored, see `.env.example`)
 - **`experiment_in_question` is ready to wire in:** in `api.search`, when `experiment is None`, use
   `experiment_in_question(query, <experiments in the index>)`. That's BE's file, so ask first. Or
   FE can use it to pre-select the dropdown.
-- **D15-AI (prompt v2):** Q9 and Q10 always reach `summarize()` with unrelated passages, so prompt v2's
-  "not found" rule is their only guard. Use them as the first not-found tests. Also, with the
-  0.30 cutoff, Q2's summary gets only steps 1–6 of the LOI procedure (`tests/retest.md`).
+- **D16-AI (test 8+ questions):** start from `tests/prompt_v2.md`. Re-run
+  `day15_compare_prompts.py` on the default model if it's back. Add the 10 held-out questions
+  (`HELD_OUT`), check each claim against its passage, and fix the slips found on D15:
+  under-answering (Q2) and "aims to" or "hypothesizes" written as fact (Q1, Q8).
+- **Wire the question into the app:** FE's summary box should call
+  `summarize(search(query), question=query)`. Without `question`, v2 falls back to v1's fire-topic
+  rule and Q9/Q10 get summarized again.
 - **Judge every change on both question sets** (`TUNING` and `HELD` in the D14 script).
 
 ## 7. Rules to keep

@@ -2,7 +2,9 @@
 
 Fails safely: with no API key, a timeout after retries, or a broken reply, it quotes the
 passages instead (real text, real sources), so the app keeps working and nothing is invented.
-The prompt text lives in src/prompts/summary_v1.txt (written by the AI ticket, FIF-D05-AI)."""
+The prompt text lives in src/prompts/ (written by the AI tickets: v1 FIF-D05-AI, v2 FIF-D15-AI).
+Day 15 (AI): prompt v2 also gets the user's question, so it can say "not found" when the
+passages are about fire but don't answer it (Q9 and Q10 in tests/retest.md)."""
 
 import json
 import logging
@@ -17,7 +19,7 @@ from flame_in_freefall.config import get_settings
 from flame_in_freefall.summary_check import check_summary
 
 # Built from this file's location (up 1 folder = src/), so it works from any folder.
-PROMPT_PATH = Path(__file__).resolve().parents[1] / "prompts" / "summary_v1.txt"
+PROMPT_PATH = Path(__file__).resolve().parents[1] / "prompts" / "summary_v2.txt"
 TIMEOUT_MS = 30_000  # give up on one attempt after 30 s (the Gemini client counts milliseconds)
 # First try + 2 retries. The client then retries timeouts, rate limits (429) and server errors
 # (5xx) itself; without retry options it would never retry.
@@ -62,6 +64,12 @@ def _format_passages(passages: list[dict]) -> str:
     )
 
 
+def _build_contents(passages: list[dict], question: str | None) -> str:
+    # The layout prompt v2 describes: the question (if any), then the passages.
+    body = "Passages:\n\n" + _format_passages(passages)
+    return body if question is None else f"Question: {question.strip()}\n\n{body}"
+
+
 def _first_sentence(text: str) -> str:
     # Split after the first . ! or ? that is followed by a space; no match = keep it all.
     return re.split(r"(?<=[.!?])\s", text.strip(), maxsplit=1)[0]
@@ -96,8 +104,11 @@ def _parse_reply(raw: str, passages: list[dict]) -> dict:
     return {"takeaways": takeaways, "not_found": False}
 
 
-def summarize_passages(passages: list[dict]) -> dict:
-    """Return {"takeaways": [{"text", "source", "chunk_id"}], "not_found": bool}."""
+def summarize_passages(passages: list[dict], question: str | None = None) -> dict:
+    """Return {"takeaways": [{"text", "source", "chunk_id"}], "not_found": bool}.
+
+    With a question, only takeaways that help answer it are kept, and not_found is True when
+    no passage does. Without one, takeaways cover anything about fire (prompt v2, rule 9)."""
     # Nothing found -> say so, never invent an answer (contract rule).
     if not passages:
         return {"takeaways": [], "not_found": True}
@@ -109,9 +120,13 @@ def summarize_passages(passages: list[dict]) -> dict:
     # Read outside the try: a missing prompt file is our bug, so it should fail loudly.
     instructions = PROMPT_PATH.read_text(encoding="utf-8")
     try:
-        response = _get_client(settings.gemini_api_key).models.generate_content(
+        # Day 15 (AI): keep the client in a variable for the whole call. Written inline, nothing
+        # held the client, so Python cleaned it up as soon as .models was read, and cleanup
+        # closes its connection: every real call failed with "client has been closed".
+        client = _get_client(settings.gemini_api_key)
+        response = client.models.generate_content(
             model=settings.gemini_model,
-            contents=_format_passages(passages),
+            contents=_build_contents(passages, question),
             config=types.GenerateContentConfig(
                 system_instruction=instructions,
                 response_mime_type="application/json",  # reply with JSON only, no extra prose

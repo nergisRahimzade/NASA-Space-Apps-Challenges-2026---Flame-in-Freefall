@@ -1,4 +1,4 @@
-# Flame in Freefall — Contract v1.6
+# Flame in Freefall — Contract v1.7
 
 Everyone codes against these shapes. Change them only by pull request, and bump the version.
 
@@ -26,6 +26,11 @@ that aren't a dict) with `ValueError`.
 `ValueError`. The plan asks for `{takeaways: [{text, source}]}`. We keep `chunk_id` (it's how a
 takeaway is checked against its passage) and `not_found`.
 
+**v1.7 (FIF-D15-AI):** `summarize()` takes an optional `question` (the user's search text). With
+it, the summary keeps only takeaways that help answer the question, and `not_found` is True when
+no passage does, even if the passages are about fire. Calls without it work exactly as before.
+A `question` that is blank or not text -> `ValueError`. The return shape is unchanged.
+
 ## 1. Functions (in `src/flame_in_freefall/api.py`)
 
 ```python
@@ -43,8 +48,10 @@ def search(query: str, k: int = 5, experiment: str | None = None) -> list[dict]:
     so it can take ~15 s."""
 
 
-def summarize(passages: list[dict]) -> dict:
+def summarize(passages: list[dict], question: str | None = None) -> dict:
     """Turn found passages into takeaways that cite their chunk.
+    question: the user's question (v1.7). Given -> only takeaways that answer it, and
+    not_found=True when no passage does. None -> takeaways about anything fire-related.
     passages: a list of chunk dicts with at least "id", "text", "source" and "page"
     (search() results work as they are; extra fields are fine).
     Returns {"takeaways": [{"text": str, "source": str, "chunk_id": str}], "not_found": bool}

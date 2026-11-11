@@ -77,6 +77,27 @@ def test_summarize_extra_fields_are_fine():
     assert result["takeaways"][0]["chunk_id"] == "flex-p1-c0"
 
 
+@pytest.mark.parametrize("question", ["", "   ", 5, ["flame"]])
+def test_summarize_rejects_a_blank_or_non_text_question(question):
+    # v1.7 (FIF-D15-AI): None means "no question"; blank text is a mistake.
+    with pytest.raises(ValueError, match="question"):
+        api.summarize([PASSAGE], question=question)
+
+
+def test_summarize_passes_the_question_on(monkeypatch):
+    seen = {}
+
+    def fake(passages, question=None):
+        seen["question"] = question
+        return {"takeaways": [], "not_found": True}
+
+    monkeypatch.setattr(api, "summarize_passages", fake)
+    api.summarize([PASSAGE], question="How long did droplets burn?")
+    assert seen["question"] == "How long did droplets burn?"
+    api.summarize([PASSAGE])  # without one: exactly as before v1.7
+    assert seen["question"] is None
+
+
 # --- get_table() ---------------------------------------------------------------------------
 
 
