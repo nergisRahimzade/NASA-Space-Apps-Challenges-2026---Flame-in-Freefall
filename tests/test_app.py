@@ -15,6 +15,9 @@ import pandas as pd
 import pytest
 from streamlit.testing.v1 import AppTest
 
+from flame_in_freefall.page_states import SLOW_SEARCH_NOTE
+from flame_in_freefall.summary_box import AI_LABEL, NOT_FOUND_TEXT, QUOTED_LABEL
+
 ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "app" / "streamlit_app.py"
 
@@ -102,15 +105,51 @@ def test_known_source_links_to_its_report():
     assert any(link in m.value for m in at.markdown)
 
 
-def test_no_results_shows_a_message():
+def test_no_results_shows_one_clear_empty_state():
+    # FIF-D16-FE: a headline and tips, and no empty summary box or skeleton
     at = _run_search(return_value=[])
-    assert "No matching passages found. Try different words." in [i.value for i in at.info]
+    _assert_healthy(at)
+    texts = [m.value for m in at.markdown]
+    assert "**Nothing in the reports matches this question.**" in texts
+    assert any(t.startswith("- Try different or fewer words.") for t in texts)
+    assert "Summary" not in [h.value for h in at.subheader]
+    assert not any("fif-skeleton" in t for t in texts)
 
 
 def test_search_failure_shows_an_error_not_a_crash():
     at = _run_search(side_effect=RuntimeError("index missing"))
     assert not at.exception
     assert len(at.error) == 1
+    assert [b.label for b in at.button] == ["Try again"]
+
+
+def test_try_again_searches_again():
+    # The first search fails, the retry works
+    with mock.patch(
+        "flame_in_freefall.api.search", side_effect=[RuntimeError("index missing"), [RESULT]]
+    ):
+        at = AppTest.from_file(str(APP), default_timeout=30).run()
+        at.text_input[0].input("flame spread").run()
+        at.button[0].click().run()
+    _assert_healthy(at)
+    assert "Results (1)" in [h.value for h in at.subheader]
+
+
+def test_slow_search_explains_why():
+    # The 3 s threshold is tested in test_page_states.py; here, check the page shows the note.
+    # (Faking the clock would also slow Streamlit's own timers, so the check is faked instead.)
+    with mock.patch(
+        "flame_in_freefall.page_states.slow_search_note", return_value=SLOW_SEARCH_NOTE
+    ) as check:
+        at = _run_search(return_value=[RESULT])
+    _assert_healthy(at)
+    check.assert_called()
+    assert SLOW_SEARCH_NOTE in [c.value for c in at.caption]
+
+
+def test_fast_search_has_no_slow_note():
+    at = _run_search(return_value=[RESULT])
+    assert SLOW_SEARCH_NOTE not in [c.value for c in at.caption]
 
 
 # FIF-D12-FE: the sidebar's Experiment choice filters search as well as the table.
@@ -152,9 +191,9 @@ def test_all_searches_every_experiment():
 
 def test_no_results_in_one_experiment_suggests_all():
     at, _ = _search_in("FLEX", return_value=[])
-    assert "No FLEX passages match. Try different words, or choose All in the sidebar." in [
-        i.value for i in at.info
-    ]
+    texts = [m.value for m in at.markdown]
+    assert "**Nothing in the FLEX reports matches this question.**" in texts
+    assert any(t.startswith("- Choose All in the sidebar") for t in texts)
 
 
 def test_experiment_without_reports_searches_everything():
@@ -266,3 +305,62 @@ def test_page_works_without_the_glossary():
     _assert_healthy(at)
     assert GLOSSARY_LABEL not in [e.label for e in at.expander]
     assert at.dataframe  # the table still shows
+
+
+# FIF-D14-FE: the summary box, filled from summarize(results, question=query).
+AI_SUMMARY = {
+    "takeaways": [
+        {"text": "Spread rose to $5 * 2.", "source": "BASS report", "chunk_id": RESULT["id"]}
+    ],
+    "not_found": False,
+}
+
+
+def _run_summary(**patch) -> tuple[AppTest, mock.MagicMock]:
+    with (
+        mock.patch("flame_in_freefall.api.search", return_value=[RESULT]),
+        mock.patch("flame_in_freefall.api.summarize", **patch) as fake_summarize,
+    ):
+        at = AppTest.from_file(str(APP), default_timeout=30).run()
+        at.text_input[0].input("flame spread").run()
+    return at, fake_summarize
+
+
+def test_summary_shows_takeaways_with_sources(monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key-not-real")
+    at, fake_summarize = _run_summary(return_value=AI_SUMMARY)
+    _assert_healthy(at)
+    fake_summarize.assert_called_once_with([RESULT], question="flame spread")
+    assert AI_LABEL in [c.value for c in at.caption]
+    # FIF-D15-FE: the source is a chip; mock results have no experiment, so the short title shows
+    chip = r":orange-badge[BASS report · p\. 3]"
+    assert rf"- Spread rose to \$5 \* 2\. {chip}" in [m.value for m in at.markdown]
+    # The skeleton is replaced once the summary is ready
+    assert not any("fif-skeleton" in m.value for m in at.markdown)
+
+
+def test_summary_says_not_found():
+    at, _ = _run_summary(return_value={"takeaways": [], "not_found": True})
+    _assert_healthy(at)
+    assert NOT_FOUND_TEXT in [i.value for i in at.info]
+
+
+def test_without_a_key_the_quotes_are_not_called_ai():
+    # conftest removes GEMINI_API_KEY, so the real summarize() quotes the passages
+    with mock.patch("flame_in_freefall.api.search", return_value=[RESULT]):
+        at = AppTest.from_file(str(APP), default_timeout=30).run()
+        at.text_input[0].input("flame spread").run()
+    _assert_healthy(at)
+    captions = [c.value for c in at.caption]
+    assert QUOTED_LABEL in captions and AI_LABEL not in captions
+
+
+def test_summary_failure_keeps_the_result_cards():
+    at, _ = _run_summary(side_effect=RuntimeError("Gemini down"))
+    assert not at.exception
+    assert [e.value for e in at.error] == [
+        "The summary isn't working right now. The passages below still are."
+    ]
+    assert "Results (1)" in [h.value for h in at.subheader]
+    # FIF-D16-FE: a retry button for the summary
+    assert [b.label for b in at.button] == ["Try again"]
