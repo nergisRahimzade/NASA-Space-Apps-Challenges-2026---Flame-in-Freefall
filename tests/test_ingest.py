@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 
 from flame_in_freefall import ingest
-from flame_in_freefall.store import load_index
+from flame_in_freefall.store import _paths, load_index
 
 
 @pytest.fixture
@@ -56,6 +56,17 @@ def test_second_run_skips_everything(paths):
 
 def test_changed_report_rebuilds_both_steps(paths):
     ingest.run(**paths)
+    _touch_later(paths["reports"] / "alpha_abstract.txt")
+    assert ingest.run(**paths) == {"chunks": "built", "index": "built"}
+
+
+def test_new_chunks_rebuild_the_index_even_when_file_times_tie(paths):
+    # On Windows, file times can move in steps of ~16 ms, so in a fast test the old index and
+    # the freshly rebuilt chunks can get the same time, and the index looked "up to date".
+    # Pushing the old index's time ahead makes that tie happen every run, not only sometimes.
+    ingest.run(**paths)
+    for f in _paths(paths["index"]):
+        _touch_later(f)
     _touch_later(paths["reports"] / "alpha_abstract.txt")
     assert ingest.run(**paths) == {"chunks": "built", "index": "built"}
 

@@ -80,8 +80,11 @@ def run(
         done["chunks"] = "built"
         log.info("chunks: %d -> %s (%.1f s)", count, chunks, time.perf_counter() - start)
 
-    # Checked after the step above, so freshly built chunks always lead to a new index.
-    if not force and _is_fresh(list(_paths(index)), [chunks]):
+    # Freshly built chunks always lead to a new index. Checked by what happened above, not only
+    # by file times: on Windows those can move in ~16 ms steps, so an index built just before
+    # the new chunks could get the same time and look up to date (the flaky test in #153).
+    chunks_unchanged = done["chunks"] == "skipped"
+    if not force and chunks_unchanged and _is_fresh(list(_paths(index)), [chunks]):
         done["index"] = "skipped"
         log.info("index: up to date, skipped (%s)", index)
     else:
