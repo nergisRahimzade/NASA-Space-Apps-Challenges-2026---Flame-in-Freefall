@@ -193,3 +193,43 @@ there is mixed with a CO2 effect.
 Tests: `tests/test_spot_check.py` checks each row above. Each test first confirms the report still
 says what's quoted, then checks the saved tables, so a report change or cleaning change that breaks
 agreement fails CI.
+
+## 11. Glossary tooltips (Day 15, FIF-D15-DAT)
+
+- Saved at `data/glossary.json`: 18 terms, each with an `id`, the `term` as shown, a plain-word
+  `tooltip`, and the data `columns` it explains. The ticket's two terms are `loi` and `spread_rate`.
+- **Where the app uses it** (`app/streamlit_app.py`):
+  - **Table headers:** hovering any `master.csv` column header shows its tooltip. All 12 columns
+    have one.
+  - **Sidebar:** the Experiment, Material and Oxygen % filters show the matching tooltip.
+  - **"What do these words mean?"** box under search lists every term. LOI, cool flame and
+    suppressant come up in the reports that search returns but not in the table, so this box is
+    where they're explained.
+- **Loading:** `src/flame_in_freefall/glossary.py`. `load_glossary()` checks the file and raises
+  `ValueError` on a mistake. The app catches that, so a broken glossary only removes the tooltips
+  and the rest of the page keeps working.
+
+**Rules for the text** (the first 4 are checked by `load_glossary()`):
+- Every term has a non-empty `id`, `term` and `tooltip`, and ids are unique.
+- A tooltip is at most 250 characters (about 2 short sentences, so it fits a hover box).
+- A column has at most one tooltip.
+- Plain words first, unit in brackets, and say what makes something riskier when it applies (for
+  example, "a lower LOI means it burns more easily").
+- Only say what our data or reports support. For example, the spread-rate tooltip says only 2
+  samples have a measured rate.
+
+**To add a term:** add an entry to `data/glossary.json`. Put the column names in `columns` if it
+explains a table column, or leave `[]` for a word from the reports. Then run
+`uv run pytest tests/test_glossary.py`.
+
+Tests: `tests/test_glossary.py` checks the rules, that LOI and spread rate are there, that every
+`master.csv` column has a tooltip, that every listed column exists in `master.csv` or
+`ranking.csv` (a typo would never show), and that the experiment tooltip names every experiment
+in the table. `tests/test_app.py` checks that the glossary shows on the page and that the page
+still works without it.
+
+- **`docs/glossary.md`** (Day 2) stays as the team's longer study notes. `glossary.json` is the
+  short, app-facing version. It's written fresh, not copied: the Day 2 notes still describe BASS,
+  which is out of scope (section 1).
+- **For FE:** the ranking chart (D13-FE) can use the `kept_burning_share` and `oxygen_pct`
+  tooltips through `column_help(load_glossary())`, like the table does.

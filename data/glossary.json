@@ -1,0 +1,113 @@
+{
+  "about": "Plain-word tooltips for the app (FIF-D15-DAT). Each term has a short tooltip and the data columns it explains. Rules and how to add a term: data_notes.md section 11.",
+  "terms": [
+    {
+      "id": "loi",
+      "term": "LOI (Limiting Oxygen Index)",
+      "tooltip": "The lowest oxygen level, in %, at which something can keep burning. A lower LOI means it burns more easily, so it is riskier. Earth's air is about 21% oxygen. FLEX measured LOI for fuel droplets at different pressures.",
+      "columns": []
+    },
+    {
+      "id": "spread_rate",
+      "term": "Flame spread rate",
+      "tooltip": "How fast a flame moves along a material, in millimetres per second (mm/s). Faster spread means a fire grows faster, so it is riskier. Only the 2 Saffire-II SIBAL samples have a measured spread rate.",
+      "columns": ["spread_rate_mm_s"]
+    },
+    {
+      "id": "spread_rate_per_flow",
+      "term": "Spread rate per airflow",
+      "tooltip": "The flame spread rate divided by the airflow speed (both in mm/s), so it has no unit. It lets you compare spread in different airflows. Filled only for the 2 SIBAL samples.",
+      "columns": ["spread_rate_per_flow"]
+    },
+    {
+      "id": "oxygen",
+      "term": "Oxygen (%)",
+      "tooltip": "How much of the gas around the flame is oxygen. Earth's air is about 21%. Min and max are the lowest and highest levels tested; they are the same when only one level was used.",
+      "columns": ["oxygen_pct_min", "oxygen_pct_max", "oxygen_pct"]
+    },
+    {
+      "id": "pressure",
+      "term": "Pressure (kPa)",
+      "tooltip": "How hard the surrounding gas presses, in kilopascals. Earth's air at sea level is about 101 kPa (1 atmosphere). Empty for Saffire-II, whose table gives no pressure.",
+      "columns": ["pressure_kpa_min", "pressure_kpa_max"]
+    },
+    {
+      "id": "airflow",
+      "term": "Airflow (cm/s)",
+      "tooltip": "How fast air moves past the flame, in centimetres per second. In space hot air doesn't rise, so moving air is what brings the flame fresh oxygen. FLEX droplets burned in still air (0).",
+      "columns": ["flow_cm_s_min", "flow_cm_s_max"]
+    },
+    {
+      "id": "microgravity",
+      "term": "Microgravity",
+      "tooltip": "The near-weightless state on the space station. Hot air doesn't rise, so flames get oxygen only by slow mixing or from moving air, and they burn differently than on Earth.",
+      "columns": []
+    },
+    {
+      "id": "experiment",
+      "term": "Experiment",
+      "tooltip": "FLEX and FLEX-2 burned small fuel droplets on the space station. Saffire-II burned large material samples inside an empty cargo ship after it left the station.",
+      "columns": ["experiment"]
+    },
+    {
+      "id": "material",
+      "term": "Material",
+      "tooltip": "What was burned: a liquid fuel droplet (FLEX, FLEX-2) or a solid sample (Saffire-II).",
+      "columns": ["material"]
+    },
+    {
+      "id": "material_category",
+      "term": "Material category",
+      "tooltip": "The kind of material: hydrocarbon or alcohol (liquid fuels), or plastic, fabric or silicone (solid samples).",
+      "columns": ["material_category"]
+    },
+    {
+      "id": "outcome",
+      "term": "Outcome",
+      "tooltip": "How a FLEX test ended. Extinction: the flame went out. Completion: the fuel burned away. Disruption: the test was cut short, so we don't know. Only FLEX has outcomes.",
+      "columns": ["outcome"]
+    },
+    {
+      "id": "kept_burning_share",
+      "term": "Share that kept burning",
+      "tooltip": "Out of the FLEX tests that finished, the share where the fuel burned away instead of the flame going out. 1 means every flame kept burning. Cut-short tests are left out.",
+      "columns": ["kept_burning_share"]
+    },
+    {
+      "id": "suppressant",
+      "term": "Suppressant",
+      "tooltip": "A gas added to the air to make a fire harder to keep going. FLEX tested carbon dioxide (CO2), helium and SF6.",
+      "columns": []
+    },
+    {
+      "id": "cool_flame",
+      "term": "Cool flame",
+      "tooltip": "A faint, low-temperature flame that is hard to see. In FLEX, some fuel droplets kept burning this way after the visible flame went out.",
+      "columns": []
+    },
+    {
+      "id": "concurrent_opposed",
+      "term": "Concurrent and opposed flow",
+      "tooltip": "Concurrent: the air flows the same way the flame spreads. Opposed: the air flows against it. Saffire-II used both.",
+      "columns": []
+    },
+    {
+      "id": "pmma",
+      "term": "PMMA",
+      "tooltip": "A clear acrylic plastic, often sold as Plexiglas.",
+      "columns": []
+    },
+    {
+      "id": "sibal",
+      "term": "SIBAL",
+      "tooltip": "A fabric woven from cotton and fiberglass.",
+      "columns": []
+    },
+    {
+      "id": "nomex",
+      "term": "Nomex",
+      "tooltip": "A fire-resistant fabric, the kind used in firefighters' suits.",
+      "columns": []
+    }
+  ]
+}
