@@ -27,7 +27,8 @@ SKELETON_HTML = """
 @media (prefers-reduced-motion: reduce) { .fif-skeleton div { animation: none; } }
 </style>
 """
-LOADING_TEXT = "Writing a summary from these passages..."
+# FIF-D16-FE: says how long it can take, since Gemini gives up after 30 s
+LOADING_TEXT = "Writing a summary from these passages. This can take up to 30 seconds..."
 
 AI_LABEL = "AI-generated from the passages below. Check each source before relying on it."
 QUOTED_LABEL = (

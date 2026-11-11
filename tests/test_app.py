@@ -15,6 +15,7 @@ import pandas as pd
 import pytest
 from streamlit.testing.v1 import AppTest
 
+from flame_in_freefall.page_states import SLOW_SEARCH_NOTE
 from flame_in_freefall.summary_box import AI_LABEL, NOT_FOUND_TEXT, QUOTED_LABEL
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -104,15 +105,51 @@ def test_known_source_links_to_its_report():
     assert any(link in m.value for m in at.markdown)
 
 
-def test_no_results_shows_a_message():
+def test_no_results_shows_one_clear_empty_state():
+    # FIF-D16-FE: a headline and tips, and no empty summary box or skeleton
     at = _run_search(return_value=[])
-    assert "No matching passages found. Try different words." in [i.value for i in at.info]
+    _assert_healthy(at)
+    texts = [m.value for m in at.markdown]
+    assert "**Nothing in the reports matches this question.**" in texts
+    assert any(t.startswith("- Try different or fewer words.") for t in texts)
+    assert "Summary" not in [h.value for h in at.subheader]
+    assert not any("fif-skeleton" in t for t in texts)
 
 
 def test_search_failure_shows_an_error_not_a_crash():
     at = _run_search(side_effect=RuntimeError("index missing"))
     assert not at.exception
     assert len(at.error) == 1
+    assert [b.label for b in at.button] == ["Try again"]
+
+
+def test_try_again_searches_again():
+    # The first search fails, the retry works
+    with mock.patch(
+        "flame_in_freefall.api.search", side_effect=[RuntimeError("index missing"), [RESULT]]
+    ):
+        at = AppTest.from_file(str(APP), default_timeout=30).run()
+        at.text_input[0].input("flame spread").run()
+        at.button[0].click().run()
+    _assert_healthy(at)
+    assert "Results (1)" in [h.value for h in at.subheader]
+
+
+def test_slow_search_explains_why():
+    # The 3 s threshold is tested in test_page_states.py; here, check the page shows the note.
+    # (Faking the clock would also slow Streamlit's own timers, so the check is faked instead.)
+    with mock.patch(
+        "flame_in_freefall.page_states.slow_search_note", return_value=SLOW_SEARCH_NOTE
+    ) as check:
+        at = _run_search(return_value=[RESULT])
+    _assert_healthy(at)
+    check.assert_called()
+    assert SLOW_SEARCH_NOTE in [c.value for c in at.caption]
+
+
+def test_fast_search_has_no_slow_note():
+    at = _run_search(return_value=[RESULT])
+    assert SLOW_SEARCH_NOTE not in [c.value for c in at.caption]
 
 
 # FIF-D12-FE: the sidebar's Experiment choice filters search as well as the table.
@@ -154,9 +191,9 @@ def test_all_searches_every_experiment():
 
 def test_no_results_in_one_experiment_suggests_all():
     at, _ = _search_in("FLEX", return_value=[])
-    assert "No FLEX passages match. Try different words, or choose All in the sidebar." in [
-        i.value for i in at.info
-    ]
+    texts = [m.value for m in at.markdown]
+    assert "**Nothing in the FLEX reports matches this question.**" in texts
+    assert any(t.startswith("- Choose All in the sidebar") for t in texts)
 
 
 def test_experiment_without_reports_searches_everything():
@@ -316,3 +353,5 @@ def test_summary_failure_keeps_the_result_cards():
         "The summary isn't working right now. The passages below still are."
     ]
     assert "Results (1)" in [h.value for h in at.subheader]
+    # FIF-D16-FE: a retry button for the summary
+    assert [b.label for b in at.button] == ["Try again"]
