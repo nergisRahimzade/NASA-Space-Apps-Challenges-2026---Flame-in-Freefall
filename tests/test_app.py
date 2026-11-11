@@ -11,6 +11,7 @@ import tomllib
 from pathlib import Path
 from unittest import mock
 
+import pandas as pd
 import pytest
 from streamlit.testing.v1 import AppTest
 
@@ -178,6 +179,44 @@ def test_search_still_works_when_the_table_fails():
     assert [e.value for e in at.error] == [
         "Experiment data isn't available right now. Please try again in a moment."
     ]
+
+
+# FIF-D13-FE: the riskiness charts read data/ranking.csv and follow the sidebar filters.
+SAFFIRE_HEADING = "**Saffire-II: solid materials, ranked by how fast the flame spread**"
+FLEX_HEADING = "**FLEX: fuel droplets, how often the flame kept burning at each oxygen level**"
+
+
+def _markdown(at: AppTest) -> list[str]:
+    return [m.value for m in at.markdown]
+
+
+def test_ranking_shows_one_chart_per_experiment(app):
+    _assert_healthy(app)
+    assert SAFFIRE_HEADING in _markdown(app)
+    assert FLEX_HEADING in _markdown(app)
+    assert not any("Fake numbers" in c.value and "Day 13" in c.value for c in app.caption)
+
+
+def test_ranking_follows_the_experiment_filter(app):
+    app.sidebar.selectbox[0].select("Saffire-II").run()
+    _assert_healthy(app)
+    assert SAFFIRE_HEADING in _markdown(app)
+    assert FLEX_HEADING not in _markdown(app)
+
+
+def test_experiment_without_results_explains_why(app):
+    app.sidebar.selectbox[0].select("FLEX-2").run()
+    _assert_healthy(app)
+    assert "No ranking for FLEX-2: its tests have no recorded results." in [
+        i.value for i in app.info
+    ]
+
+
+def test_missing_ranking_file_shows_a_message():
+    with mock.patch("flame_in_freefall.ranking_view.load_ranking", return_value=pd.DataFrame()):
+        at = AppTest.from_file(str(APP), default_timeout=30).run()
+    _assert_healthy(at)
+    assert "The riskiness ranking hasn't been built yet." in [i.value for i in at.info]
 
 
 def _package_names(lines: list[str]) -> set[str]:
