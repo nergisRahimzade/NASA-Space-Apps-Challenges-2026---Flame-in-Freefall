@@ -15,6 +15,8 @@ import pandas as pd
 import pytest
 from streamlit.testing.v1 import AppTest
 
+from flame_in_freefall.summary_box import AI_LABEL, NOT_FOUND_TEXT, QUOTED_LABEL
+
 ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "app" / "streamlit_app.py"
 
@@ -257,3 +259,58 @@ def test_page_works_without_the_glossary():
     _assert_healthy(at)
     assert GLOSSARY_LABEL not in [e.label for e in at.expander]
     assert at.dataframe  # the table still shows
+
+
+# FIF-D14-FE: the summary box, filled from summarize(results, question=query).
+AI_SUMMARY = {
+    "takeaways": [
+        {"text": "Spread rose to $5 * 2.", "source": "BASS report", "chunk_id": RESULT["id"]}
+    ],
+    "not_found": False,
+}
+
+
+def _run_summary(**patch) -> tuple[AppTest, mock.MagicMock]:
+    with (
+        mock.patch("flame_in_freefall.api.search", return_value=[RESULT]),
+        mock.patch("flame_in_freefall.api.summarize", **patch) as fake_summarize,
+    ):
+        at = AppTest.from_file(str(APP), default_timeout=30).run()
+        at.text_input[0].input("flame spread").run()
+    return at, fake_summarize
+
+
+def test_summary_shows_takeaways_with_sources(monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key-not-real")
+    at, fake_summarize = _run_summary(return_value=AI_SUMMARY)
+    _assert_healthy(at)
+    fake_summarize.assert_called_once_with([RESULT], question="flame spread")
+    assert AI_LABEL in [c.value for c in at.caption]
+    assert r"- Spread rose to \$5 \* 2\. (BASS report · page 3)" in [m.value for m in at.markdown]
+    # The skeleton is replaced once the summary is ready
+    assert not any("fif-skeleton" in m.value for m in at.markdown)
+
+
+def test_summary_says_not_found():
+    at, _ = _run_summary(return_value={"takeaways": [], "not_found": True})
+    _assert_healthy(at)
+    assert NOT_FOUND_TEXT in [i.value for i in at.info]
+
+
+def test_without_a_key_the_quotes_are_not_called_ai():
+    # conftest removes GEMINI_API_KEY, so the real summarize() quotes the passages
+    with mock.patch("flame_in_freefall.api.search", return_value=[RESULT]):
+        at = AppTest.from_file(str(APP), default_timeout=30).run()
+        at.text_input[0].input("flame spread").run()
+    _assert_healthy(at)
+    captions = [c.value for c in at.caption]
+    assert QUOTED_LABEL in captions and AI_LABEL not in captions
+
+
+def test_summary_failure_keeps_the_result_cards():
+    at, _ = _run_summary(side_effect=RuntimeError("Gemini down"))
+    assert not at.exception
+    assert [e.value for e in at.error] == [
+        "The summary isn't working right now. The passages below still are."
+    ]
+    assert "Results (1)" in [h.value for h in at.subheader]

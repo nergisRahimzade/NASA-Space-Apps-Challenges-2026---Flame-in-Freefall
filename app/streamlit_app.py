@@ -9,7 +9,8 @@ import streamlit as st
 # Make src/ importable when the package isn't installed (e.g. Streamlit Community Cloud).
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from flame_in_freefall.api import get_table, search  # noqa: E402
+from flame_in_freefall.api import get_table, search, summarize  # noqa: E402
+from flame_in_freefall.config import get_settings  # noqa: E402
 from flame_in_freefall.glossary import column_help, load_glossary  # noqa: E402
 from flame_in_freefall.ranking_view import axis_label, filter_ranking, load_ranking  # noqa: E402
 from flame_in_freefall.result_cards import (  # noqa: E402
@@ -19,6 +20,13 @@ from flame_in_freefall.result_cards import (  # noqa: E402
     score_badge,
     snippet,
     source_line,
+)
+from flame_in_freefall.summary_box import (  # noqa: E402
+    LOADING_TEXT,
+    NOT_FOUND_TEXT,
+    SKELETON_HTML,
+    summary_label,
+    takeaway_markdown,
 )
 
 st.set_page_config(page_title="Flame in Freefall", layout="wide")
@@ -105,7 +113,12 @@ else:
         st.error("Search isn't working right now. Please try again in a moment.")
     else:
         st.subheader("Summary")
-        st.info("Summary coming soon. This will show cited takeaways from summarize().")
+        # FIF-D14-FE: show a skeleton now, so the result cards below appear while summarize()
+        # works. The box is filled in after the cards.
+        summary_box = st.empty()
+        with summary_box.container():
+            st.caption(LOADING_TEXT)
+            st.markdown(SKELETON_HTML, unsafe_allow_html=True)
 
         from_text = f" from {search_experiment}" if search_experiment else ""
         st.subheader(f"Results ({len(results)}){from_text}")
@@ -136,6 +149,20 @@ else:
                     with st.expander("Full passage"):
                         # st.text, not st.write: shows the passage exactly as written
                         st.text(r["text"])
+
+        try:
+            # FIF-D15-AI (contract v1.7): passing the question keeps only takeaways that answer
+            # it, and gives "not found" when none do. No results -> "not found", no AI call.
+            summary = summarize(results, question=query)
+        except Exception:
+            summary_box.error("The summary isn't working right now. The passages below still are.")
+        else:
+            with summary_box.container():
+                if summary["not_found"]:
+                    st.info(NOT_FOUND_TEXT)
+                else:
+                    st.caption(summary_label(ai_available=bool(get_settings().gemini_api_key)))
+                    st.markdown(takeaway_markdown(summary, results, links))
 
 # FIF-D15-DAT: words like LOI come up in the reports but not in the table, so list them all here.
 if glossary:
