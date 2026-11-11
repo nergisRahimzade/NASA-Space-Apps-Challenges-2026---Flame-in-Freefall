@@ -1,10 +1,10 @@
 """Day 14 (FE): the summary box above the result cards.
 
 The app shows a loading skeleton while summarize() works, then the takeaways, each followed by
-its source and page. Takeaway text is escaped, like the snippets, so $ or * can't turn into
-math or bold."""
+a chip naming its experiment and page (FIF-D15-FE). Takeaway text is escaped, like the
+snippets, so $ or * can't turn into math or bold."""
 
-from flame_in_freefall.result_cards import escape_markdown, source_line
+from flame_in_freefall.result_cards import escape_markdown
 
 # Three grey lines that shimmer while the summary is being written. Fixed HTML with no user
 # text in it, so it's safe to show with unsafe_allow_html. Motion stops for people who ask
@@ -45,11 +45,31 @@ def summary_label(ai_available: bool) -> str:
     return AI_LABEL if ai_available else QUOTED_LABEL
 
 
+def short_source(source: str) -> str:
+    """A report title without its description: "FLEX (Flame Extinguishment ...) investigation
+    description" -> "FLEX". Used when a result has no experiment tag."""
+    return source.split(" (")[0].strip() or source
+
+
+def source_chip(takeaway: dict, results: list[dict], links: dict[str, str]) -> str:
+    """A small badge naming the experiment and page a takeaway came from, e.g. "FLEX · p. 1".
+    It links to the report when we know its page; hovering the link shows the full title."""
+    result = {r["id"]: r for r in results}.get(takeaway["chunk_id"], {})
+    name = result.get("experiment") or short_source(takeaway["source"])
+    page = result.get("page", "?")
+    chip = f":orange-badge[{escape_markdown(f'{name} · p. {page}')}]"
+    url = links.get(takeaway["source"])
+    if not url:
+        return chip
+    # Parentheses or quotes would break the Markdown link, so they're encoded or dropped.
+    url = url.replace("(", "%28").replace(")", "%29")
+    title = takeaway["source"].replace('"', "")
+    return f'[{chip}]({url} "{title}")'
+
+
 def takeaway_markdown(summary: dict, results: list[dict], links: dict[str, str]) -> str:
-    """A bullet list: each takeaway, then its source (linked when known) and page."""
-    pages = {r["id"]: r["page"] for r in results}
-    lines = []
-    for t in summary["takeaways"]:
-        source = source_line(t["source"], pages.get(t["chunk_id"], "?"), links)
-        lines.append(f"- {escape_markdown(t['text'])} ({source})")
-    return "\n".join(lines)
+    """A bullet list: each takeaway, then a chip for its source (FIF-D15-FE)."""
+    return "\n".join(
+        f"- {escape_markdown(t['text'])} {source_chip(t, results, links)}"
+        for t in summary["takeaways"]
+    )

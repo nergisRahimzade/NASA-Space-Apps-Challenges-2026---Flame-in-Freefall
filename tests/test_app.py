@@ -286,7 +286,9 @@ def test_summary_shows_takeaways_with_sources(monkeypatch):
     _assert_healthy(at)
     fake_summarize.assert_called_once_with([RESULT], question="flame spread")
     assert AI_LABEL in [c.value for c in at.caption]
-    assert r"- Spread rose to \$5 \* 2\. (BASS report · page 3)" in [m.value for m in at.markdown]
+    # FIF-D15-FE: the source is a chip; mock results have no experiment, so the short title shows
+    chip = r":orange-badge[BASS report · p\. 3]"
+    assert rf"- Spread rose to \$5 \* 2\. {chip}" in [m.value for m in at.markdown]
     # The skeleton is replaced once the summary is ready
     assert not any("fif-skeleton" in m.value for m in at.markdown)
 
