@@ -11,6 +11,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from flame_in_freefall.api import get_table, search, summarize  # noqa: E402
 from flame_in_freefall.config import get_settings  # noqa: E402
+from flame_in_freefall.filters import (  # noqa: E402
+    ALL,
+    Filters,
+    from_choices,
+    material_options,
+    material_oxygen_test_counts,
+)
 from flame_in_freefall.glossary import column_help, load_glossary  # noqa: E402
 from flame_in_freefall.page_states import (  # noqa: E402
     SEARCH_FAILED,
@@ -24,6 +31,7 @@ from flame_in_freefall.page_states import (  # noqa: E402
 from flame_in_freefall.ranking_view import axis_label, filter_ranking, load_ranking  # noqa: E402
 from flame_in_freefall.result_cards import (  # noqa: E402
     SNIPPET_WORDS,
+    escape_markdown,
     load_experiments,
     load_source_links,
     score_badge,
@@ -42,7 +50,6 @@ st.set_page_config(page_title="Flame in Freefall", layout="wide")
 st.title("Flame in Freefall")
 st.write("Explore microgravity combustion experiments.")
 
-ALL = "All"
 
 # FIF-D15-DAT: plain-word tooltips from data/glossary.json. A missing or broken glossary only
 # removes the tooltips; the rest of the page still works.
@@ -62,7 +69,18 @@ except Exception:
     all_rows = pd.DataFrame()
     table_error = True
 
-experiment = ALL
+# FIF-D17-FE: one filter state for the whole page. The sidebar widgets keep their values in
+# st.session_state (under these keys), and everything below reads the single `f` built from them.
+FILTER_KEYS = ("f_experiment", "f_material", "f_oxygen")
+
+
+def reset_filters() -> None:
+    # Removing the saved values puts every widget back to its default on the next run
+    for key in FILTER_KEYS:
+        st.session_state.pop(key, None)
+
+
+f = Filters(experiment=None, material=None, oxygen_min=0.0, oxygen_max=100.0)
 if not all_rows.empty:
     # Widen the slider if the data goes past 15-30%, so no rows are hidden by default.
     # master.csv stores oxygen as a range per row (FIF-D09-BE), so use the lowest min and highest
@@ -72,10 +90,12 @@ if not all_rows.empty:
 
     with st.sidebar:
         st.header("Filters")
+        st.caption("These filters apply to search, the table and every chart.")
         # Single choice, because the contract's get_table() and search() take one experiment
         experiment = st.selectbox(
             "Experiment",
             [ALL, *sorted(all_rows["experiment"].unique())],
+            key="f_experiment",
             help=" ".join(
                 [
                     tooltip.get("experiment", ""),
@@ -83,29 +103,37 @@ if not all_rows.empty:
                 ]
             ).strip(),
         )
+        # Only offer materials from the chosen experiment. A material left over from another
+        # experiment would empty every chart, so it goes back to All.
+        materials = material_options(all_rows, experiment)
+        if st.session_state.get("f_material", ALL) not in materials:
+            st.session_state["f_material"] = ALL
         material = st.selectbox(
-            "Material",
-            [ALL, *sorted(all_rows["material"].unique())],
-            help=tooltip.get("material"),
+            "Material", materials, key="f_material", help=tooltip.get("material")
         )
-        oxygen_min, oxygen_max = st.slider(
+        oxygen = st.slider(
             "Oxygen %",
             oxygen_low,
             oxygen_high,
             (oxygen_low, oxygen_high),
             step=0.5,
+            key="f_oxygen",
             help=tooltip.get("oxygen_pct_min"),
         )
+        st.button("Reset filters", on_click=reset_filters)
+    f = from_choices(experiment, material, oxygen)
 
 query = st.text_input("Search the research reports")
 # Only experiments with reports can be searched; search() rejects any other name
-searchable = experiment in load_experiments()
-if experiment != ALL:
+searchable = f.experiment in load_experiments()
+if f.experiment:
     if searchable:
-        st.caption(f"Searching {experiment} reports only. Choose All in the sidebar to search all.")
+        st.caption(
+            f"Searching {f.experiment} reports only. Choose All in the sidebar to search all."
+        )
     else:
-        st.caption(f"There are no {experiment} reports to search, so search covers all of them.")
-search_experiment = experiment if searchable else None
+        st.caption(f"There are no {f.experiment} reports to search, so search covers all of them.")
+search_experiment = f.experiment if searchable else None
 
 if not query.strip():
     st.caption("Try a question like: What gases were tested as fire suppressants in microgravity?")
@@ -199,12 +227,9 @@ if all_rows.empty:
     st.info("No experiment data has been loaded yet.")
     st.stop()
 
-filters = {"oxygen_min": oxygen_min, "oxygen_max": oxygen_max}
-if experiment != ALL:
-    filters["experiment"] = experiment
-if material != ALL:
-    filters["material"] = material
-table = pd.DataFrame(get_table(filters))
+# FIF-D17-FE: every chart below uses this one filter state
+st.markdown(f"**Showing:** {escape_markdown(f.describe())}")
+table = pd.DataFrame(get_table(f.table_filters()))
 
 st.caption(f"{len(table)} rows")
 if table.empty:
@@ -245,12 +270,12 @@ if ranking.empty:
 else:
     ranked = filter_ranking(
         ranking,
-        experiment=None if experiment == ALL else experiment,
-        material=None if material == ALL else material,
-        oxygen_min=oxygen_min,
-        oxygen_max=oxygen_max,
+        experiment=f.experiment,
+        material=f.material,
+        oxygen_min=f.oxygen_min,
+        oxygen_max=f.oxygen_max,
     )
-    if experiment == "BASS-II":
+    if f.experiment == "BASS-II":
         # FIF-D16-DAT: BASS-II has outcomes, but flames were turned down until they went out on
         # purpose, so "went out" doesn't rank risk (data_notes.md section 13).
         st.info(
@@ -258,8 +283,8 @@ else:
             "so how a test ended doesn't show how risky the material is. See its rows in the "
             "table above."
         )
-    elif experiment != ALL and experiment not in set(ranking["experiment"]):
-        st.info(f"No ranking for {experiment}: its tests have no recorded results.")
+    elif f.experiment and f.experiment not in set(ranking["experiment"]):
+        st.info(f"No ranking for {f.experiment}: its tests have no recorded results.")
     elif ranked.empty:
         st.info("No ranked materials match these filters. Try widening them in the sidebar.")
 
@@ -335,44 +360,23 @@ else:
         fig.update_yaxes(range=[-0.05, 1.05], tickformat=".0%")
         st.plotly_chart(fig)
 
-st.subheader("Flame spread by material and oxygen")
-st.caption("Fake numbers for building the layout. Real data replaces them once master.csv lands.")
-
-# Made-up grid, not NASA data: each material spreads faster as oxygen rises
-base_rate = {
-    "cotton": 0.8,
-    "PMMA": 0.3,
-    "cotton-fiberglass": 1.6,
-    "Nomex": 0.1,
-    "heptane": 0.5,
-}
-fake = pd.DataFrame(
-    [
-        {"material": m, "oxygen_pct": o, "spread_rate_mm_s": round(rate * (o - 15) / 6, 2)}
-        for m, rate in base_rate.items()
-        for o in [16, 18, 21, 25, 30]
-    ]
+st.subheader("Tests run by material and oxygen level")
+# FIF-D17-FE: real counts from the same filtered table, replacing the made-up grid, so this chart
+# follows the sidebar like the others.
+st.caption(
+    "How many tests were run for each material at each oxygen level, so you can see where the "
+    "data is thin. FLEX-2 is left out: its rows are planned ranges, one per fuel, not tests."
 )
-
-# Reuse the sidebar filters so the heatmap matches the table
-if experiment != ALL:
-    in_experiment = all_rows.loc[all_rows["experiment"] == experiment, "material"]
-    fake = fake[fake["material"].isin(in_experiment)]
-if material != ALL:
-    fake = fake[fake["material"] == material]
-fake = fake[fake["oxygen_pct"].between(oxygen_min, oxygen_max)]
-
-if fake.empty:
-    st.info("No data for these filters.")
+grid = material_oxygen_test_counts(table) if not table.empty else pd.DataFrame()
+if grid.empty:
+    st.info("No tests match these filters. Try widening them in the sidebar.")
 else:
-    grid = fake.pivot(index="material", columns="oxygen_pct", values="spread_rate_mm_s")
-    grid.columns = [f"{o}%" for o in grid.columns]
     fig = px.imshow(
         grid,
-        color_continuous_scale="YlOrRd",
+        color_continuous_scale="Oranges",
         text_auto=True,
         aspect="auto",
-        labels={"x": "Oxygen", "y": "Material", "color": "Spread (mm/s)"},
+        labels={"x": "Oxygen", "y": "Material", "color": "Tests"},
     )
     # Plotly reads "16%" as a number, so force labels to keep the cells evenly spaced
     fig.update_xaxes(type="category")
