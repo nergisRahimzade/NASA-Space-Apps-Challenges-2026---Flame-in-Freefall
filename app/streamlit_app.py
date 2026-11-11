@@ -10,6 +10,7 @@ import streamlit as st
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from flame_in_freefall.api import get_table, search  # noqa: E402
+from flame_in_freefall.glossary import column_help, load_glossary  # noqa: E402
 from flame_in_freefall.ranking_view import axis_label, filter_ranking, load_ranking  # noqa: E402
 from flame_in_freefall.result_cards import (  # noqa: E402
     SNIPPET_WORDS,
@@ -25,6 +26,14 @@ st.title("Flame in Freefall")
 st.write("Explore microgravity combustion experiments.")
 
 ALL = "All"
+
+# FIF-D15-DAT: plain-word tooltips from data/glossary.json. A missing or broken glossary only
+# removes the tooltips; the rest of the page still works.
+try:
+    glossary = load_glossary()
+except Exception:
+    glossary = []
+tooltip = column_help(glossary)  # column name -> tooltip
 
 # The table loads first: its experiments fill the sidebar, and search reads the same Experiment
 # choice (FIF-D12-FE). If it fails, search still works, unfiltered.
@@ -50,11 +59,25 @@ if not all_rows.empty:
         experiment = st.selectbox(
             "Experiment",
             [ALL, *sorted(all_rows["experiment"].unique())],
-            help="Filters the search results and the experiment data.",
+            help=" ".join(
+                [
+                    tooltip.get("experiment", ""),
+                    "Filters the search results and the experiment data.",
+                ]
+            ).strip(),
         )
-        material = st.selectbox("Material", [ALL, *sorted(all_rows["material"].unique())])
+        material = st.selectbox(
+            "Material",
+            [ALL, *sorted(all_rows["material"].unique())],
+            help=tooltip.get("material"),
+        )
         oxygen_min, oxygen_max = st.slider(
-            "Oxygen %", oxygen_low, oxygen_high, (oxygen_low, oxygen_high), step=0.5
+            "Oxygen %",
+            oxygen_low,
+            oxygen_high,
+            (oxygen_low, oxygen_high),
+            step=0.5,
+            help=tooltip.get("oxygen_pct_min"),
         )
 
 query = st.text_input("Search the research reports")
@@ -114,6 +137,12 @@ else:
                         # st.text, not st.write: shows the passage exactly as written
                         st.text(r["text"])
 
+# FIF-D15-DAT: words like LOI come up in the reports but not in the table, so list them all here.
+if glossary:
+    with st.expander("What do these words mean?"):
+        for t in glossary:
+            st.markdown(f"**{t['term']}**: {t['tooltip']}")
+
 st.divider()
 st.subheader("Experiment data")
 
@@ -135,7 +164,15 @@ st.caption(f"{len(table)} rows")
 if table.empty:
     st.info("No experiments match these filters. Try widening them in the sidebar.")
 else:
-    st.dataframe(table, hide_index=True, width="stretch")
+    # Hovering a column header shows its plain-word tooltip (FIF-D15-DAT)
+    st.dataframe(
+        table,
+        hide_index=True,
+        width="stretch",
+        column_config={
+            col: st.column_config.Column(help=tooltip[col]) for col in table if col in tooltip
+        },
+    )
 
     st.subheader("Flame spread vs. oxygen")
     fig = px.scatter(

@@ -37,7 +37,7 @@ LIMITS = {
     # airflow from cm/s into mm/s gives 0.105-0.13.
     "spread_rate_per_flow": (0, 0.1),
     "nitrogen_pct": (0, 100),
-    "co_pct": (0, 100),
+    "co2_pct": (0, 100),
     "helium_pct": (0, 100),
     "droplet_diameter_mm": (0.5, 10),  # real: 1.1-4.7
     "extinction_diameter_mm": (0, 10),  # real: 0-4.6
@@ -58,9 +58,9 @@ FLEX_DATES = ("2008-01-01", "2013-12-31")
 # The column that names one row of each clean table: every value must appear once.
 ID_COLUMNS = {"flex2.csv": "material", "saffire2.csv": "sample_id", "flex.csv": "test_id"}
 
-# FLEX gas mix: O2 + N2 + CO + He should add up to about 100%. The raw mole fractions
+# FLEX gas mix: O2 + N2 + CO2 + He should add up to about 100%. The raw mole fractions
 # have 2 decimals, so real totals land between 98 and 101.
-GAS_COLUMNS = ["oxygen_pct_min", "nitrogen_pct", "co_pct", "helium_pct"]
+GAS_COLUMNS = ["oxygen_pct_min", "nitrogen_pct", "co2_pct", "helium_pct"]
 GAS_TOTAL_PCT = (97, 102)
 # A flame cannot go out on a droplet bigger than the one it started with. Allow 0.05 mm
 # for measurement noise: C13H102 went out at 3.34 mm on a 3.33 mm droplet.

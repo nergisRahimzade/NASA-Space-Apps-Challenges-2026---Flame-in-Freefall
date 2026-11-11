@@ -58,6 +58,14 @@ RESULT = {
 }
 
 
+GLOSSARY_LABEL = "What do these words mean?"  # FIF-D15-DAT, always on the page
+
+
+def _result_expanders(at: AppTest) -> list[str]:
+    # Expanders that belong to the result cards, leaving out the glossary.
+    return [e.label for e in at.expander if e.label != GLOSSARY_LABEL]
+
+
 def _run_search(**patch) -> AppTest:
     with mock.patch("flame_in_freefall.api.search", **patch):
         at = AppTest.from_file(str(APP), default_timeout=30).run()
@@ -74,7 +82,7 @@ def test_result_card_shows_badge_source_and_snippet():
     # "spread" from the question is highlighted, and $ and * are escaped
     assert any("**:orange-background[Spread]**" in c and r"\$5" in c for c in cards)
     # The snippet already shows this short passage in full, so there's no "Full passage"
-    assert not at.expander
+    assert _result_expanders(at) == []
     assert not at.text
 
 
@@ -82,7 +90,7 @@ def test_long_passage_offers_the_full_text_exactly():
     long_text = PASSAGE + " " + " ".join(f"word{i}" for i in range(50))
     at = _run_search(return_value=[{**RESULT, "text": long_text}])
     _assert_healthy(at)
-    assert [e.label for e in at.expander] == ["Full passage"]
+    assert _result_expanders(at) == ["Full passage"]
     assert [t.value for t in at.text] == [long_text]
 
 
@@ -229,3 +237,23 @@ def test_live_app_package_list_covers_pyproject():
     ours = _package_names(pyproject["project"]["dependencies"])
     live = _package_names((ROOT / "app" / "requirements.txt").read_text().splitlines())
     assert ours <= live, f"missing from app/requirements.txt: {sorted(ours - live)}"
+
+
+def test_glossary_explains_the_words(app):
+    # FIF-D15-DAT: the glossary is on the page, including LOI (in the reports, not the table).
+    _assert_healthy(app)
+    assert [e.label for e in app.expander] == [GLOSSARY_LABEL]
+    texts = [m.value for m in app.markdown]
+    assert any(t.startswith("**LOI (Limiting Oxygen Index)**: The lowest oxygen") for t in texts)
+    assert any(t.startswith("**Flame spread rate**:") for t in texts)
+
+
+def test_page_works_without_the_glossary():
+    # A missing or broken glossary.json only removes the tooltips and the glossary box.
+    with mock.patch(
+        "flame_in_freefall.glossary.load_glossary", side_effect=ValueError("broken file")
+    ):
+        at = AppTest.from_file(str(APP), default_timeout=30).run()
+    _assert_healthy(at)
+    assert GLOSSARY_LABEL not in [e.label for e in at.expander]
+    assert at.dataframe  # the table still shows

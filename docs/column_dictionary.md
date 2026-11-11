@@ -44,7 +44,7 @@ Issues: values are ranges/lists in text and need parsing (`min`/`max` or explodi
 | Ambient pressure; mmHg | float | mmHg (760 = 1 atm) | 1 zero (`C11M201`) | Chamber pressure, 526 to 2320 mmHg; 0 is impossible, treat as missing |
 | O initial ambient composition; mole fraction | float | fraction | 0 | Oxygen, 0.12 to 0.34 |
 | N initial ambient composition; mole fraction | float | fraction | 0 | Nitrogen |
-| CO initial ambient composition; mole fraction | float | fraction | 0 | Likely CO2 (diluent, up to 0.7); header says CO. **Assumption, confirm in the report** |
+| CO initial ambient composition; mole fraction | float | fraction | 0 | CO2 (diluent/suppressant, up to 0.7); header says CO. **Confirmed on Day 14** (data_notes.md section 10): the headers drop subscripts and the report names CO2. Clean column: `co2_pct` |
 | He initial ambient composition; mole fraction | float | fraction | 0 | Helium |
 | Droplet initial diameter; mm | text | mm | 6 empty + 6 `�` | Starting droplet size. `�` is a corrupted character for "no value" |
 | Visible flame extinction diameter; mm | text | mm | 49 empty + 28 `�` | Droplet diameter when flame went out. `0` is a real value (burned to the end) |
