@@ -28,13 +28,13 @@
     {
       "id": "pressure",
       "term": "Pressure (kPa)",
-      "tooltip": "How hard the surrounding gas presses, in kilopascals. Earth's air at sea level is about 101 kPa (1 atmosphere). Empty for Saffire-II, whose table gives no pressure.",
+      "tooltip": "How hard the surrounding gas presses, in kilopascals. Earth's air at sea level is about 101 kPa (1 atmosphere). Empty for Saffire-II and BASS-II, whose tables give no pressure.",
       "columns": ["pressure_kpa_min", "pressure_kpa_max"]
     },
     {
       "id": "airflow",
       "term": "Airflow (cm/s)",
-      "tooltip": "How fast air moves past the flame, in centimetres per second. In space hot air doesn't rise, so moving air is what brings the flame fresh oxygen. FLEX droplets burned in still air (0).",
+      "tooltip": "How fast air moves past the flame, in cm/s. In space hot air doesn't rise, so moving air brings the flame fresh oxygen. FLEX burned in still air (0). BASS-II's lowest speed is empty when it was turned down further than noted.",
       "columns": ["flow_cm_s_min", "flow_cm_s_max"]
     },
     {
@@ -46,25 +46,25 @@
     {
       "id": "experiment",
       "term": "Experiment",
-      "tooltip": "FLEX and FLEX-2 burned small fuel droplets on the space station. Saffire-II burned large material samples inside an empty cargo ship after it left the station.",
+      "tooltip": "FLEX and FLEX-2 burned small fuel droplets on the space station. Saffire-II burned large samples in an empty cargo ship. BASS-II burned small solid samples in a wind tunnel on the station, changing airflow and oxygen.",
       "columns": ["experiment"]
     },
     {
       "id": "material",
       "term": "Material",
-      "tooltip": "What was burned: a liquid fuel droplet (FLEX, FLEX-2) or a solid sample (Saffire-II).",
+      "tooltip": "What was burned: a liquid fuel droplet (FLEX, FLEX-2) or a solid sample (Saffire-II, BASS-II).",
       "columns": ["material"]
     },
     {
       "id": "material_category",
       "term": "Material category",
-      "tooltip": "The kind of material: hydrocarbon or alcohol (liquid fuels), or plastic, fabric or silicone (solid samples).",
+      "tooltip": "The kind of material: hydrocarbon or alcohol (liquid fuels), or plastic, fabric, silicone or wax (solids). Unknown: BASS-II samples whose material is never named.",
       "columns": ["material_category"]
     },
     {
       "id": "outcome",
       "term": "Outcome",
-      "tooltip": "How a FLEX test ended. Extinction: the flame went out. Completion: the fuel burned away. Disruption: the test was cut short, so we don't know. Only FLEX has outcomes.",
+      "tooltip": "How a test ended. Extinction: the flame went out. Completion: the fuel burned away. Disruption: cut short. Blowoff: blown out by strong air. No ignition: never lit. Empty: not recorded.",
       "columns": ["outcome"]
     },
     {
@@ -76,8 +76,14 @@
     {
       "id": "suppressant",
       "term": "Suppressant",
-      "tooltip": "A gas added to the air to make a fire harder to keep going. FLEX tested carbon dioxide (CO2), helium and SF6.",
-      "columns": []
+      "tooltip": "A gas added to make a fire harder to keep going. FLEX tested CO2, helium and SF6. The table shows which gas was added (none = no suppressant) and its share of the gas in %. Empty for FLEX-2, whose table doesn't say.",
+      "columns": ["suppressant", "suppressant_pct"]
+    },
+    {
+      "id": "suppressed_tests",
+      "term": "Suppressed tests",
+      "tooltip": "How many tests in this group had CO2 or helium added. Flames go out more often with a suppressant, so a group with many of these keeps burning less.",
+      "columns": ["suppressed_tests"]
     },
     {
       "id": "cool_flame",

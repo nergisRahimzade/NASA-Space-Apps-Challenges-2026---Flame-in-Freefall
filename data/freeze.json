@@ -1,0 +1,141 @@
+{
+  "version": "1.0",
+  "frozen_on": "2026-11-10",
+  "git_tag": "data-v1.0",
+  "rows_per_experiment": {
+    "FLEX-2": 8,
+    "Saffire-II": 9,
+    "FLEX": 273,
+    "BASS-II": 129
+  },
+  "outputs": {
+    "data/master.csv": {
+      "sha256": "53b2b8648becc83b80fd7e3a15844859ab22d55031aa875a72de5971b8e80008",
+      "rows": 419,
+      "columns": [
+        "experiment",
+        "material",
+        "material_category",
+        "oxygen_pct_min",
+        "oxygen_pct_max",
+        "pressure_kpa_min",
+        "pressure_kpa_max",
+        "flow_cm_s_min",
+        "flow_cm_s_max",
+        "suppressant",
+        "suppressant_pct",
+        "spread_rate_mm_s",
+        "spread_rate_per_flow",
+        "outcome"
+      ]
+    },
+    "data/ranking.csv": {
+      "sha256": "14a44d67da664f392aae644702c9d5ad7f1eaa05d58601347ebb41164c1d4b4e",
+      "rows": 30,
+      "columns": [
+        "experiment",
+        "material",
+        "material_category",
+        "oxygen_pct",
+        "tests",
+        "suppressed_tests",
+        "spread_rate_n",
+        "spread_rate_mm_s_min",
+        "spread_rate_mm_s_mean",
+        "spread_rate_mm_s_max",
+        "burn_spread_mm_s_mean",
+        "completion",
+        "extinction",
+        "disruption",
+        "kept_burning_share",
+        "risk_basis",
+        "risk_value",
+        "risk_rank"
+      ]
+    },
+    "data/clean/flex2.csv": {
+      "sha256": "caa68e49ed0aed8d65dc113b363ea1b3b7b69883e6cfda2ef0806dc5b47aa797",
+      "rows": 8,
+      "columns": [
+        "experiment",
+        "material",
+        "gas_mixture",
+        "oxygen_pct_min",
+        "oxygen_pct_max",
+        "pressure_kpa_min",
+        "pressure_kpa_max",
+        "flow_cm_s_min",
+        "flow_cm_s_max"
+      ]
+    },
+    "data/clean/saffire2.csv": {
+      "sha256": "fcb04f7c2c45759b42a3cf4b615a49a44db136f9b9f6ef91b6dca9df81f22cab",
+      "rows": 9,
+      "columns": [
+        "experiment",
+        "sample_id",
+        "material",
+        "thickness_mm",
+        "flow_direction",
+        "oxygen_pct_min",
+        "oxygen_pct_max",
+        "flow_cm_s_min",
+        "flow_cm_s_max",
+        "spread_rate_mm_s",
+        "burn_length_cm",
+        "burn_time_s"
+      ]
+    },
+    "data/clean/flex.csv": {
+      "sha256": "924549309f84bd62706dcc682fb4383480bd67be02983fb3eb0108939b2d9454",
+      "rows": 273,
+      "columns": [
+        "experiment",
+        "test_id",
+        "test_date",
+        "material",
+        "oxygen_pct_min",
+        "oxygen_pct_max",
+        "pressure_kpa_min",
+        "pressure_kpa_max",
+        "flow_cm_s_min",
+        "flow_cm_s_max",
+        "nitrogen_pct",
+        "co2_pct",
+        "helium_pct",
+        "droplet_diameter_mm",
+        "extinction_diameter_mm",
+        "burn_time_s",
+        "outcome"
+      ]
+    },
+    "data/clean/bass2.csv": {
+      "sha256": "398daccbeb84e4d24b27429a1bc1896c1dc791c6f7e4517e38f83b39ee7f7c7e",
+      "rows": 129,
+      "columns": [
+        "experiment",
+        "test_id",
+        "test_date",
+        "pi",
+        "sample_id",
+        "sample_text",
+        "material",
+        "thickness_mm",
+        "width_cm",
+        "oxygen_pct_min",
+        "oxygen_pct_max",
+        "oxygen_final_pct",
+        "flow_cm_s_min",
+        "flow_cm_s_max",
+        "flow_notes",
+        "outcome"
+      ]
+    }
+  },
+  "inputs": {
+    "data/raw/PSI-68_Experimental table_Flex2.csv": "3ac2500a11d0101456b07b7a6cee23def93ee0f97a1d2ee62b77d405abad7b2e",
+    "data/raw/PSI-99_Experimental table_SAFFIRE-2.csv": "87c724671c9eb5947d525ad7a65c6087f78071a70b6a9827b428b3490c8947cd",
+    "data/raw/PSI-69_Experimental table_FLEX.csv": "bd22cb93ed360b7b9d3ec74a982aeab3163252043c015058e131211a041a5f23",
+    "data/raw/PSI-25_Experimental table_BASS-II.csv": "872a5c3b8dd9137c1c066441d0b360bdbee3268fad36b38d98b53d9eb74d6090"
+  }
+}

@@ -25,7 +25,7 @@ def test_search_rejects_bad_k(k):
 
 
 def test_search_k_larger_than_the_reports_returns_every_chunk():
-    assert len(api.search("flame", k=100)) == 18  # the reports make 18 chunks
+    assert len(api.search("flame", k=100)) == 22  # the reports make 22 chunks (BASS-II: 4)
 
 
 def test_search_with_no_match_returns_nothing(monkeypatch):
@@ -108,7 +108,7 @@ def test_get_table_rejects_filters_that_are_not_a_dict(filters):
 
 
 def test_get_table_empty_dict_means_no_filters():
-    assert len(api.get_table({})) == 290
+    assert len(api.get_table({})) == 419
 
 
 def test_get_table_with_no_match_returns_nothing():

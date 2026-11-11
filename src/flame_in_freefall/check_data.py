@@ -29,7 +29,8 @@ LIMITS = {
     # kPa. Real: 50.7-309. Unconverted atm (0.5-3) or mmHg (530-761) falls outside.
     "pressure_kpa_min": (10, 500),
     "pressure_kpa_max": (10, 500),
-    # cm/s. Real: 0 (FLEX), 0.1-5 (FLEX-2), 20 (Saffire-II). mm/s by mistake would be 200.
+    # cm/s. Real: 0 (FLEX), 0.1-5 (FLEX-2), 20 (Saffire-II), 0-38.5 (BASS-II).
+    # mm/s by mistake would be 200.
     "flow_cm_s_min": (0, 50),
     "flow_cm_s_max": (0, 50),
     "spread_rate_mm_s": (0, 20),  # real: 2.1-2.6, flames spread slowly in microgravity
@@ -38,6 +39,9 @@ LIMITS = {
     "spread_rate_per_flow": (0, 0.1),
     "nitrogen_pct": (0, 100),
     "co2_pct": (0, 100),
+    "oxygen_final_pct": (5, 30),  # BASS-II, real 13.5-22.2 (glitches blanked in cleaning)
+    "width_cm": (0, 10),  # BASS-II sample width, real 1-2
+    "suppressant_pct": (0, 100),  # real: 0-70 (Day 16)
     "helium_pct": (0, 100),
     "droplet_diameter_mm": (0.5, 10),  # real: 1.1-4.7
     "extinction_diameter_mm": (0, 10),  # real: 0-4.6
@@ -47,16 +51,27 @@ LIMITS = {
 }
 
 ALLOWED = {
-    "experiment": {"FLEX-2", "Saffire-II", "FLEX"},
-    "outcome": {"Extinction", "Completion", "Disruption"},
+    "experiment": {"FLEX-2", "Saffire-II", "FLEX", "BASS-II"},
+    # Blowoff and No ignition are BASS-II's (Day 16): blown out by too much air, never lit.
+    "outcome": {"Extinction", "Completion", "Disruption", "Blowoff", "No ignition"},
+    "suppressant": {"none", "CO2", "He"},  # Day 16
     "material_category": set(MATERIAL_CATEGORY.values()),
 }
 
-# FLEX tests ran on the ISS; real dates are 2009-03-05 to 2011-12-08.
-FLEX_DATES = ("2008-01-01", "2013-12-31")
+# Test dates per experiment. FLEX: 2009-03-05 to 2011-12-08. BASS-II: 2014-02-14 to
+# 2016-02-26 (Day 16).
+TEST_DATES = {
+    "FLEX": ("2008-01-01", "2013-12-31"),
+    "BASS-II": ("2014-01-01", "2016-12-31"),
+}
 
 # The column that names one row of each clean table: every value must appear once.
-ID_COLUMNS = {"flex2.csv": "material", "saffire2.csv": "sample_id", "flex.csv": "test_id"}
+ID_COLUMNS = {
+    "flex2.csv": "material",
+    "saffire2.csv": "sample_id",
+    "flex.csv": "test_id",
+    "bass2.csv": "test_id",  # Day 16. Sample ids repeat: some samples were burned twice
+}
 
 # FLEX gas mix: O2 + N2 + CO2 + He should add up to about 100%. The raw mole fractions
 # have 2 decimals, so real totals land between 98 and 101.
@@ -90,7 +105,7 @@ def _flag(table: pd.DataFrame, bad: pd.Series, message) -> list[str]:
 
 
 def range_problems(table: pd.DataFrame) -> list[str]:
-    """Numbers outside LIMITS, unknown words, a min above its max, dates outside FLEX_DATES."""
+    """Numbers outside LIMITS, unknown words, a min above its max, dates outside TEST_DATES."""
     problems = []
     for col, (lo, hi) in LIMITS.items():
         if col in table:
@@ -100,6 +115,14 @@ def range_problems(table: pd.DataFrame) -> list[str]:
         if col in table:
             bad = table[col].notna() & ~table[col].isin(allowed)
             problems += _flag(table, bad, lambda r: f"{col} = {r[col]!r}, not a known value")
+    if {"suppressant", "suppressant_pct"} <= set(table.columns):
+        # Day 16: "none" means 0%, and a named gas is at least 1% (real: 5-70). A mole
+        # fraction not turned into % (0.05-0.7) passes the 0-100 range, so it's caught here.
+        gas, pct = table["suppressant"], table["suppressant_pct"]
+        bad = (gas.eq("none") & pct.ne(0)) | (gas.isin(["CO2", "He"]) & ~pct.between(1, 100))
+        problems += _flag(
+            table, bad, lambda r: f"suppressant {r['suppressant']} with {r['suppressant_pct']}%"
+        )
     for base in ("oxygen_pct", "pressure_kpa", "flow_cm_s"):
         lo, hi = f"{base}_min", f"{base}_max"
         if lo in table:
@@ -107,8 +130,13 @@ def range_problems(table: pd.DataFrame) -> list[str]:
             problems += _flag(table, bad, lambda r: f"{lo} = {r[lo]} is above {hi} = {r[hi]}")
     if "test_date" in table:
         dates = pd.to_datetime(table["test_date"], errors="coerce")
-        bad = ~dates.between(*FLEX_DATES)  # also True for a date that does not parse
-        problems += _flag(table, bad, lambda r: f"test_date = {r['test_date']}, outside FLEX")
+        start = table["experiment"].map(lambda e: TEST_DATES[e][0])
+        end = table["experiment"].map(lambda e: TEST_DATES[e][1])
+        # Also True for a date that does not parse.
+        bad = ~((dates >= pd.to_datetime(start)) & (dates <= pd.to_datetime(end)))
+        problems += _flag(
+            table, bad, lambda r: f"test_date = {r['test_date']}, outside {r['experiment']}"
+        )
     return problems
 
 
