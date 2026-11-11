@@ -120,7 +120,7 @@ def test_search_failure_shows_an_error_not_a_crash():
     at = _run_search(side_effect=RuntimeError("index missing"))
     assert not at.exception
     assert len(at.error) == 1
-    assert [b.label for b in at.button] == ["Try again"]
+    assert [b.label for b in at.main.button] == ["Try again"]
 
 
 def test_try_again_searches_again():
@@ -130,7 +130,7 @@ def test_try_again_searches_again():
     ):
         at = AppTest.from_file(str(APP), default_timeout=30).run()
         at.text_input[0].input("flame spread").run()
-        at.button[0].click().run()
+        at.main.button[0].click().run()
     _assert_healthy(at)
     assert "Results (1)" in [h.value for h in at.subheader]
 
@@ -354,4 +354,52 @@ def test_summary_failure_keeps_the_result_cards():
     ]
     assert "Results (1)" in [h.value for h in at.subheader]
     # FIF-D16-FE: a retry button for the summary
-    assert [b.label for b in at.button] == ["Try again"]
+    assert [b.label for b in at.main.button] == ["Try again"]
+
+
+# FIF-D17-FE: one filter state for search, the table and every chart.
+
+
+def _sidebar_box(at: AppTest, label: str):
+    return next(b for b in at.sidebar.selectbox if b.label == label)
+
+
+def _chart_specs(at: AppTest) -> list[str]:
+    # Each Plotly chart's figure as JSON text, to check which materials it draws
+    return [c.proto.spec for c in at.get("plotly_chart")]
+
+
+def test_material_list_follows_the_experiment(app):
+    _sidebar_box(app, "Experiment").select("FLEX").run()
+    _assert_healthy(app)
+    assert _sidebar_box(app, "Material").options == ["All", "Heptane", "Methanol"]
+
+
+def test_material_from_another_experiment_goes_back_to_all(app):
+    _sidebar_box(app, "Material").select("PMMA").run()
+    _sidebar_box(app, "Experiment").select("FLEX").run()
+    _assert_healthy(app)
+    assert _sidebar_box(app, "Material").value == "All"
+    assert "No experiments match these filters." not in " ".join(i.value for i in app.info)
+
+
+def test_showing_line_and_every_chart_follow_one_choice(app):
+    _sidebar_box(app, "Experiment").select("Saffire-II").run()
+    _assert_healthy(app)
+    assert "**Showing:** Saffire\\-II · all materials · 12–34\\% oxygen" in [
+        m.value for m in app.markdown
+    ]
+    assert set(app.dataframe[0].value["experiment"]) == {"Saffire-II"}
+    specs = _chart_specs(app)
+    assert specs and all("Heptane" not in s and "Methanol" not in s for s in specs)
+    assert any("Silicone" in s for s in specs)
+
+
+def test_reset_filters_puts_everything_back(app):
+    _sidebar_box(app, "Experiment").select("FLEX").run()
+    _sidebar_box(app, "Material").select("Heptane").run()
+    next(b for b in app.sidebar.button if b.label == "Reset filters").click().run()
+    _assert_healthy(app)
+    assert _sidebar_box(app, "Experiment").value == "All"
+    assert _sidebar_box(app, "Material").value == "All"
+    assert len(app.dataframe[0].value) == 290
