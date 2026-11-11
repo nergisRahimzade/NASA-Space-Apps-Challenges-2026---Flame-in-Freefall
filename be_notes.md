@@ -1,4 +1,4 @@
-# BE notes: what's built and how it runs (Days 1–14, FIF-D01-BE … FIF-D14-BE)
+# BE notes: what's built and how it runs (Days 1–15, FIF-D01-BE … FIF-D15-BE)
 
 For anyone reviewing BE PRs, and for teammates whose code calls the backend. Like
 `data_notes.md` and `ai_notes.md`, this file records what exists, the decisions behind it, and
@@ -26,7 +26,8 @@ the open questions.
 | D11-BE | Measure speed: every call timed, repeated questions cached, slowest-calls report | `speed.py`, `api.py`, `cache.py` (`is_cached`), `tests/test_speed.py`, 3 lines in `app/streamlit_app.py` (FE's file) | #145 |
 | D12-BE | `search()` takes an `experiment` filter; contract v1.4 | `api.py`, `docs/contract.md`, `tests/test_search.py` | #146 |
 | D13-BE | Edge cases for all three functions; `search()` "no match" (min score 0.30); contract v1.5 | `api.py`, `docs/contract.md`, `tests/test_api_edge_cases.py`, `tests/conftest.py` | #148 |
-| D14-BE | End-to-end check: ingest → search → table | `tests/test_end_to_end.py`, `scripts/day14_end_to_end.py` | FIF-D14-BE PR |
+| D14-BE | End-to-end check: ingest → search → table | `tests/test_end_to_end.py`, `scripts/day14_end_to_end.py` | #149 |
+| D15-BE | Sources in output: `summarize()` checks its answer's shape on every path; contract v1.6 | `api.py`, `summarizer.py`, `summary_check.py` (D06-AI's file), `docs/contract.md`, `tests/test_summary_shape.py`, `tests/test_summary_check.py` | FIF-D15-BE PR |
 
 ## 2. What each BE file does
 
@@ -133,6 +134,19 @@ The app (`app/streamlit_app.py`) belongs to FE and only calls `api.py`.
   contract change.
 - **Worst-case wait for a summary is about 95 s** (3 tries × 30 s + waits between them) before the
   fallback.
+- **The 0.30 cutoff has no safe value with today's ranking** (2026-11-10, real model). It drops two
+  of Q2's answer passages (0.295, 0.281; `tests/retest.md`). Lowering it to 0.27 (suggested in #151)
+  lets "How much thrust does a rocket engine produce?" (0.2755) through, and the short query "rocket
+  thrust" already gets through at 0.3267. Q9 and Q10 (not answered by the reports) score above real
+  answers, so no cutoff stops them. Waiting on the team's decision about the new ranking below,
+  since it would change every score.
+- **Team decisions from D14-AI (#152), each needing BE work:** (1) the "keywords + best sentence"
+  ranking (8 of 10): sentence vectors in the index (`store.py`, `ingest.py`), `score` becomes the
+  best sentence's (contract), and a new `MIN_SCORE`. (2) Calling `experiment_in_question()` in
+  `search()` when no experiment is picked (4 → 7 of 10 in the app's default run): about one line
+  plus a contract note. Neither is in the sprint plan.
+- **Our off-topic test questions aren't in the repo,** so the AI role can't retune the cutoff
+  against them (#152). They should be committed with the next cutoff change.
 
 ### Ingest (D08)
 
@@ -240,20 +254,37 @@ The app (`app/streamlit_app.py`) belongs to FE and only calls `api.py`.
   `tests/retrieval.md` (AI's retrieval work, D14-AI). The check only proves the path works, not
   that the top passage is the right one.
 
-## 6. Where the next ticket starts (FIF-D15-BE: sources in output)
+### Sources in output (D15)
 
-**Still to do for D14 after its PR merges:** tag the merge commit `v0.2` once the team agrees
-(`git tag v0.2 <commit>`, then `git push origin v0.2`). Pushing a tag is visible to everyone.
+- **The shape was already right on the normal paths;** probing found the edges where it wasn't. A
+  passage with blank text came back as a takeaway with no text, a number as text crashed with
+  `AttributeError`, `source: None` was shown as the source, a Gemini reply with a number as `text`
+  went straight through, and `not_found: "no"` counted as *yes*, throwing a real answer away.
+  `check_summary` itself crashed on a takeaway that wasn't a dict.
+- **Three layers now:** passages are checked on the way in (`api._check_passages`), Gemini's reply
+  is checked in `summarizer.py` (a bad one falls back to quoting), and `api.summarize()` checks its
+  own answer with `check_summary` before returning it. That last check only fails on a bug in our
+  code, so it raises `RuntimeError` instead of showing a broken summary.
+- **`check_summary` (D06-AI's file) got stricter:** exactly `text`, `source`, `chunk_id`, all text.
+- **Shape tested:** `tests/test_summary_shape.py` runs every path (Gemini answer, nothing useful,
+  timeout, two bad replies, no key, no passages) through one shape check. Each new rule was
+  confirmed to fail its test when removed (on a scratch copy).
+- **Plan vs contract:** the plan asks for `{takeaways: [{text, source}]}`. We keep `chunk_id` and
+  `not_found` (contract v1.0), so nothing that calls `summarize()` has to change.
 
-The D15 plan: *1) Return `{takeaways: [{text, source}]}`. 2) Validate shape. Done when: shape
-tested.*
+## 6. Where the next ticket starts (FIF-D16-BE: protect the app)
 
-- **Mostly there already:** `summarize()` returns `{"takeaways": [{"text", "source", "chunk_id"}],
-  "not_found": bool}` (`docs/contract.md`), on both the Gemini path and the fallback. That's the
-  plan's shape plus `chunk_id` and `not_found`, so keep those and flag the difference in the PR.
-- **Where to start:** D13 validates what goes *into* `summarize()` (`_check_passages`). D15 is about
-  what comes *out*, so check what `tests/test_contract.py` and `tests/test_summarizer.py` already
-  cover and add only what's missing.
+**Still open from D14:** tag #149's merge commit (`bf28918`) `v0.2` once the team agrees
+(`git tag v0.2 bf28918`, then `git push origin v0.2`). Pushing a tag is visible to everyone.
+
+The D16 plan: *1) Reject empty/very long queries. 2) Rate limit. 3) Timeouts. Done when: bad input
+handled.*
+
+- **Already done:** empty, blank and non-text queries raise `ValueError` (D13), and Gemini calls
+  time out after 30 s with 3 tries, then fall back (D05).
+- **Still to do:** a maximum query length in `search()` (no limit today), a rate limit (one per
+  visitor session would fit Streamlit), and deciding what
+  "timeout" means for `search()`, whose first call after a deploy takes 15–45 s.
 
 ## 7. Rules to keep
 
