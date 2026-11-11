@@ -24,6 +24,9 @@ GROUP_KEYS = ["experiment", "material", "material_category", "oxygen_pct"]
 RANKING_COLUMNS = [
     *GROUP_KEYS,
     "tests",
+    # Day 16: tests in the group that had CO2 or helium added. Groups are not split by
+    # suppressant, so a share can mix both kinds (data_notes.md section 12).
+    "suppressed_tests",
     # Measured spread rate (master.csv spread_rate_mm_s). Only SIBAL has one.
     "spread_rate_n",
     "spread_rate_mm_s_min",
@@ -86,9 +89,11 @@ def build_ranking(master: pd.DataFrame, saffire2: pd.DataFrame) -> pd.DataFrame:
     rows = master.assign(oxygen_pct=oxygen_level(master))
     for word in ("Completion", "Extinction", "Disruption"):
         rows[word.lower()] = (rows["outcome"] == word).astype(int)
+    rows["suppressed"] = rows["suppressant"].isin(["CO2", "He"]).astype(int)
 
     table = rows.groupby(GROUP_KEYS, as_index=False).agg(
         tests=("material", "size"),
+        suppressed_tests=("suppressed", "sum"),
         spread_rate_n=("spread_rate_mm_s", "count"),
         spread_rate_mm_s_min=("spread_rate_mm_s", "min"),
         spread_rate_mm_s_mean=("spread_rate_mm_s", "mean"),
@@ -115,7 +120,10 @@ def build_ranking(master: pd.DataFrame, saffire2: pd.DataFrame) -> pd.DataFrame:
     has_result = (
         table["spread_rate_n"].gt(0) | table["burn_spread_mm_s_mean"].notna() | finished.gt(0)
     )
-    table = table[has_result].copy()
+    # Day 16: only experiments with a risk measure are ranked. BASS-II has outcomes, but
+    # its crews turned the air down until the flame went out, so "went out" is what the
+    # test was for, not a measure of risk (data_notes.md section 13).
+    table = table[has_result & table["experiment"].isin(list(RISK_BASIS))].copy()
 
     table["risk_basis"] = table["experiment"].map(RISK_BASIS)
     table["risk_value"] = np.nan

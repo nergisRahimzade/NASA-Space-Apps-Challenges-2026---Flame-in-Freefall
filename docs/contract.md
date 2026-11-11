@@ -1,4 +1,4 @@
-# Flame in Freefall — Contract v1.7
+# Flame in Freefall — Contract v1.8
 
 Everyone codes against these shapes. Change them only by pull request, and bump the version.
 
@@ -31,16 +31,29 @@ it, the summary keeps only takeaways that help answer the question, and `not_fou
 no passage does, even if the passages are about fire. Calls without it work exactly as before.
 A `question` that is blank or not text -> `ValueError`. The return shape is unchanged.
 
+**v1.8 (FIF-D16-DAT):** BASS-II is the 4th experiment: 129 more `master.csv` rows (419 in all)
+and 4 more report chunks (22), so `experiment` can also be `"BASS-II"` in `get_table()`,
+`search()` and the chunks. `outcome` can also be `Blowoff` (blown out by strong airflow) or
+`No ignition` (BASS-II only). Rows have 2 more columns, `suppressant` (`none`, `CO2` or `He`)
+and `suppressant_pct`, after the airflow columns. The existing rows and their values don't
+change.
+
+**Data freeze (FIF-D17-DAT):** `master.csv` is frozen as **data v1.0** (Git tag `data-v1.0`,
+record in `data/freeze.json`). From here on, `get_table()` returns the same 419 rows and 14
+columns. A change to them needs the team's agreement and a new data version, and CI
+(`tests/test_freeze.py`) fails until one is recorded. The function signatures don't change.
+
 ## 1. Functions (in `src/flame_in_freefall/api.py`)
 
 ```python
 def search(query: str, k: int = 5, experiment: str | None = None) -> list[dict]:
     """Return up to k best-matching report chunks for a question, best first.
     Each item: {"id", "text", "source", "page", "score", "experiment"}
-    (score: cosine similarity as a float, higher = better; experiment: FLEX-2, Saffire-II or FLEX)
+    (score: cosine similarity as a float, higher = better;
+    experiment: FLEX-2, Saffire-II, FLEX or BASS-II)
     Only results scoring at least 0.30 (api.MIN_SCORE) are returned, so fewer than k is normal,
     and no match (an off-topic question) -> [].
-    experiment: "FLEX-2", "Saffire-II" or "FLEX" keeps only that experiment's chunks (before
+    experiment: "FLEX-2", "Saffire-II", "FLEX" or "BASS-II" keeps only that experiment's chunks (before
     ranking, so all results come from it); None (the default) searches every experiment.
     Empty, blank or non-text query, k that isn't a whole number above 0, a blank experiment,
     or an unknown experiment -> ValueError (the message lists the valid experiments).
@@ -82,24 +95,26 @@ def get_table(filters: dict | None = None) -> list[dict]:
 | text   | str  | the passage text |
 | source | str  | document name, as listed in `sources.csv` |
 | page   | int  | page number in the original document |
-| experiment | str | `FLEX-2`, `Saffire-II` or `FLEX`, from `sources.csv` (Day 12) |
+| experiment | str | `FLEX-2`, `Saffire-II`, `FLEX` or `BASS-II`, from `sources.csv` (Day 12, 16) |
 
 ## 3. `master.csv` columns
 
-290 rows: FLEX-2 (8), Saffire-II (9), FLEX (273). Full definitions are in `data_notes.md` and
+419 rows: FLEX-2 (8), Saffire-II (9), FLEX (273), BASS-II (129, v1.8). Full definitions are in `data_notes.md` and
 `docs/column_dictionary.md`. A source with one value puts the same number in `_min` and `_max`.
 
 | column | unit | meaning | empty when |
 |--------|------|---------|------------|
-| experiment | — | `FLEX-2`, `Saffire-II` or `FLEX` | never |
+| experiment | — | `FLEX-2`, `Saffire-II`, `FLEX` or `BASS-II` | never |
 | material | — | sample material or fuel | never |
 | material_category | — | `hydrocarbon`, `alcohol`, `plastic`, `fabric`, `silicone` or `plastic + fabric` | never |
 | oxygen_pct_min / oxygen_pct_max | % | oxygen concentration (range) | never |
-| pressure_kpa_min / pressure_kpa_max | kPa | ambient pressure (range) | Saffire-II, one FLEX test |
-| flow_cm_s_min / flow_cm_s_max | cm/s | airflow speed past the sample (range; FLEX = 0) | never |
+| pressure_kpa_min / pressure_kpa_max | kPa | ambient pressure (range) | Saffire-II, BASS-II, one FLEX test |
+| flow_cm_s_min / flow_cm_s_max | cm/s | airflow speed past the sample (range; FLEX = 0) | some BASS-II rows (`_min` 43, `_max` 6) |
+| suppressant | — | fire-suppressing gas added: `none`, `CO2` or `He` (v1.8) | FLEX-2 |
+| suppressant_pct | % | that gas's share of the mix; 0 when `none` (v1.8) | FLEX-2 |
 | spread_rate_mm_s | mm/s | flame spread rate | all but 2 Saffire-II rows |
 | spread_rate_per_flow | — | spread rate ÷ airflow speed (both mm/s) | all but 2 Saffire-II rows |
-| outcome | — | `Extinction`, `Completion` or `Disruption` | FLEX-2 and Saffire-II |
+| outcome | — | `Extinction`, `Completion`, `Disruption`, `Blowoff` or `No ignition` | FLEX-2, Saffire-II, 101 BASS-II rows (not recorded) |
 
 ## 4. Mock files
 - `data/mock/chunks.mock.jsonl` — 3 fake chunks. No longer used by `search()` since v1.3; kept for

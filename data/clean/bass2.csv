@@ -1,0 +1,130 @@
+experiment,test_id,test_date,pi,sample_id,sample_text,material,thickness_mm,width_cm,oxygen_pct_min,oxygen_pct_max,oxygen_final_pct,flow_cm_s_min,flow_cm_s_max,flow_notes,outcome
+BASS-II,B1,2014-02-19,Bhattacharjee,147,100 micron PMMA film 2 cm wide,PMMA film,0.1,2.0,22.2,22.2,22.2,5.0,5.0,5,
+BASS-II,B2,2014-02-19,Bhattacharjee,155,200 micron PMMA film 2 cm wide,PMMA film,0.2,2.0,22.2,22.2,,5.0,5.0,5,
+BASS-II,B3,2014-02-19,Bhattacharjee,148,100 micron film 2 cm wide,PMMA film,0.1,2.0,22.2,22.2,21.8,2.0,2.0,2,
+BASS-II,B4,2014-02-19,Bhattacharjee,159,300 micron PMMA film 2 cm wide,PMMA film,0.3,2.0,22.2,22.2,22.2,5.0,5.0,5,
+BASS-II,B5,2014-02-19,Bhattacharjee,156,200 micron 2 cm wide,PMMA film,0.2,2.0,22.2,22.2,21.9,5.0,5.0,5,
+BASS-II,B6,2014-07-07,Bhattacharjee,153m,2 cm 0.1 mm PMMA film,PMMA film,0.1,2.0,21.0,21.0,20.9,3.0,10.0,3 5 approaching 10,
+BASS-II,B7,2014-02-19,Bhattacharjee,161,400 micron film 2 cm wide,PMMA film,0.4,2.0,22.2,22.2,22.1,2.0,2.0,2,
+BASS-II,B8,2014-07-07,Bhattacharjee,157m,2 cm 0.2 mm PMMA film,PMMA film,0.2,2.0,21.0,21.0,20.5,10.0,10.0,10 max,
+BASS-II,B9,2014-07-07,Bhattacharjee,154m,2 cm 0.1 mm PMMA film,PMMA film,0.1,2.0,21.0,21.0,20.9,,2.0,2 <1,
+BASS-II,B10,2014-07-07,Bhattacharjee,173m,1 cm 0.2 mm PMMA film,PMMA film,0.2,1.0,21.0,21.0,20.8,1.0,5.0,5 4 3 2 1,
+BASS-II,B11,2014-07-07,Bhattacharjee,158m,2 cm 0.2 mm PMMA film,PMMA film,0.2,2.0,21.0,21.0,20.7,,5.0,5 3 1 <1,
+BASS-II,B12,2014-02-19,Bhattacharjee,160,300 micron film 2 cm wide,PMMA film,0.3,2.0,22.2,22.2,22.1,2.0,2.0,2,
+BASS-II,B13,2014-07-07,Bhattacharjee,162m,2 cm 0.4 mm thick film,PMMA film,0.4,2.0,21.0,21.0,20.5,1.0,10.0,10 5 4 3 2 1,
+BASS-II,B14,2014-07-02,Bhattacharjee,174m,1 cm wide 200 micron thick PMMA,PMMA film,0.2,1.0,15.0,15.0,,2.0,5.0,5 3 2 ext,Extinction
+BASS-II,B15,2014-07-07,Bhattacharjee,149m,2 cm 0.1 mm PMMA film,PMMA film,0.1,2.0,21.0,21.0,20.8,10.0,10.0,10 max,
+BASS-II,B16,2014-07-02,Bhattacharjee,150m,2 cm 100 micron thick PMMA,PMMA film,0.1,2.0,17.3,17.3,17.2,,3.0,3 0.5 pot 0.4 pot,
+BASS-II,B17,2014-07-02,Bhattacharjee,175m,1 cm wide 200 micron thick PMMA,PMMA film,0.2,1.0,17.5,17.5,17.4,,5.0,5 3 pot 0.4,
+BASS-II,B18,2014-07-02,Bhattacharjee,176m,1 cm wide 200 micron thick PMMA,PMMA film,0.2,1.0,17.4,17.4,17.4,,10.0,10 blowoff,Blowoff
+BASS-II,B19,2014-07-02,Bhattacharjee,151m,2 cm 100 micron thick PMMA,PMMA film,0.1,2.0,17.3,17.3,17.2,,10.0,10 blowoff,Blowoff
+BASS-II,B20,2014-07-02,Bhattacharjee,152m,2 cm 100 micron thick PMMA,PMMA film,0.1,2.0,17.4,17.4,17.4,,5.0,5 3 pot 0.5,
+BASS-II,B21,2014-08-04,Bhattacharjee,174m,1 cm wide 200 micron thick PMMA,PMMA film,0.2,1.0,20.8,20.8,20.6,,5.0,5 down to ext,Extinction
+BASS-II,B22,2014-08-04,Bhattacharjee,176m,1 cm wide 200 micron thick PMMA,PMMA film,0.2,1.0,20.7,20.7,20.5,0.0,5.0,5 2 0,
+BASS-II,F1,2014-02-19,Ferkul,227,Nomex natural (nomex III),Nomex,,,22.2,22.2,22.2,9.5,9.5,9.5,
+BASS-II,F2,2014-07-28,Ferkul,228m,Nomex natural (nomex III),Nomex,,,21.0,21.0,21.0,15.0,15.0,15,
+BASS-II,F3,2014-08-01,Ferkul,229m,Nomex natural (nomex III),Nomex,,,21.7,21.7,,8.0,8.0,8,
+BASS-II,F4,2014-06-24,Ferkul,39M,Japan Wax candle,Japan wax candle,,,17.4,17.4,17.4,3.0,3.0,3 ign,
+BASS-II,M1,2014-02-20,Miller,222,1 mm thick PMMA 1 sided 2 cm,PMMA slab,1.0,2.0,22.2,22.2,21.9,8.0,10.0,10 8,
+BASS-II,M2,2014-02-20,Miller,224,3 mm thick PMMA 1 sided 2 cm wide,PMMA slab,3.0,2.0,22.2,22.2,21.2,13.0,20.0,20 15 13 14,
+BASS-II,M3,2014-07-11,Miller,226m,2 cm wide 5 mm thick 1 sided PMMA,PMMA slab,5.0,2.0,20.8,20.8,19.7,10.0,20.0,10 20 18,
+BASS-II,M4,2014-07-31,Miller,171m,5 mm thick PMMA 2 cm wide,PMMA slab,5.0,2.0,21.8,21.8,19.8,3.0,5.0,5 4 3,
+BASS-II,M5,2014-02-20,Miller,167,3 mm thick PMMA 2 sided 2 cm thick,PMMA slab,3.0,2.0,22.2,22.2,19.0,5.0,20.0,20 13 10 8 5,
+BASS-II,M6,2014-07-31,Miller,163m,1 mm thick PMMA 2 cm wide,PMMA slab,1.0,2.0,21.8,21.8,20.7,0.0,10.0,10 5 3 0,
+BASS-II,M7,2014-07-11,Miller,177m,1 cm wide PMMA 1 mm thick,PMMA slab,1.0,1.0,18.9,18.9,18.4,3.0,10.0,10 6 5 4.5 4 3,
+BASS-II,M8,2014-07-11,Miller,178m,1 cm wide PMMA 2 mm thick,PMMA slab,2.0,1.0,19.1,19.1,18.2,,10.0,10 5>7 5 decr,
+BASS-II,M9,2014-07-11,Miller,179m,1 cm wide PMMA 3 mm thick,PMMA slab,3.0,1.0,18.0,18.0,17.6,10.0,14.0,10 14,
+BASS-II,M10,2014-07-23,Miller,180m,4 mm thick 1 cm wide PMMA slab,PMMA slab,4.0,1.0,20.1,20.1,18.6,8.0,17.0,10 17 14 10 8,
+BASS-II,M11,2014-07-11,Miller,181m,1 cm wide PMMA 5 mm thick,PMMA slab,5.0,1.0,20.0,20.0,18.5,10.0,20.0,10 20 15 12,
+BASS-II,M12,2014-07-31,Miller,165m,2 mm thick PMMA 2 cm wide,PMMA slab,2.0,2.0,21.7,21.7,20.4,,1.0,<1,
+BASS-II,M13,2014-07-31,Miller,169m,4 mm thick PMMA 2 cm wide,PMMA slab,4.0,2.0,20.8,20.8,19.0,4.0,6.0,6 5 4,
+BASS-II,M14,2014-02-20,Miller,223,2mm thick PMMA 1 sided 2 cm wide,PMMA slab,2.0,2.0,22.2,22.2,21.6,8.0,10.0,10 ~8,
+BASS-II,M15,2014-07-07,Miller,225m,2 cm 4 mm 1 sided PMMA slab,PMMA slab,4.0,2.0,21.0,21.0,20.0,7.0,20.0,10 8 7 8 10 20 18 16 15,
+BASS-II,M16,2014-07-23,Miller,164m,1 mm thick PMMA 2 cm wide,PMMA slab,1.0,2.0,19.2,19.2,18.7,1.0,10.0,10 6 3 2 1 10,
+BASS-II,M17,2014-07-15,Miller,166m,2 cm wide PMMA 2 mm thick,PMMA slab,2.0,2.0,18.8,18.8,17.1,0.0,10.0,10 5 3 0ext,Extinction
+BASS-II,M18,2014-07-15,Miller,168m,2 cm wide PMMA 3 mm thick,PMMA slab,3.0,2.0,17.9,17.9,16.8,8.0,15.0,10 15 (brief) 10 8,
+BASS-II,M19,2014-07-23,Miller,170m,4 mm thick 2 cm 2ide PMMA slab,PMMA slab,4.0,2.0,19.0,19.0,17.4,5.0,17.0,10 17 14 10 7 5,
+BASS-II,M20,2014-08-01,Miller,172m,5 mm thick PMMA 2 cm wide,PMMA slab,5.0,2.0,18.0,18.0,17.4,8.0,10.0,10 8,
+BASS-II,O1,2014-02-18,Olson,207,"1/4"" clear rod",PMMA rod,6.35,,22.2,22.2,21.7,1.0,20.0,20 10 5 2 1,
+BASS-II,O2,2014-02-18,Olson,204,"1/4"" clear rod",PMMA rod,6.35,,22.2,22.2,21.9,0.0,0.0,0,
+BASS-II,O3a,2014-06-13,Olson,205M,"1/4"" clear rod",PMMA rod,6.35,,18.0,18.0,18.0,3.0,5.0,5 3,
+BASS-II,O3b,2014-06-13,Olson,205M,"1/4"" clear rod",PMMA rod,6.35,,18.0,18.0,17.7,,5.0,5 3 2 1 low,
+BASS-II,O4,2014-07-08,Olson,216m,"3/8""clear rod",PMMA rod,9.52,,14.8,14.8,13.6,,5.0,5 down to ext,Extinction
+BASS-II,O5a,2014-07-21,Olson,220m,"1/2"" clear PMMA rod",PMMA rod,12.7,,15.1,15.1,14.2,0.0,10.0,5 10 5 2 0 (49 62 49 44 42),
+BASS-II,O5b,2014-07-21,Olson,220m,"1/2"" clear PMMA rod",PMMA rod,12.7,,14.2,14.2,14.1,5.0,5.0,49 5 cm/s,
+BASS-II,O6,2014-06-26,Olson,206M,"1/4"" clear rod",PMMA rod,6.35,,16.7,16.7,16.0,,,see fan,Extinction
+BASS-II,O7,2014-06-26,Olson,214m,"1/4"" clear rod",PMMA rod,6.35,,16.0,16.0,15.5,,,,Blowoff
+BASS-II,O8a,2014-06-26,Olson,208m,"1/4"" clear rod",PMMA rod,6.35,,15.7,15.7,15.3,,,,Extinction
+BASS-II,O8b,2014-06-26,Olson,208m,"1/4"" clear rod",PMMA rod,6.35,,15.5,15.5,15.2,,,,Blowoff
+BASS-II,O9,2014-06-26,Olson,209m,"1/4"" clear rod",PMMA rod,6.35,,15.0,15.0,14.8,,,,Blowoff
+BASS-II,O10,2014-07-22,Olson,210m,"1/4"" clear rod",PMMA rod,6.35,,16.7,16.7,16.1,0.0,5.0,5 2 0 max,
+BASS-II,O11,2014-07-08,Olson,184m,"1/4"" black rod",Black rod,6.35,,15.4,15.4,14.8,,5.0,5 down then blowoff,Blowoff
+BASS-II,O12,2014-07-08,Olson,217m,"3/8"" clear rod",PMMA rod,9.52,,13.6,13.6,13.5,,,no ign at any flow,No ignition
+BASS-II,O13a,2014-07-21,Olson,221m,"1/2"" clear PMMA rod",PMMA rod,12.7,,15.9,15.9,14.6,0.0,5.0,49 44 42 41 41 40.5 (5 2 0),
+BASS-II,O13b,2014-07-21,Olson,221m,"1/2"" clear PMMA rod",PMMA rod,12.7,,14.6,14.6,14.4,4.0,7.0,7 4? (49 ?),
+BASS-II,O14,2014-08-01,Olson,183m,"1/4"" black rod",Black rod,6.35,,16.3,16.3,15.3,,5.0,5 down to ext,Extinction
+BASS-II,O15a,2014-07-28,Olson,218m,"3/8"" clear rod",PMMA rod,9.52,,17.1,17.1,16.7,0.0,5.0,5 0,
+BASS-II,O15b,2014-07-28,Olson,218m,"3/8"" clear rod",PMMA rod,9.52,,16.7,16.7,15.6,0.0,5.0,5 0,
+BASS-II,O16,2014-07-29,Olson,219m,"3/8""clear rod",PMMA rod,9.52,,14.5,14.5,14.5,5.0,5.0,5,
+BASS-II,O17,2014-07-22,Olson,211m,"1/4"" clear rod",PMMA rod,6.35,,15.1,15.1,14.3,0.0,11.0,3 0 11,
+BASS-II,O18,2014-07-28,Olson,212m,"1/4"" clear rod",PMMA rod,6.35,,15.2,15.2,14.5,0.0,11.0,5 2 0 11 2 11 2 0,
+BASS-II,O19,2014-08-01,Olson,213m,"1/4"" clear rod",PMMA rod,6.35,,15.3,15.3,14.6,,5.0,5 down to ext,Extinction
+BASS-II,O20,2016-02-26,Olson,204m,"1/4"" clear rod",PMMA rod,6.35,,16.5,16.5,15.9,5.0,38.5,5 8 incr to max 38.5,
+BASS-II,O21,2016-02-26,Olson,219m,"3/8"" clear rod",PMMA rod,9.52,,15.9,15.9,15.4,,28.0,incr to 28,
+BASS-II,O22,2016-02-26,Olson,220m,"1/2"" clear rod",PMMA rod,12.7,,15.4,15.4,14.9,4.0,26.5,4 incr to 26.5,Blowoff
+BASS-II,P1,2014-06-16,Fernandez-Pello,185M,"1/4"" black rod",Black rod,6.35,,17.7,17.7,17.5,,5.0,5 2 slow decr to ext,Extinction
+BASS-II,P2,2014-06-16,Fernandez-Pello,188M,"1/4"" black rod",Black rod,6.35,,17.4,17.4,17.2,,5.0,5 2.5 2 (pot .9 .5 .35. .33),
+BASS-II,P3a,2014-06-16,Fernandez-Pello,215M,"1/4"" clear rod",PMMA rod,6.35,,17.7,17.7,17.4,,5.0,5 2.5 (1.15 .5 .35 .33. .32 .315 .31 .3),
+BASS-II,P3b,2014-06-16,Fernandez-Pello,215M,1/4 clear rod,PMMA rod,6.35,,17.4,17.4,16.8,,5.0,5 very low (0.85 0.32 0.31 0.305 0.30 0.295),
+BASS-II,P4,2014-07-03,Fernandez-Pello,197m,"3/8"" black rod",Black rod,9.52,,18.5,18.5,17.1,,5.0,5 pots 0.4 0.36 0.32 0.308 .3 off,Extinction
+BASS-II,P5,2014-07-14,Fernandez-Pello,202m,"0.5"" black rod",Black rod,12.7,,19.3,19.3,17.6,,5.0,5 down to ext,Extinction
+BASS-II,P6,2014-07-03,Fernandez-Pello,186m,"1/4"" black rod",Black rod,6.35,,18.9,18.9,18.5,,5.0,5 pots 0.4 0.36 0.32 0.31 off,Extinction
+BASS-II,P8,2014-07-03,Fernandez-Pello,197m,"3/8"" black rod",Black rod,9.52,,16.4,16.4,16.3,5.0,15.0,5 would not stay lit 10 15 ibid,Extinction
+BASS-II,P9,2014-07-14,Fernandez-Pello,202m,"0.5"" black rod",Black rod,12.7,,17.6,17.6,17.1,,5.0,5 down to ext,Extinction
+BASS-II,P10,2014-07-03,Fernandez-Pello,187m,"1/4"" black rod",Black rod,6.35,,17.0,17.0,16.4,,5.0,5 pots 0.4 0.36 0.32 0.31 0.30 extinguished,Extinction
+BASS-II,P12,2014-07-29,Fernandez-Pello,199m,"3/8"" black rod",Black rod,9.52,,17.5,17.5,16.8,,5.0,5 3 2 1 0.5 lower,
+BASS-II,P13a,2014-07-14,Fernandez-Pello,203m,"0.5"" black rod",Black rod,12.7,,20.7,20.7,19.1,,5.0,5 down to ext,Extinction
+BASS-II,P13b,2014-07-14,Fernandez-Pello,203m,"0.5"" black rod",Black rod,12.7,,20.6,20.6,20.2,,5.0,5 down to ext,Extinction
+BASS-II,P14,2014-06-23,Fernandez-Pello,189M,1/4 blac rod,Black rod,6.35,,18.4,18.4,18.0,,5.0,5 low (.85 .4 .32),
+BASS-II,P15,2014-06-23,Fernandez-Pello,190M,1/4 black rod,Black rod,6.35,,18.0,18.0,17.5,,5.0,5 (0.36),
+BASS-II,P16,2014-07-22,Fernandez-Pello,191m,"1/4"" black rod",Black rod,6.35,,18.2,18.2,17.4,,8.0,5 8 2 low,
+BASS-II,P17,2014-07-29,Fernandez-Pello,192m,"1/4"" black rod",Black rod,6.35,,16.8,16.8,16.5,,22.0,5 3 2 22 2 low,
+BASS-II,P18,2014-07-30,Fernandez-Pello,193m,"1/4"" black rod",Black rod,6.35,,20.0,20.0,19.0,0.0,2.0,2 0 2 0 etc,
+BASS-II,P19,2014-07-22,Fernandez-Pello,194m,"1/4"" black rod",Black rod,6.35,,17.5,17.5,16.7,0.0,8.0,5 8 2 max 0,
+BASS-II,P20,2014-07-30,Fernandez-Pello,195m,"1/4"" black rod",Black rod,6.35,,19.0,19.0,18.2,0.0,2.0,2 0 2 0 etc,
+BASS-II,P21a,2014-06-23,Fernandez-Pello,196M,1/4 black rod,Black rod,6.35,,16.3,16.3,16.3,5.0,5.0,5,
+BASS-II,P21b,2014-06-23,Fernandez-Pello,196M,"1/4"" black rod",Black rod,6.35,,16.3,16.3,16.3,5.0,5.0,5,
+BASS-II,P22a,2014-07-08,Fernandez-Pello,200m,"3/8"" black rod",Black rod,9.52,,20.8,20.8,,,5.0,5 down to ext,Extinction
+BASS-II,P22b,2014-07-08,Fernandez-Pello,200m,"3/8"" black rod",Black rod,9.52,,20.0,20.0,,,5.0,5 down to ext,Extinction
+BASS-II,P23,2014-07-30,Fernandez-Pello,201m,"3/8"" black rod",Black rod,9.52,,18.2,18.2,17.0,0.0,2.0,2 0 2 0 etc,
+BASS-II,P24,2014-07-30,Fernandez-Pello,819L,"3/8"" black rod",Black rod,9.52,,19.0,19.0,17.5,0.0,2.0,2 0 2 0 etc,
+BASS-II,P25,2014-07-08,Fernandez-Pello,217m,"3/8"" clear rod",PMMA rod,9.52,,20.9,20.9,20.2,,5.0,5 down to ext,Extinction
+BASS-II,T1,2014-02-14,T'ien,128,2 cm SIBAL,Cotton-Fiberglass (SIBAL),,2.0,18.5,18.5,18.5,10.0,10.0,10,
+BASS-II,T2,2014-02-14,T'ien,129,2 cm SIBAL,Cotton-Fiberglass (SIBAL),,2.0,18.5,18.5,18.5,4.0,9.0,9 5 4,
+BASS-II,T3,2014-06-27,T'ien,182m,4 cm spherical section,Spherical section,,,17.2,17.2,16.8,10.0,10.0,10,
+BASS-II,T4,2014-02-14,T'ien,130,2 cm SIBAL,Cotton-Fiberglass (SIBAL),,2.0,18.7,18.7,18.7,1.0,9.0,9 1,
+BASS-II,T5,2014-04-10,T'ien,131,2 cm SIBAL,Cotton-Fiberglass (SIBAL),,2.0,18.8,18.8,18.9,1.0,10.0,10 2 1,
+BASS-II,T6,2014-04-10,T'ien,132,2 cm SIBAL,Cotton-Fiberglass (SIBAL),,2.0,18.8,18.8,18.8,,5.0,5 2 1 <1,
+BASS-II,T7,2014-07-09,T'ien,182m,4 cm spherical section,Spherical section,,,17.3,17.3,17.1,,10.0,10 5 3 1 decr,
+BASS-II,T9,2014-06-24,T'ien,133M,2 cm SIBAL,Cotton-Fiberglass (SIBAL),,2.0,16.4,16.4,16.4,10.0,10.0,10,
+BASS-II,T10,2014-06-24,T'ien,134M,2 cm SIBAL,Cotton-Fiberglass (SIBAL),,2.0,16.4,16.4,16.5,5.0,5.0,5,
+BASS-II,T11,2014-06-27,T'ien,135m,2 cm SIBAL,Cotton-Fiberglass (SIBAL),,2.0,17.1,17.1,17.0,5.0,5.0,5,
+BASS-II,T12,2014-06-27,T'ien,136m,2 cm SIBAL,Cotton-Fiberglass (SIBAL),,2.0,16.8,16.8,16.9,5.0,5.0,5,
+BASS-II,T13,2014-04-10,T'ien,137,2 cm SIBAL,Cotton-Fiberglass (SIBAL),,2.0,17.5,17.5,17.6,1.0,5.0,5 1,
+BASS-II,T14,2014-06-27,T'ien,140m,2 cm SIBAL,Cotton-Fiberglass (SIBAL),,2.0,16.9,16.9,16.9,3.0,5.0,5 3,
+BASS-II,T15,2014-02-14,T'ien,138,2 cm SIBAL,Cotton-Fiberglass (SIBAL),,2.0,18.7,18.7,18.7,9.0,29.0,9 29,
+BASS-II,T16,2014-04-10,T'ien,139,2 cm SIBAL,Cotton-Fiberglass (SIBAL),,2.0,17.6,17.6,17.5,3.0,5.0,5 3,
+BASS-II,T17,2014-06-27,T'ien,142m,2 cm SIBAL,Cotton-Fiberglass (SIBAL),,2.0,16.9,16.9,16.9,6.0,6.0,6 53,
+BASS-II,T18,2014-06-24,T'ien,141M,2 cm SIBAL,Cotton-Fiberglass (SIBAL),,2.0,17.4,17.4,17.4,2.0,5.0,5 2,
+BASS-II,T19,2014-07-09,T'ien,143m,1 cm SIBAL,Cotton-Fiberglass (SIBAL),,1.0,17.2,17.2,17.2,11.0,11.0,11,
+BASS-II,T20,2014-07-09,T'ien,144m,1 cm SIBAL,Cotton-Fiberglass (SIBAL),,1.0,17.2,17.2,17.2,3.0,11.0,11 3,
+BASS-II,T21,2014-07-09,T'ien,145m,1 cm SIBAL,Cotton-Fiberglass (SIBAL),,1.0,17.2,17.2,17.2,11.0,11.0,11 max(47),
+BASS-II,T22,2014-07-09,T'ien,146m,1 cm SIBAL,Cotton-Fiberglass (SIBAL),,1.0,17.1,17.1,17.0,5.0,10.0,10 5,
+BASS-II,T23,2014-07-09,T'ien,133m,2 cm Sibal moved igniter,Cotton-Fiberglass (SIBAL),,2.0,17.2,17.2,17.3,10.0,10.0,10,
+BASS-II,T24,2014-07-09,T'ien,133m,1 cm SIBAL top side ign,Cotton-Fiberglass (SIBAL),,1.0,18.2,18.2,18.2,10.0,10.0,10,
+BASS-II,T25,2014-08-04,T'ien,138m,2 cm SIBAL,Cotton-Fiberglass (SIBAL),,2.0,20.8,20.8,20.7,2.5,5.0,5 2.5,
+BASS-II,T26,2014-08-04,T'ien,137m,2 cm SIBAL,Cotton-Fiberglass (SIBAL),,2.0,20.8,20.8,20.7,2.5,5.0,5 2.5,
+BASS-II,T27,2014-08-04,T'ien,146m,1 cm SIBAL,Cotton-Fiberglass (SIBAL),,1.0,20.7,20.7,20.6,2.0,5.0,5 2,
+BASS-II,T28a,2014-08-04,T'ien,144m,1 cm SIBAL,Cotton-Fiberglass (SIBAL),,1.0,20.7,20.7,,5.0,5.0,5,
+BASS-II,T28b,2014-08-04,T'ien,144m,1 cm SIBAL,Cotton-Fiberglass (SIBAL),,1.0,20.7,20.7,,5.0,5.0,5,
+BASS-II,T29,2014-08-04,T'ien,145m,1 cm SIBAL,Cotton-Fiberglass (SIBAL),,1.0,20.7,20.7,20.5,2.0,5.0,5 2(?),

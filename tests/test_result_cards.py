@@ -89,7 +89,7 @@ def test_load_source_links_drops_non_web_links_and_missing_file(tmp_path):
 
 
 def test_load_experiments_reads_real_sources_csv():
-    assert load_experiments() == ["FLEX", "FLEX-2", "Saffire-II"]
+    assert load_experiments() == ["BASS-II", "FLEX", "FLEX-2", "Saffire-II"]
 
 
 def test_load_experiments_skips_blanks_and_missing_file(tmp_path):

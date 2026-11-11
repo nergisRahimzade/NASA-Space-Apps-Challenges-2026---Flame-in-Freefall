@@ -112,6 +112,13 @@ Rules:
 
 Why spread / airflow and not a 0-1 scale: with only 2 spread rates, a 0-1 scale would just turn them into 0 and 1. The ratio keeps its meaning, and it can still be compared if tests at other airflow speeds are added.
 
+**Day 16 (FIF-D16-DAT): two more added columns**, after the airflow columns. `build_master.py` (`add_suppressant`) works them out from the clean tables.
+
+| Column | Type | Unit | Meaning |
+|---|---|---|---|
+| `suppressant` | text | n/a | The fire-suppressing gas added to the mix: `CO2`, `He` (helium) or `none`. FLEX: from `co2_pct` and `helium_pct` in `data/clean/flex.csv` (CO2 123 tests, He 50, none 100; no test has both). Saffire-II: `none` (the report says air was drawn through the duct). FLEX-2: empty, because its table says "O2/N2 or O2/He" without saying which fuel used which. |
+| `suppressant_pct` | float | % | That gas's share of the mix. 0 when `none`; 5-70 for CO2 and 5-45 for helium. Empty for FLEX-2. |
+
 ## 5. Riskiness ranking: `data/ranking.csv` (Day 13, FIF-D13-DAT)
 
 Built by `src/flame_in_freefall/build_ranking.py` from `data/master.csv` and `data/clean/saffire2.csv`. One row = one experiment + material + oxygen level. 30 rows: Saffire-II 4, FLEX 26. Rules and reasons: `data_notes.md` section 9.
@@ -123,6 +130,7 @@ Built by `src/flame_in_freefall/build_ranking.py` from `data/master.csv` and `da
 | `material_category` | text | n/a | Same as `master.csv` (section 4). |
 | `oxygen_pct` | number | % | Oxygen level of the group: middle of `oxygen_pct_min`/`max`, rounded to a whole percent (0.5 rounds up). |
 | `tests` | integer | count | Rows of `master.csv` in the group (Saffire-II samples or FLEX tests). |
+| `suppressed_tests` | integer | count | Day 16. How many of those tests had CO2 or helium added (`suppressant`). Groups are **not** split by suppressant, so `kept_burning_share` can mix both kinds (`data_notes.md` section 12). 0 for Saffire-II. |
 | `spread_rate_n` | integer | count | How many of those rows have a measured `spread_rate_mm_s`. Only SIBAL (2). |
 | `spread_rate_mm_s_min` / `_mean` / `_max` | number | mm/s | Smallest, average and largest measured spread rate. Empty when `spread_rate_n` is 0. |
 | `burn_spread_mm_s_mean` | number | mm/s | Saffire-II only. Average spread over the whole burn: microgravity burn length / burn time, averaged over the samples. 0 when the flame did not spread (burn length 0). Empty for FLEX. |
@@ -131,6 +139,28 @@ Built by `src/flame_in_freefall/build_ranking.py` from `data/master.csv` and `da
 | `risk_basis` | text | n/a | Name of the column that decides the rank: `burn_spread_mm_s_mean` (Saffire-II) or `kept_burning_share` (FLEX). |
 | `risk_value` | number | as `risk_basis` | Copy of that column, so a chart can plot one column for both experiments. |
 | `risk_rank` | integer | n/a | 1 = riskiest **within the experiment**. Ties share a rank (two groups at 1.0 are both 1, the next is 3). Do not compare ranks across experiments. |
+
+## 6. PSI-25 BASS-II: `PSI-25_Experimental table_BASS-II.csv` (Day 16, FIF-D16-DAT)
+
+129 tests, one row each. Most cells are typed notes, not single values. Rules: `data_notes.md` section 13.
+
+| Raw column | Clean column (`data/clean/bass2.csv`) | Notes |
+|---|---|---|
+| PI | `pi` | Scientist who led the test (Bhattacharjee, Ferkul, Miller, Olson, Fernandez-Pello, T'ien) |
+| Test # | `test_id` | Unique (B1, O13a, ...). The key |
+| Date | `test_date` | ISO date. 2018 is a typo for 2014 (T9, T18) |
+| GMT | dropped | Day of the year, not a time (50 = 19 Feb) |
+| Sample # | `sample_id` | Repeats: some samples were burned twice |
+| Fuel Sample Material | `sample_text`, `material`, `thickness_mm`, `width_cm` | Text kept as typed; material parsed (PMMA film/slab/rod, Black rod, SIBAL, Nomex, Spherical section, Japan wax candle). Rods: `thickness_mm` is the diameter |
+| Flow restrictor, Fan display | dropped | Fan settings, no speed. Fan display is read only for outcome words ("ext", "blowoff") |
+| Air display | `flow_cm_s_min`, `flow_cm_s_max`, `flow_notes` | Air speed in cm/s, often a list of steps. Text kept in `flow_notes` |
+| Radiometer gain, Total Frames Shot | dropped | Instrument settings |
+| Calibrated initial O2 % by vol | `oxygen_pct_min`, `oxygen_pct_max` | 13.6-22.2% |
+| Calibrated final O2 % by vol | `oxygen_final_pct` | After burning; glitches (under 5% or over 30%) blanked |
+| Initial/Final CO2 % by vol, Initial/Final CO (ppm) | dropped | Combustion products, not conditions. Not a suppressant |
+| (from Fan + Air display words) | `outcome` | `Extinction`, `Blowoff`, `No ignition`, or empty when not recorded |
+
+New `material_category` values: `wax` (Japan wax candle) and `unknown` (Black rod, Spherical section, material never named). PMMA film, slab and rod are `plastic`; Nomex is `fabric`.
 
 ## Gaps and risks for the project
 

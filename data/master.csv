@@ -1,291 +1,420 @@
-experiment,material,material_category,oxygen_pct_min,oxygen_pct_max,pressure_kpa_min,pressure_kpa_max,flow_cm_s_min,flow_cm_s_max,spread_rate_mm_s,spread_rate_per_flow,outcome
-FLEX-2,IsoOctane,hydrocarbon,17.0,30.0,50.662,303.975,0.1,5.0,,,
-FLEX-2,n-Octane,hydrocarbon,17.0,30.0,50.662,303.975,0.1,5.0,,,
-FLEX-2,Heptane,hydrocarbon,17.0,30.0,50.662,303.975,0.1,5.0,,,
-FLEX-2,Decane,hydrocarbon,17.0,30.0,50.662,303.975,0.1,5.0,,,
-FLEX-2,Ethanol,alcohol,17.0,30.0,50.662,303.975,0.1,5.0,,,
-FLEX-2,Propanol (95%) Glycerol (5%),alcohol,17.0,30.0,50.662,303.975,0.1,5.0,,,
-FLEX-2,Heptane (50%) IsoOctane (50%),hydrocarbon,17.0,30.0,50.662,303.975,0.1,5.0,,,
-FLEX-2,Propanol (80%) Glycerol (20%),alcohol,17.0,30.0,50.662,303.975,0.1,5.0,,,
-Saffire-II,Silicone,silicone,21.5,21.5,,,20.0,20.0,,,
-Saffire-II,Silicone,silicone,22.1,22.1,,,20.0,20.0,,,
-Saffire-II,Silicone,silicone,22.1,22.1,,,20.0,20.0,,,
-Saffire-II,Silicone,silicone,22.1,22.1,,,20.0,20.0,,,
-Saffire-II,Cotton-Fiberglass (SIBAL),fabric,22.1,22.1,,,20.0,20.0,2.1,0.0105,
-Saffire-II,Cotton-Fiberglass (SIBAL),fabric,22.1,22.1,,,20.0,20.0,2.6,0.013,
-Saffire-II,PMMA & Nomex,plastic + fabric,22.1,22.1,,,20.0,20.0,,,
-Saffire-II,PMMA,plastic,22.0,22.1,,,20.0,20.0,,,
-Saffire-II,PMMA,plastic,21.9,22.0,,,20.0,20.0,,,
-FLEX,Methanol,alcohol,21.0,21.0,101.018,101.018,0.0,0.0,,,Disruption
-FLEX,Methanol,alcohol,21.0,21.0,101.591,101.591,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,21.0,21.0,101.885,101.885,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,21.0,21.0,101.325,101.325,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,21.0,21.0,101.325,101.325,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,21.0,21.0,101.325,101.325,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,21.0,21.0,101.498,101.498,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,21.0,21.0,101.645,101.645,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,21.0,21.0,101.325,101.325,0.0,0.0,,,Disruption
-FLEX,Methanol,alcohol,21.0,21.0,309.267,309.267,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,21.0,21.0,309.147,309.147,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,21.0,21.0,309.294,309.294,0.0,0.0,,,Disruption
-FLEX,Methanol,alcohol,21.0,21.0,276.536,276.536,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,21.0,21.0,274.057,274.057,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,21.0,21.0,275.523,275.523,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,21.0,21.0,276.257,276.257,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,21.0,21.0,206.076,206.076,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,21.0,21.0,207.156,207.156,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,34.0,34.0,71.874,71.874,0.0,0.0,,,Disruption
-FLEX,Methanol,alcohol,34.0,34.0,71.927,71.927,0.0,0.0,,,Completion
-FLEX,Methanol,alcohol,34.0,34.0,72.074,72.074,0.0,0.0,,,Disruption
-FLEX,Methanol,alcohol,34.0,34.0,72.061,72.061,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,34.0,34.0,72.234,72.234,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,34.0,34.0,72.367,72.367,0.0,0.0,,,Disruption
-FLEX,Methanol,alcohol,30.0,30.0,71.634,71.634,0.0,0.0,,,Completion
-FLEX,Methanol,alcohol,30.0,30.0,71.781,71.781,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,30.0,30.0,72.087,72.087,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,30.0,30.0,71.954,71.954,0.0,0.0,,,Disruption
-FLEX,Methanol,alcohol,30.0,30.0,102.245,102.245,0.0,0.0,,,Completion
-FLEX,Methanol,alcohol,30.0,30.0,102.551,102.551,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,30.0,30.0,102.725,102.725,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,30.0,30.0,102.791,102.791,0.0,0.0,,,Completion
-FLEX,Methanol,alcohol,21.0,21.0,101.925,101.925,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,21.0,21.0,102.351,102.351,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,21.0,21.0,102.405,102.405,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,20.0,20.0,71.861,71.861,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,34.0,34.0,71.234,71.234,0.0,0.0,,,Disruption
-FLEX,Methanol,alcohol,34.0,34.0,71.247,71.247,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,34.0,34.0,71.314,71.314,0.0,0.0,,,Disruption
-FLEX,Methanol,alcohol,30.0,30.0,71.341,71.341,0.0,0.0,,,Disruption
-FLEX,Methanol,alcohol,30.0,30.0,71.234,71.234,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,30.0,30.0,71.327,71.327,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,30.0,30.0,71.314,71.314,0.0,0.0,,,Disruption
-FLEX,Methanol,alcohol,30.0,30.0,102.231,102.231,0.0,0.0,,,Disruption
-FLEX,Methanol,alcohol,30.0,30.0,102.431,102.431,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,21.0,21.0,102.591,102.591,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,21.0,21.0,102.671,102.671,0.0,0.0,,,Completion
-FLEX,Methanol,alcohol,21.0,21.0,102.485,102.485,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,21.0,21.0,101.978,101.978,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,21.0,21.0,102.671,102.671,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,21.0,21.0,102.845,102.845,0.0,0.0,,,Completion
-FLEX,Heptane,hydrocarbon,30.0,30.0,102.805,102.805,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,21.0,21.0,102.685,102.685,0.0,0.0,,,Disruption
-FLEX,Methanol,alcohol,20.0,20.0,72.181,72.181,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,20.0,20.0,72.341,72.341,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,20.0,20.0,72.541,72.541,0.0,0.0,,,Completion
-FLEX,Heptane,hydrocarbon,20.0,20.0,72.58,72.58,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,18.0,18.0,103.098,103.098,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,18.0,18.0,102.551,102.551,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,18.0,18.0,103.151,103.151,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,18.0,18.0,103.205,103.205,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,18.0,18.0,101.565,101.565,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,18.0,18.0,102.338,102.338,0.0,0.0,,,Completion
-FLEX,Heptane,hydrocarbon,18.0,18.0,101.938,101.938,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,15.0,15.0,102.111,102.111,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,15.0,15.0,102.231,102.231,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,15.0,15.0,102.351,102.351,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,15.0,15.0,102.498,102.498,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,14.0,14.0,102.271,102.271,0.0,0.0,,,Completion
-FLEX,Heptane,hydrocarbon,15.0,15.0,101.458,101.458,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,15.0,15.0,102.431,102.431,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,15.0,15.0,102.018,102.018,0.0,0.0,,,Completion
-FLEX,Heptane,hydrocarbon,15.0,15.0,102.111,102.111,0.0,0.0,,,Completion
-FLEX,Methanol,alcohol,13.0,13.0,102.765,102.765,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,13.0,13.0,102.591,102.591,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,14.0,14.0,102.445,102.445,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,14.0,14.0,102.125,102.125,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,13.0,13.0,102.405,102.405,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,13.0,13.0,102.658,102.658,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,13.0,13.0,102.685,102.685,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,13.0,13.0,101.938,101.938,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,12.0,12.0,102.925,102.925,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,12.0,12.0,102.285,102.285,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,12.0,12.0,102.818,102.818,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,12.0,12.0,102.658,102.658,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,12.0,12.0,102.818,102.818,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,25.0,25.0,71.661,71.661,0.0,0.0,,,Disruption
-FLEX,Methanol,alcohol,25.0,25.0,71.647,71.647,0.0,0.0,,,Disruption
-FLEX,Methanol,alcohol,25.0,25.0,71.887,71.887,0.0,0.0,,,Disruption
-FLEX,Methanol,alcohol,25.0,25.0,71.767,71.767,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,25.0,25.0,71.501,71.501,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,25.0,25.0,71.634,71.634,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,24.0,24.0,71.141,71.141,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,24.0,24.0,71.247,71.247,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,24.0,24.0,71.247,71.247,0.0,0.0,,,Disruption
-FLEX,Methanol,alcohol,23.0,23.0,71.221,71.221,0.0,0.0,,,Completion
-FLEX,Methanol,alcohol,23.0,23.0,71.607,71.607,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,23.0,23.0,71.327,71.327,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,23.0,23.0,71.554,71.554,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,23.0,23.0,71.821,71.821,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,21.0,21.0,71.221,71.221,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,21.0,21.0,71.234,71.234,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,23.0,23.0,71.207,71.207,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,23.0,23.0,71.274,71.274,0.0,0.0,,,Disruption
-FLEX,Methanol,alcohol,23.0,23.0,71.767,71.767,0.0,0.0,,,Disruption
-FLEX,Methanol,alcohol,23.0,23.0,71.327,71.327,0.0,0.0,,,Disruption
-FLEX,Methanol,alcohol,23.0,23.0,71.767,71.767,0.0,0.0,,,Completion
-FLEX,Methanol,alcohol,21.0,21.0,71.527,71.527,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,21.0,21.0,71.594,71.594,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,21.0,21.0,71.581,71.581,0.0,0.0,,,Completion
-FLEX,Methanol,alcohol,21.0,21.0,70.754,70.754,0.0,0.0,,,Completion
-FLEX,Methanol,alcohol,20.0,20.0,71.274,71.274,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,20.0,20.0,,,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,20.0,20.0,71.434,71.434,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,20.0,20.0,71.501,71.501,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,20.0,20.0,70.807,70.807,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,20.0,20.0,71.034,71.034,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,18.0,18.0,71.007,71.007,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,18.0,18.0,70.994,70.994,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,18.0,18.0,70.167,70.167,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,18.0,18.0,70.821,70.821,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,18.0,18.0,70.927,70.927,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,18.0,18.0,70.981,70.981,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,17.0,17.0,71.621,71.621,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,17.0,17.0,71.474,71.474,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,17.0,17.0,71.554,71.554,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,17.0,17.0,71.634,71.634,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,17.0,17.0,71.487,71.487,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,17.0,17.0,71.621,71.621,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,24.0,24.0,101.845,101.845,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,24.0,24.0,102.018,102.018,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,24.0,24.0,102.218,102.218,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,24.0,24.0,102.285,102.285,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,24.0,24.0,102.418,102.418,0.0,0.0,,,Completion
-FLEX,Heptane,hydrocarbon,24.0,24.0,102.405,102.405,0.0,0.0,,,Completion
-FLEX,Heptane,hydrocarbon,24.0,24.0,102.418,102.418,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,24.0,24.0,102.471,102.471,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,24.0,24.0,102.391,102.391,0.0,0.0,,,Disruption
-FLEX,Methanol,alcohol,15.0,15.0,71.127,71.127,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,15.0,15.0,71.207,71.207,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,15.0,15.0,71.261,71.261,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,15.0,15.0,71.287,71.287,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,20.0,20.0,101.578,101.578,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,20.0,20.0,101.791,101.791,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,20.0,20.0,102.058,102.058,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,17.0,17.0,71.421,71.421,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,20.0,20.0,101.911,101.911,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,20.0,20.0,102.151,102.151,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,20.0,20.0,102.338,102.338,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,18.0,18.0,101.658,101.658,0.0,0.0,,,Completion
-FLEX,Methanol,alcohol,18.0,18.0,101.991,101.991,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,18.0,18.0,102.071,102.071,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,18.0,18.0,101.631,101.631,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,18.0,18.0,101.978,101.978,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,18.0,18.0,102.085,102.085,0.0,0.0,,,Completion
-FLEX,Methanol,alcohol,16.0,16.0,101.605,101.605,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,16.0,16.0,101.911,101.911,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,16.0,16.0,102.058,102.058,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,16.0,16.0,102.338,102.338,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,15.0,15.0,101.765,101.765,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,15.0,15.0,101.911,101.911,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,15.0,15.0,102.111,102.111,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,15.0,15.0,102.138,102.138,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,18.0,18.0,102.045,102.045,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,14.0,14.0,101.431,101.431,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,14.0,14.0,101.538,101.538,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,21.0,21.0,101.778,101.778,0.0,0.0,,,Disruption
-FLEX,Methanol,alcohol,21.0,21.0,102.138,102.138,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,21.0,21.0,102.218,102.218,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,18.0,18.0,101.311,101.311,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,18.0,18.0,101.591,101.591,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,18.0,18.0,101.605,101.605,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,24.0,24.0,70.887,70.887,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,24.0,24.0,70.941,70.941,0.0,0.0,,,Disruption
-FLEX,Methanol,alcohol,24.0,24.0,71.581,71.581,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,24.0,24.0,71.594,71.594,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,23.0,23.0,71.141,71.141,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,23.0,23.0,71.247,71.247,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,19.0,19.0,101.111,101.111,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,19.0,19.0,101.205,101.205,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,19.0,19.0,101.191,101.191,0.0,0.0,,,Disruption
-FLEX,Methanol,alcohol,23.0,23.0,71.247,71.247,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,23.0,23.0,71.341,71.341,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,23.0,23.0,71.354,71.354,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,23.0,23.0,71.487,71.487,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,19.0,19.0,101.058,101.058,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,19.0,19.0,101.071,101.071,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,18.0,18.0,101.485,101.485,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,18.0,18.0,101.938,101.938,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,18.0,18.0,102.031,102.031,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,17.0,17.0,101.258,101.258,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,17.0,17.0,101.205,101.205,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,17.0,17.0,100.258,100.258,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,17.0,17.0,100.325,100.325,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,20.0,20.0,101.111,101.111,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,20.0,20.0,101.298,101.298,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,20.0,20.0,101.338,101.338,0.0,0.0,,,Disruption
-FLEX,Methanol,alcohol,20.0,20.0,100.525,100.525,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,20.0,20.0,100.805,100.805,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,20.0,20.0,100.911,100.911,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,21.0,21.0,101.351,101.351,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,21.0,21.0,101.538,101.538,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,21.0,21.0,100.858,100.858,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,21.0,21.0,100.965,100.965,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,21.0,21.0,101.351,101.351,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,21.0,21.0,101.685,101.685,0.0,0.0,,,Completion
-FLEX,Heptane,hydrocarbon,21.0,21.0,101.711,101.711,0.0,0.0,,,Completion
-FLEX,Heptane,hydrocarbon,16.0,16.0,101.298,101.298,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,16.0,16.0,101.298,101.298,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,16.0,16.0,101.311,101.311,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,15.0,15.0,101.858,101.858,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,14.0,14.0,101.298,101.298,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,14.0,14.0,101.311,101.311,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,14.0,14.0,101.005,101.005,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,14.0,14.0,101.098,101.098,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,13.0,13.0,101.245,101.245,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,13.0,13.0,101.405,101.405,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,12.0,12.0,101.538,101.538,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,12.0,12.0,101.578,101.578,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,12.0,12.0,101.818,101.818,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,20.0,20.0,101.218,101.218,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,20.0,20.0,101.271,101.271,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,20.0,20.0,100.698,100.698,0.0,0.0,,,Completion
-FLEX,Methanol,alcohol,19.0,19.0,100.445,100.445,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,18.0,18.0,101.218,101.218,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,18.0,18.0,101.365,101.365,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,21.0,21.0,102.311,102.311,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,21.0,21.0,102.405,102.405,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,21.0,21.0,102.551,102.551,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,19.0,19.0,101.165,101.165,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,18.0,18.0,101.818,101.818,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,18.0,18.0,102.111,102.111,0.0,0.0,,,Completion
-FLEX,Heptane,hydrocarbon,18.0,18.0,102.191,102.191,0.0,0.0,,,Completion
-FLEX,Heptane,hydrocarbon,17.0,17.0,101.231,101.231,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,17.0,17.0,101.231,101.231,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,17.0,17.0,101.271,101.271,0.0,0.0,,,Disruption
-FLEX,Heptane,hydrocarbon,17.0,17.0,101.298,101.298,0.0,0.0,,,Completion
-FLEX,Methanol,alcohol,17.0,17.0,100.551,100.551,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,17.0,17.0,100.925,100.925,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,16.0,16.0,101.311,101.311,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,16.0,16.0,101.458,101.458,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,16.0,16.0,101.045,101.045,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,15.0,15.0,100.738,100.738,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,15.0,15.0,100.885,100.885,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,14.0,14.0,101.218,101.218,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,14.0,14.0,101.298,101.298,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,13.0,13.0,101.791,101.791,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,24.0,24.0,71.194,71.194,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,23.0,23.0,70.954,70.954,0.0,0.0,,,Completion
-FLEX,Methanol,alcohol,24.0,24.0,71.234,71.234,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,24.0,24.0,71.274,71.274,0.0,0.0,,,Disruption
-FLEX,Methanol,alcohol,23.0,23.0,70.887,70.887,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,23.0,23.0,70.901,70.901,0.0,0.0,,,Disruption
-FLEX,Methanol,alcohol,21.0,21.0,70.914,70.914,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,21.0,21.0,70.821,70.821,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,21.0,21.0,70.821,70.821,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,21.0,21.0,70.607,70.607,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,21.0,21.0,70.527,70.527,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,20.0,20.0,70.994,70.994,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,20.0,20.0,70.927,70.927,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,20.0,20.0,70.341,70.341,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,20.0,20.0,70.381,70.381,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,18.0,18.0,70.981,70.981,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,18.0,18.0,71.047,71.047,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,18.0,18.0,71.087,71.087,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,18.0,18.0,70.394,70.394,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,18.0,18.0,70.701,70.701,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,17.0,17.0,70.954,70.954,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,17.0,17.0,70.994,70.994,0.0,0.0,,,Completion
-FLEX,Methanol,alcohol,17.0,17.0,70.714,70.714,0.0,0.0,,,Extinction
-FLEX,Methanol,alcohol,17.0,17.0,70.861,70.861,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,21.0,21.0,101.951,101.951,0.0,0.0,,,Extinction
-FLEX,Heptane,hydrocarbon,21.0,21.0,102.151,102.151,0.0,0.0,,,Extinction
+experiment,material,material_category,oxygen_pct_min,oxygen_pct_max,pressure_kpa_min,pressure_kpa_max,flow_cm_s_min,flow_cm_s_max,suppressant,suppressant_pct,spread_rate_mm_s,spread_rate_per_flow,outcome
+FLEX-2,IsoOctane,hydrocarbon,17.0,30.0,50.662,303.975,0.1,5.0,,,,,
+FLEX-2,n-Octane,hydrocarbon,17.0,30.0,50.662,303.975,0.1,5.0,,,,,
+FLEX-2,Heptane,hydrocarbon,17.0,30.0,50.662,303.975,0.1,5.0,,,,,
+FLEX-2,Decane,hydrocarbon,17.0,30.0,50.662,303.975,0.1,5.0,,,,,
+FLEX-2,Ethanol,alcohol,17.0,30.0,50.662,303.975,0.1,5.0,,,,,
+FLEX-2,Propanol (95%) Glycerol (5%),alcohol,17.0,30.0,50.662,303.975,0.1,5.0,,,,,
+FLEX-2,Heptane (50%) IsoOctane (50%),hydrocarbon,17.0,30.0,50.662,303.975,0.1,5.0,,,,,
+FLEX-2,Propanol (80%) Glycerol (20%),alcohol,17.0,30.0,50.662,303.975,0.1,5.0,,,,,
+Saffire-II,Silicone,silicone,21.5,21.5,,,20.0,20.0,none,0.0,,,
+Saffire-II,Silicone,silicone,22.1,22.1,,,20.0,20.0,none,0.0,,,
+Saffire-II,Silicone,silicone,22.1,22.1,,,20.0,20.0,none,0.0,,,
+Saffire-II,Silicone,silicone,22.1,22.1,,,20.0,20.0,none,0.0,,,
+Saffire-II,Cotton-Fiberglass (SIBAL),fabric,22.1,22.1,,,20.0,20.0,none,0.0,2.1,0.0105,
+Saffire-II,Cotton-Fiberglass (SIBAL),fabric,22.1,22.1,,,20.0,20.0,none,0.0,2.6,0.013,
+Saffire-II,PMMA & Nomex,plastic + fabric,22.1,22.1,,,20.0,20.0,none,0.0,,,
+Saffire-II,PMMA,plastic,22.0,22.1,,,20.0,20.0,none,0.0,,,
+Saffire-II,PMMA,plastic,21.9,22.0,,,20.0,20.0,none,0.0,,,
+FLEX,Methanol,alcohol,21.0,21.0,101.018,101.018,0.0,0.0,none,0.0,,,Disruption
+FLEX,Methanol,alcohol,21.0,21.0,101.591,101.591,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,21.0,21.0,101.885,101.885,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,21.0,21.0,101.325,101.325,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,21.0,21.0,101.325,101.325,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,21.0,21.0,101.325,101.325,0.0,0.0,none,0.0,,,Extinction
+FLEX,Heptane,hydrocarbon,21.0,21.0,101.498,101.498,0.0,0.0,none,0.0,,,Disruption
+FLEX,Heptane,hydrocarbon,21.0,21.0,101.645,101.645,0.0,0.0,none,0.0,,,Disruption
+FLEX,Heptane,hydrocarbon,21.0,21.0,101.325,101.325,0.0,0.0,none,0.0,,,Disruption
+FLEX,Methanol,alcohol,21.0,21.0,309.267,309.267,0.0,0.0,CO2,70.0,,,Extinction
+FLEX,Methanol,alcohol,21.0,21.0,309.147,309.147,0.0,0.0,CO2,70.0,,,Extinction
+FLEX,Heptane,hydrocarbon,21.0,21.0,309.294,309.294,0.0,0.0,CO2,70.0,,,Disruption
+FLEX,Methanol,alcohol,21.0,21.0,276.536,276.536,0.0,0.0,CO2,70.0,,,Extinction
+FLEX,Methanol,alcohol,21.0,21.0,274.057,274.057,0.0,0.0,CO2,70.0,,,Extinction
+FLEX,Methanol,alcohol,21.0,21.0,275.523,275.523,0.0,0.0,CO2,70.0,,,Extinction
+FLEX,Methanol,alcohol,21.0,21.0,276.257,276.257,0.0,0.0,CO2,70.0,,,Extinction
+FLEX,Methanol,alcohol,21.0,21.0,206.076,206.076,0.0,0.0,CO2,70.0,,,Disruption
+FLEX,Heptane,hydrocarbon,21.0,21.0,207.156,207.156,0.0,0.0,CO2,70.0,,,Extinction
+FLEX,Heptane,hydrocarbon,34.0,34.0,71.874,71.874,0.0,0.0,none,0.0,,,Disruption
+FLEX,Methanol,alcohol,34.0,34.0,71.927,71.927,0.0,0.0,none,0.0,,,Completion
+FLEX,Methanol,alcohol,34.0,34.0,72.074,72.074,0.0,0.0,none,0.0,,,Disruption
+FLEX,Methanol,alcohol,34.0,34.0,72.061,72.061,0.0,0.0,none,0.0,,,Disruption
+FLEX,Heptane,hydrocarbon,34.0,34.0,72.234,72.234,0.0,0.0,none,0.0,,,Disruption
+FLEX,Heptane,hydrocarbon,34.0,34.0,72.367,72.367,0.0,0.0,none,0.0,,,Disruption
+FLEX,Methanol,alcohol,30.0,30.0,71.634,71.634,0.0,0.0,none,0.0,,,Completion
+FLEX,Methanol,alcohol,30.0,30.0,71.781,71.781,0.0,0.0,none,0.0,,,Disruption
+FLEX,Heptane,hydrocarbon,30.0,30.0,72.087,72.087,0.0,0.0,none,0.0,,,Disruption
+FLEX,Heptane,hydrocarbon,30.0,30.0,71.954,71.954,0.0,0.0,none,0.0,,,Disruption
+FLEX,Methanol,alcohol,30.0,30.0,102.245,102.245,0.0,0.0,none,0.0,,,Completion
+FLEX,Methanol,alcohol,30.0,30.0,102.551,102.551,0.0,0.0,none,0.0,,,Extinction
+FLEX,Heptane,hydrocarbon,30.0,30.0,102.725,102.725,0.0,0.0,none,0.0,,,Disruption
+FLEX,Heptane,hydrocarbon,30.0,30.0,102.791,102.791,0.0,0.0,none,0.0,,,Completion
+FLEX,Methanol,alcohol,21.0,21.0,101.925,101.925,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,21.0,21.0,102.351,102.351,0.0,0.0,none,0.0,,,Extinction
+FLEX,Heptane,hydrocarbon,21.0,21.0,102.405,102.405,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,20.0,20.0,71.861,71.861,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,34.0,34.0,71.234,71.234,0.0,0.0,none,0.0,,,Disruption
+FLEX,Methanol,alcohol,34.0,34.0,71.247,71.247,0.0,0.0,none,0.0,,,Disruption
+FLEX,Heptane,hydrocarbon,34.0,34.0,71.314,71.314,0.0,0.0,none,0.0,,,Disruption
+FLEX,Methanol,alcohol,30.0,30.0,71.341,71.341,0.0,0.0,none,0.0,,,Disruption
+FLEX,Methanol,alcohol,30.0,30.0,71.234,71.234,0.0,0.0,none,0.0,,,Disruption
+FLEX,Heptane,hydrocarbon,30.0,30.0,71.327,71.327,0.0,0.0,none,0.0,,,Disruption
+FLEX,Heptane,hydrocarbon,30.0,30.0,71.314,71.314,0.0,0.0,none,0.0,,,Disruption
+FLEX,Methanol,alcohol,30.0,30.0,102.231,102.231,0.0,0.0,none,0.0,,,Disruption
+FLEX,Methanol,alcohol,30.0,30.0,102.431,102.431,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,21.0,21.0,102.591,102.591,0.0,0.0,none,0.0,,,Disruption
+FLEX,Heptane,hydrocarbon,21.0,21.0,102.671,102.671,0.0,0.0,none,0.0,,,Completion
+FLEX,Methanol,alcohol,21.0,21.0,102.485,102.485,0.0,0.0,none,0.0,,,Disruption
+FLEX,Heptane,hydrocarbon,21.0,21.0,101.978,101.978,0.0,0.0,none,0.0,,,Extinction
+FLEX,Heptane,hydrocarbon,21.0,21.0,102.671,102.671,0.0,0.0,none,0.0,,,Extinction
+FLEX,Heptane,hydrocarbon,21.0,21.0,102.845,102.845,0.0,0.0,none,0.0,,,Completion
+FLEX,Heptane,hydrocarbon,30.0,30.0,102.805,102.805,0.0,0.0,none,0.0,,,Disruption
+FLEX,Heptane,hydrocarbon,21.0,21.0,102.685,102.685,0.0,0.0,none,0.0,,,Disruption
+FLEX,Methanol,alcohol,20.0,20.0,72.181,72.181,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,20.0,20.0,72.341,72.341,0.0,0.0,none,0.0,,,Disruption
+FLEX,Heptane,hydrocarbon,20.0,20.0,72.541,72.541,0.0,0.0,none,0.0,,,Completion
+FLEX,Heptane,hydrocarbon,20.0,20.0,72.58,72.58,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,18.0,18.0,103.098,103.098,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,18.0,18.0,102.551,102.551,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,18.0,18.0,103.151,103.151,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,18.0,18.0,103.205,103.205,0.0,0.0,none,0.0,,,Extinction
+FLEX,Heptane,hydrocarbon,18.0,18.0,101.565,101.565,0.0,0.0,none,0.0,,,Extinction
+FLEX,Heptane,hydrocarbon,18.0,18.0,102.338,102.338,0.0,0.0,none,0.0,,,Completion
+FLEX,Heptane,hydrocarbon,18.0,18.0,101.938,101.938,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,15.0,15.0,102.111,102.111,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,15.0,15.0,102.231,102.231,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,15.0,15.0,102.351,102.351,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,15.0,15.0,102.498,102.498,0.0,0.0,none,0.0,,,Extinction
+FLEX,Heptane,hydrocarbon,14.0,14.0,102.271,102.271,0.0,0.0,none,0.0,,,Completion
+FLEX,Heptane,hydrocarbon,15.0,15.0,101.458,101.458,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,15.0,15.0,102.431,102.431,0.0,0.0,none,0.0,,,Extinction
+FLEX,Heptane,hydrocarbon,15.0,15.0,102.018,102.018,0.0,0.0,none,0.0,,,Completion
+FLEX,Heptane,hydrocarbon,15.0,15.0,102.111,102.111,0.0,0.0,none,0.0,,,Completion
+FLEX,Methanol,alcohol,13.0,13.0,102.765,102.765,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,13.0,13.0,102.591,102.591,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,14.0,14.0,102.445,102.445,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,14.0,14.0,102.125,102.125,0.0,0.0,none,0.0,,,Extinction
+FLEX,Heptane,hydrocarbon,13.0,13.0,102.405,102.405,0.0,0.0,none,0.0,,,Extinction
+FLEX,Heptane,hydrocarbon,13.0,13.0,102.658,102.658,0.0,0.0,none,0.0,,,Extinction
+FLEX,Heptane,hydrocarbon,13.0,13.0,102.685,102.685,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,13.0,13.0,101.938,101.938,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,12.0,12.0,102.925,102.925,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,12.0,12.0,102.285,102.285,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,12.0,12.0,102.818,102.818,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,12.0,12.0,102.658,102.658,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,12.0,12.0,102.818,102.818,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,25.0,25.0,71.661,71.661,0.0,0.0,CO2,15.0,,,Disruption
+FLEX,Methanol,alcohol,25.0,25.0,71.647,71.647,0.0,0.0,CO2,15.0,,,Disruption
+FLEX,Methanol,alcohol,25.0,25.0,71.887,71.887,0.0,0.0,CO2,15.0,,,Disruption
+FLEX,Methanol,alcohol,25.0,25.0,71.767,71.767,0.0,0.0,CO2,15.0,,,Disruption
+FLEX,Heptane,hydrocarbon,25.0,25.0,71.501,71.501,0.0,0.0,CO2,15.0,,,Disruption
+FLEX,Heptane,hydrocarbon,25.0,25.0,71.634,71.634,0.0,0.0,CO2,15.0,,,Disruption
+FLEX,Heptane,hydrocarbon,24.0,24.0,71.141,71.141,0.0,0.0,CO2,20.0,,,Extinction
+FLEX,Heptane,hydrocarbon,24.0,24.0,71.247,71.247,0.0,0.0,CO2,20.0,,,Extinction
+FLEX,Heptane,hydrocarbon,24.0,24.0,71.247,71.247,0.0,0.0,CO2,20.0,,,Disruption
+FLEX,Methanol,alcohol,23.0,23.0,71.221,71.221,0.0,0.0,CO2,20.0,,,Completion
+FLEX,Methanol,alcohol,23.0,23.0,71.607,71.607,0.0,0.0,CO2,25.0,,,Extinction
+FLEX,Methanol,alcohol,23.0,23.0,71.327,71.327,0.0,0.0,CO2,25.0,,,Extinction
+FLEX,Heptane,hydrocarbon,23.0,23.0,71.554,71.554,0.0,0.0,CO2,25.0,,,Extinction
+FLEX,Heptane,hydrocarbon,23.0,23.0,71.821,71.821,0.0,0.0,CO2,25.0,,,Extinction
+FLEX,Heptane,hydrocarbon,21.0,21.0,71.221,71.221,0.0,0.0,CO2,30.0,,,Extinction
+FLEX,Heptane,hydrocarbon,21.0,21.0,71.234,71.234,0.0,0.0,CO2,30.0,,,Extinction
+FLEX,Methanol,alcohol,23.0,23.0,71.207,71.207,0.0,0.0,CO2,20.0,,,Extinction
+FLEX,Methanol,alcohol,23.0,23.0,71.274,71.274,0.0,0.0,CO2,20.0,,,Disruption
+FLEX,Methanol,alcohol,23.0,23.0,71.767,71.767,0.0,0.0,CO2,25.0,,,Disruption
+FLEX,Methanol,alcohol,23.0,23.0,71.327,71.327,0.0,0.0,CO2,20.0,,,Disruption
+FLEX,Methanol,alcohol,23.0,23.0,71.767,71.767,0.0,0.0,CO2,25.0,,,Completion
+FLEX,Methanol,alcohol,21.0,21.0,71.527,71.527,0.0,0.0,CO2,30.0,,,Extinction
+FLEX,Methanol,alcohol,21.0,21.0,71.594,71.594,0.0,0.0,CO2,30.0,,,Extinction
+FLEX,Methanol,alcohol,21.0,21.0,71.581,71.581,0.0,0.0,CO2,30.0,,,Completion
+FLEX,Methanol,alcohol,21.0,21.0,70.754,70.754,0.0,0.0,CO2,30.0,,,Completion
+FLEX,Methanol,alcohol,20.0,20.0,71.274,71.274,0.0,0.0,CO2,35.0,,,Extinction
+FLEX,Methanol,alcohol,20.0,20.0,,,0.0,0.0,CO2,35.0,,,Extinction
+FLEX,Methanol,alcohol,20.0,20.0,71.434,71.434,0.0,0.0,CO2,35.0,,,Extinction
+FLEX,Methanol,alcohol,20.0,20.0,71.501,71.501,0.0,0.0,CO2,35.0,,,Extinction
+FLEX,Heptane,hydrocarbon,20.0,20.0,70.807,70.807,0.0,0.0,CO2,35.0,,,Extinction
+FLEX,Heptane,hydrocarbon,20.0,20.0,71.034,71.034,0.0,0.0,CO2,35.0,,,Extinction
+FLEX,Heptane,hydrocarbon,18.0,18.0,71.007,71.007,0.0,0.0,CO2,40.0,,,Extinction
+FLEX,Heptane,hydrocarbon,18.0,18.0,70.994,70.994,0.0,0.0,CO2,40.0,,,Extinction
+FLEX,Methanol,alcohol,18.0,18.0,70.167,70.167,0.0,0.0,CO2,40.0,,,Extinction
+FLEX,Methanol,alcohol,18.0,18.0,70.821,70.821,0.0,0.0,CO2,40.0,,,Extinction
+FLEX,Methanol,alcohol,18.0,18.0,70.927,70.927,0.0,0.0,CO2,40.0,,,Extinction
+FLEX,Methanol,alcohol,18.0,18.0,70.981,70.981,0.0,0.0,CO2,40.0,,,Extinction
+FLEX,Methanol,alcohol,17.0,17.0,71.621,71.621,0.0,0.0,CO2,45.0,,,Extinction
+FLEX,Methanol,alcohol,17.0,17.0,71.474,71.474,0.0,0.0,CO2,45.0,,,Extinction
+FLEX,Methanol,alcohol,17.0,17.0,71.554,71.554,0.0,0.0,CO2,45.0,,,Extinction
+FLEX,Methanol,alcohol,17.0,17.0,71.634,71.634,0.0,0.0,CO2,45.0,,,Extinction
+FLEX,Heptane,hydrocarbon,17.0,17.0,71.487,71.487,0.0,0.0,CO2,45.0,,,Extinction
+FLEX,Heptane,hydrocarbon,17.0,17.0,71.621,71.621,0.0,0.0,CO2,45.0,,,Extinction
+FLEX,Heptane,hydrocarbon,24.0,24.0,101.845,101.845,0.0,0.0,CO2,20.0,,,Disruption
+FLEX,Heptane,hydrocarbon,24.0,24.0,102.018,102.018,0.0,0.0,CO2,20.0,,,Disruption
+FLEX,Heptane,hydrocarbon,24.0,24.0,102.218,102.218,0.0,0.0,CO2,20.0,,,Disruption
+FLEX,Heptane,hydrocarbon,24.0,24.0,102.285,102.285,0.0,0.0,CO2,20.0,,,Extinction
+FLEX,Heptane,hydrocarbon,24.0,24.0,102.418,102.418,0.0,0.0,CO2,20.0,,,Completion
+FLEX,Heptane,hydrocarbon,24.0,24.0,102.405,102.405,0.0,0.0,CO2,20.0,,,Completion
+FLEX,Heptane,hydrocarbon,24.0,24.0,102.418,102.418,0.0,0.0,CO2,20.0,,,Disruption
+FLEX,Heptane,hydrocarbon,24.0,24.0,102.471,102.471,0.0,0.0,CO2,20.0,,,Disruption
+FLEX,Heptane,hydrocarbon,24.0,24.0,102.391,102.391,0.0,0.0,CO2,20.0,,,Disruption
+FLEX,Methanol,alcohol,15.0,15.0,71.127,71.127,0.0,0.0,CO2,50.0,,,Extinction
+FLEX,Methanol,alcohol,15.0,15.0,71.207,71.207,0.0,0.0,CO2,50.0,,,Extinction
+FLEX,Methanol,alcohol,15.0,15.0,71.261,71.261,0.0,0.0,CO2,50.0,,,Extinction
+FLEX,Methanol,alcohol,15.0,15.0,71.287,71.287,0.0,0.0,CO2,50.0,,,Extinction
+FLEX,Methanol,alcohol,20.0,20.0,101.578,101.578,0.0,0.0,CO2,5.0,,,Extinction
+FLEX,Methanol,alcohol,20.0,20.0,101.791,101.791,0.0,0.0,CO2,5.0,,,Extinction
+FLEX,Methanol,alcohol,20.0,20.0,102.058,102.058,0.0,0.0,CO2,5.0,,,Extinction
+FLEX,Methanol,alcohol,17.0,17.0,71.421,71.421,0.0,0.0,CO2,45.0,,,Extinction
+FLEX,Heptane,hydrocarbon,20.0,20.0,101.911,101.911,0.0,0.0,CO2,5.0,,,Disruption
+FLEX,Heptane,hydrocarbon,20.0,20.0,102.151,102.151,0.0,0.0,CO2,5.0,,,Disruption
+FLEX,Heptane,hydrocarbon,20.0,20.0,102.338,102.338,0.0,0.0,CO2,5.0,,,Extinction
+FLEX,Methanol,alcohol,18.0,18.0,101.658,101.658,0.0,0.0,CO2,15.0,,,Completion
+FLEX,Methanol,alcohol,18.0,18.0,101.991,101.991,0.0,0.0,CO2,15.0,,,Extinction
+FLEX,Methanol,alcohol,18.0,18.0,102.071,102.071,0.0,0.0,CO2,15.0,,,Extinction
+FLEX,Heptane,hydrocarbon,18.0,18.0,101.631,101.631,0.0,0.0,CO2,15.0,,,Extinction
+FLEX,Heptane,hydrocarbon,18.0,18.0,101.978,101.978,0.0,0.0,CO2,15.0,,,Extinction
+FLEX,Heptane,hydrocarbon,18.0,18.0,102.085,102.085,0.0,0.0,CO2,15.0,,,Completion
+FLEX,Methanol,alcohol,16.0,16.0,101.605,101.605,0.0,0.0,CO2,25.0,,,Extinction
+FLEX,Methanol,alcohol,16.0,16.0,101.911,101.911,0.0,0.0,CO2,25.0,,,Extinction
+FLEX,Methanol,alcohol,16.0,16.0,102.058,102.058,0.0,0.0,CO2,25.0,,,Extinction
+FLEX,Methanol,alcohol,16.0,16.0,102.338,102.338,0.0,0.0,CO2,25.0,,,Extinction
+FLEX,Methanol,alcohol,15.0,15.0,101.765,101.765,0.0,0.0,CO2,32.0,,,Extinction
+FLEX,Methanol,alcohol,15.0,15.0,101.911,101.911,0.0,0.0,CO2,32.0,,,Extinction
+FLEX,Methanol,alcohol,15.0,15.0,102.111,102.111,0.0,0.0,CO2,32.0,,,Extinction
+FLEX,Methanol,alcohol,15.0,15.0,102.138,102.138,0.0,0.0,CO2,32.0,,,Extinction
+FLEX,Heptane,hydrocarbon,18.0,18.0,102.045,102.045,0.0,0.0,CO2,15.0,,,Extinction
+FLEX,Methanol,alcohol,14.0,14.0,101.431,101.431,0.0,0.0,CO2,36.0,,,Extinction
+FLEX,Methanol,alcohol,14.0,14.0,101.538,101.538,0.0,0.0,CO2,36.0,,,Extinction
+FLEX,Methanol,alcohol,21.0,21.0,101.778,101.778,0.0,0.0,CO2,15.0,,,Disruption
+FLEX,Methanol,alcohol,21.0,21.0,102.138,102.138,0.0,0.0,CO2,15.0,,,Extinction
+FLEX,Methanol,alcohol,21.0,21.0,102.218,102.218,0.0,0.0,CO2,15.0,,,Extinction
+FLEX,Heptane,hydrocarbon,18.0,18.0,101.311,101.311,0.0,0.0,CO2,15.0,,,Extinction
+FLEX,Heptane,hydrocarbon,18.0,18.0,101.591,101.591,0.0,0.0,CO2,15.0,,,Extinction
+FLEX,Heptane,hydrocarbon,18.0,18.0,101.605,101.605,0.0,0.0,CO2,15.0,,,Disruption
+FLEX,Heptane,hydrocarbon,24.0,24.0,70.887,70.887,0.0,0.0,CO2,20.0,,,Disruption
+FLEX,Heptane,hydrocarbon,24.0,24.0,70.941,70.941,0.0,0.0,CO2,20.0,,,Disruption
+FLEX,Methanol,alcohol,24.0,24.0,71.581,71.581,0.0,0.0,CO2,20.0,,,Extinction
+FLEX,Methanol,alcohol,24.0,24.0,71.594,71.594,0.0,0.0,CO2,20.0,,,Extinction
+FLEX,Heptane,hydrocarbon,23.0,23.0,71.141,71.141,0.0,0.0,CO2,25.0,,,Extinction
+FLEX,Heptane,hydrocarbon,23.0,23.0,71.247,71.247,0.0,0.0,CO2,25.0,,,Disruption
+FLEX,Heptane,hydrocarbon,19.0,19.0,101.111,101.111,0.0,0.0,CO2,10.0,,,Extinction
+FLEX,Heptane,hydrocarbon,19.0,19.0,101.205,101.205,0.0,0.0,CO2,10.0,,,Extinction
+FLEX,Heptane,hydrocarbon,19.0,19.0,101.191,101.191,0.0,0.0,CO2,10.0,,,Disruption
+FLEX,Methanol,alcohol,23.0,23.0,71.247,71.247,0.0,0.0,CO2,25.0,,,Extinction
+FLEX,Methanol,alcohol,23.0,23.0,71.341,71.341,0.0,0.0,CO2,25.0,,,Extinction
+FLEX,Methanol,alcohol,23.0,23.0,71.354,71.354,0.0,0.0,CO2,25.0,,,Extinction
+FLEX,Methanol,alcohol,23.0,23.0,71.487,71.487,0.0,0.0,CO2,25.0,,,Extinction
+FLEX,Methanol,alcohol,19.0,19.0,101.058,101.058,0.0,0.0,CO2,10.0,,,Extinction
+FLEX,Methanol,alcohol,19.0,19.0,101.071,101.071,0.0,0.0,CO2,10.0,,,Extinction
+FLEX,Methanol,alcohol,18.0,18.0,101.485,101.485,0.0,0.0,CO2,15.0,,,Extinction
+FLEX,Methanol,alcohol,18.0,18.0,101.938,101.938,0.0,0.0,CO2,15.0,,,Extinction
+FLEX,Methanol,alcohol,18.0,18.0,102.031,102.031,0.0,0.0,CO2,15.0,,,Extinction
+FLEX,Methanol,alcohol,17.0,17.0,101.258,101.258,0.0,0.0,CO2,20.0,,,Extinction
+FLEX,Methanol,alcohol,17.0,17.0,101.205,101.205,0.0,0.0,CO2,20.0,,,Extinction
+FLEX,Heptane,hydrocarbon,17.0,17.0,100.258,100.258,0.0,0.0,CO2,20.0,,,Extinction
+FLEX,Heptane,hydrocarbon,17.0,17.0,100.325,100.325,0.0,0.0,CO2,20.0,,,Extinction
+FLEX,Heptane,hydrocarbon,20.0,20.0,101.111,101.111,0.0,0.0,CO2,5.0,,,Extinction
+FLEX,Heptane,hydrocarbon,20.0,20.0,101.298,101.298,0.0,0.0,CO2,5.0,,,Extinction
+FLEX,Heptane,hydrocarbon,20.0,20.0,101.338,101.338,0.0,0.0,CO2,5.0,,,Disruption
+FLEX,Methanol,alcohol,20.0,20.0,100.525,100.525,0.0,0.0,CO2,5.0,,,Extinction
+FLEX,Methanol,alcohol,20.0,20.0,100.805,100.805,0.0,0.0,CO2,5.0,,,Extinction
+FLEX,Methanol,alcohol,20.0,20.0,100.911,100.911,0.0,0.0,CO2,5.0,,,Extinction
+FLEX,Methanol,alcohol,21.0,21.0,101.351,101.351,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,21.0,21.0,101.538,101.538,0.0,0.0,none,0.0,,,Extinction
+FLEX,Heptane,hydrocarbon,21.0,21.0,100.858,100.858,0.0,0.0,none,0.0,,,Disruption
+FLEX,Heptane,hydrocarbon,21.0,21.0,100.965,100.965,0.0,0.0,none,0.0,,,Disruption
+FLEX,Heptane,hydrocarbon,21.0,21.0,101.351,101.351,0.0,0.0,none,0.0,,,Disruption
+FLEX,Heptane,hydrocarbon,21.0,21.0,101.685,101.685,0.0,0.0,none,0.0,,,Completion
+FLEX,Heptane,hydrocarbon,21.0,21.0,101.711,101.711,0.0,0.0,none,0.0,,,Completion
+FLEX,Heptane,hydrocarbon,16.0,16.0,101.298,101.298,0.0,0.0,none,0.0,,,Extinction
+FLEX,Heptane,hydrocarbon,16.0,16.0,101.298,101.298,0.0,0.0,none,0.0,,,Extinction
+FLEX,Heptane,hydrocarbon,16.0,16.0,101.311,101.311,0.0,0.0,none,0.0,,,Extinction
+FLEX,Heptane,hydrocarbon,15.0,15.0,101.858,101.858,0.0,0.0,none,0.0,,,Extinction
+FLEX,Heptane,hydrocarbon,14.0,14.0,101.298,101.298,0.0,0.0,none,0.0,,,Extinction
+FLEX,Heptane,hydrocarbon,14.0,14.0,101.311,101.311,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,14.0,14.0,101.005,101.005,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,14.0,14.0,101.098,101.098,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,13.0,13.0,101.245,101.245,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,13.0,13.0,101.405,101.405,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,12.0,12.0,101.538,101.538,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,12.0,12.0,101.578,101.578,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,12.0,12.0,101.818,101.818,0.0,0.0,none,0.0,,,Extinction
+FLEX,Methanol,alcohol,20.0,20.0,101.218,101.218,0.0,0.0,He,5.0,,,Extinction
+FLEX,Methanol,alcohol,20.0,20.0,101.271,101.271,0.0,0.0,He,5.0,,,Extinction
+FLEX,Heptane,hydrocarbon,20.0,20.0,100.698,100.698,0.0,0.0,He,5.0,,,Completion
+FLEX,Methanol,alcohol,19.0,19.0,100.445,100.445,0.0,0.0,He,10.0,,,Extinction
+FLEX,Methanol,alcohol,18.0,18.0,101.218,101.218,0.0,0.0,He,15.0,,,Extinction
+FLEX,Methanol,alcohol,18.0,18.0,101.365,101.365,0.0,0.0,He,15.0,,,Extinction
+FLEX,Heptane,hydrocarbon,21.0,21.0,102.311,102.311,0.0,0.0,none,0.0,,,Extinction
+FLEX,Heptane,hydrocarbon,21.0,21.0,102.405,102.405,0.0,0.0,none,0.0,,,Disruption
+FLEX,Heptane,hydrocarbon,21.0,21.0,102.551,102.551,0.0,0.0,none,0.0,,,Extinction
+FLEX,Heptane,hydrocarbon,19.0,19.0,101.165,101.165,0.0,0.0,He,10.0,,,Disruption
+FLEX,Heptane,hydrocarbon,18.0,18.0,101.818,101.818,0.0,0.0,He,15.0,,,Extinction
+FLEX,Heptane,hydrocarbon,18.0,18.0,102.111,102.111,0.0,0.0,He,15.0,,,Completion
+FLEX,Heptane,hydrocarbon,18.0,18.0,102.191,102.191,0.0,0.0,He,15.0,,,Completion
+FLEX,Heptane,hydrocarbon,17.0,17.0,101.231,101.231,0.0,0.0,He,20.0,,,Extinction
+FLEX,Heptane,hydrocarbon,17.0,17.0,101.231,101.231,0.0,0.0,He,20.0,,,Extinction
+FLEX,Heptane,hydrocarbon,17.0,17.0,101.271,101.271,0.0,0.0,He,20.0,,,Disruption
+FLEX,Heptane,hydrocarbon,17.0,17.0,101.298,101.298,0.0,0.0,He,20.0,,,Completion
+FLEX,Methanol,alcohol,17.0,17.0,100.551,100.551,0.0,0.0,He,20.0,,,Extinction
+FLEX,Methanol,alcohol,17.0,17.0,100.925,100.925,0.0,0.0,He,20.0,,,Extinction
+FLEX,Methanol,alcohol,16.0,16.0,101.311,101.311,0.0,0.0,He,25.0,,,Extinction
+FLEX,Methanol,alcohol,16.0,16.0,101.458,101.458,0.0,0.0,He,25.0,,,Extinction
+FLEX,Heptane,hydrocarbon,16.0,16.0,101.045,101.045,0.0,0.0,He,25.0,,,Extinction
+FLEX,Methanol,alcohol,15.0,15.0,100.738,100.738,0.0,0.0,He,30.0,,,Extinction
+FLEX,Methanol,alcohol,15.0,15.0,100.885,100.885,0.0,0.0,He,30.0,,,Extinction
+FLEX,Methanol,alcohol,14.0,14.0,101.218,101.218,0.0,0.0,He,35.0,,,Extinction
+FLEX,Methanol,alcohol,14.0,14.0,101.298,101.298,0.0,0.0,He,35.0,,,Extinction
+FLEX,Methanol,alcohol,13.0,13.0,101.791,101.791,0.0,0.0,He,40.0,,,Extinction
+FLEX,Heptane,hydrocarbon,24.0,24.0,71.194,71.194,0.0,0.0,He,20.0,,,Extinction
+FLEX,Heptane,hydrocarbon,23.0,23.0,70.954,70.954,0.0,0.0,He,25.0,,,Completion
+FLEX,Methanol,alcohol,24.0,24.0,71.234,71.234,0.0,0.0,He,20.0,,,Extinction
+FLEX,Methanol,alcohol,24.0,24.0,71.274,71.274,0.0,0.0,He,20.0,,,Disruption
+FLEX,Methanol,alcohol,23.0,23.0,70.887,70.887,0.0,0.0,He,25.0,,,Extinction
+FLEX,Methanol,alcohol,23.0,23.0,70.901,70.901,0.0,0.0,He,25.0,,,Disruption
+FLEX,Methanol,alcohol,21.0,21.0,70.914,70.914,0.0,0.0,He,30.0,,,Extinction
+FLEX,Methanol,alcohol,21.0,21.0,70.821,70.821,0.0,0.0,He,30.0,,,Extinction
+FLEX,Methanol,alcohol,21.0,21.0,70.821,70.821,0.0,0.0,He,30.0,,,Extinction
+FLEX,Heptane,hydrocarbon,21.0,21.0,70.607,70.607,0.0,0.0,He,30.0,,,Extinction
+FLEX,Heptane,hydrocarbon,21.0,21.0,70.527,70.527,0.0,0.0,He,30.0,,,Extinction
+FLEX,Heptane,hydrocarbon,20.0,20.0,70.994,70.994,0.0,0.0,He,35.0,,,Extinction
+FLEX,Heptane,hydrocarbon,20.0,20.0,70.927,70.927,0.0,0.0,He,35.0,,,Extinction
+FLEX,Methanol,alcohol,20.0,20.0,70.341,70.341,0.0,0.0,He,35.0,,,Extinction
+FLEX,Methanol,alcohol,20.0,20.0,70.381,70.381,0.0,0.0,He,35.0,,,Extinction
+FLEX,Methanol,alcohol,18.0,18.0,70.981,70.981,0.0,0.0,He,40.0,,,Extinction
+FLEX,Methanol,alcohol,18.0,18.0,71.047,71.047,0.0,0.0,He,40.0,,,Extinction
+FLEX,Methanol,alcohol,18.0,18.0,71.087,71.087,0.0,0.0,He,40.0,,,Extinction
+FLEX,Heptane,hydrocarbon,18.0,18.0,70.394,70.394,0.0,0.0,He,40.0,,,Extinction
+FLEX,Heptane,hydrocarbon,18.0,18.0,70.701,70.701,0.0,0.0,He,40.0,,,Extinction
+FLEX,Heptane,hydrocarbon,17.0,17.0,70.954,70.954,0.0,0.0,He,45.0,,,Extinction
+FLEX,Heptane,hydrocarbon,17.0,17.0,70.994,70.994,0.0,0.0,He,45.0,,,Completion
+FLEX,Methanol,alcohol,17.0,17.0,70.714,70.714,0.0,0.0,He,45.0,,,Extinction
+FLEX,Methanol,alcohol,17.0,17.0,70.861,70.861,0.0,0.0,He,45.0,,,Extinction
+FLEX,Heptane,hydrocarbon,21.0,21.0,101.951,101.951,0.0,0.0,He,15.0,,,Extinction
+FLEX,Heptane,hydrocarbon,21.0,21.0,102.151,102.151,0.0,0.0,He,15.0,,,Extinction
+BASS-II,PMMA film,plastic,22.2,22.2,,,5.0,5.0,none,0.0,,,
+BASS-II,PMMA film,plastic,22.2,22.2,,,5.0,5.0,none,0.0,,,
+BASS-II,PMMA film,plastic,22.2,22.2,,,2.0,2.0,none,0.0,,,
+BASS-II,PMMA film,plastic,22.2,22.2,,,5.0,5.0,none,0.0,,,
+BASS-II,PMMA film,plastic,22.2,22.2,,,5.0,5.0,none,0.0,,,
+BASS-II,PMMA film,plastic,21.0,21.0,,,3.0,10.0,none,0.0,,,
+BASS-II,PMMA film,plastic,22.2,22.2,,,2.0,2.0,none,0.0,,,
+BASS-II,PMMA film,plastic,21.0,21.0,,,10.0,10.0,none,0.0,,,
+BASS-II,PMMA film,plastic,21.0,21.0,,,,2.0,none,0.0,,,
+BASS-II,PMMA film,plastic,21.0,21.0,,,1.0,5.0,none,0.0,,,
+BASS-II,PMMA film,plastic,21.0,21.0,,,,5.0,none,0.0,,,
+BASS-II,PMMA film,plastic,22.2,22.2,,,2.0,2.0,none,0.0,,,
+BASS-II,PMMA film,plastic,21.0,21.0,,,1.0,10.0,none,0.0,,,
+BASS-II,PMMA film,plastic,15.0,15.0,,,2.0,5.0,none,0.0,,,Extinction
+BASS-II,PMMA film,plastic,21.0,21.0,,,10.0,10.0,none,0.0,,,
+BASS-II,PMMA film,plastic,17.3,17.3,,,,3.0,none,0.0,,,
+BASS-II,PMMA film,plastic,17.5,17.5,,,,5.0,none,0.0,,,
+BASS-II,PMMA film,plastic,17.4,17.4,,,,10.0,none,0.0,,,Blowoff
+BASS-II,PMMA film,plastic,17.3,17.3,,,,10.0,none,0.0,,,Blowoff
+BASS-II,PMMA film,plastic,17.4,17.4,,,,5.0,none,0.0,,,
+BASS-II,PMMA film,plastic,20.8,20.8,,,,5.0,none,0.0,,,Extinction
+BASS-II,PMMA film,plastic,20.7,20.7,,,0.0,5.0,none,0.0,,,
+BASS-II,Nomex,fabric,22.2,22.2,,,9.5,9.5,none,0.0,,,
+BASS-II,Nomex,fabric,21.0,21.0,,,15.0,15.0,none,0.0,,,
+BASS-II,Nomex,fabric,21.7,21.7,,,8.0,8.0,none,0.0,,,
+BASS-II,Japan wax candle,wax,17.4,17.4,,,3.0,3.0,none,0.0,,,
+BASS-II,PMMA slab,plastic,22.2,22.2,,,8.0,10.0,none,0.0,,,
+BASS-II,PMMA slab,plastic,22.2,22.2,,,13.0,20.0,none,0.0,,,
+BASS-II,PMMA slab,plastic,20.8,20.8,,,10.0,20.0,none,0.0,,,
+BASS-II,PMMA slab,plastic,21.8,21.8,,,3.0,5.0,none,0.0,,,
+BASS-II,PMMA slab,plastic,22.2,22.2,,,5.0,20.0,none,0.0,,,
+BASS-II,PMMA slab,plastic,21.8,21.8,,,0.0,10.0,none,0.0,,,
+BASS-II,PMMA slab,plastic,18.9,18.9,,,3.0,10.0,none,0.0,,,
+BASS-II,PMMA slab,plastic,19.1,19.1,,,,10.0,none,0.0,,,
+BASS-II,PMMA slab,plastic,18.0,18.0,,,10.0,14.0,none,0.0,,,
+BASS-II,PMMA slab,plastic,20.1,20.1,,,8.0,17.0,none,0.0,,,
+BASS-II,PMMA slab,plastic,20.0,20.0,,,10.0,20.0,none,0.0,,,
+BASS-II,PMMA slab,plastic,21.7,21.7,,,,1.0,none,0.0,,,
+BASS-II,PMMA slab,plastic,20.8,20.8,,,4.0,6.0,none,0.0,,,
+BASS-II,PMMA slab,plastic,22.2,22.2,,,8.0,10.0,none,0.0,,,
+BASS-II,PMMA slab,plastic,21.0,21.0,,,7.0,20.0,none,0.0,,,
+BASS-II,PMMA slab,plastic,19.2,19.2,,,1.0,10.0,none,0.0,,,
+BASS-II,PMMA slab,plastic,18.8,18.8,,,0.0,10.0,none,0.0,,,Extinction
+BASS-II,PMMA slab,plastic,17.9,17.9,,,8.0,15.0,none,0.0,,,
+BASS-II,PMMA slab,plastic,19.0,19.0,,,5.0,17.0,none,0.0,,,
+BASS-II,PMMA slab,plastic,18.0,18.0,,,8.0,10.0,none,0.0,,,
+BASS-II,PMMA rod,plastic,22.2,22.2,,,1.0,20.0,none,0.0,,,
+BASS-II,PMMA rod,plastic,22.2,22.2,,,0.0,0.0,none,0.0,,,
+BASS-II,PMMA rod,plastic,18.0,18.0,,,3.0,5.0,none,0.0,,,
+BASS-II,PMMA rod,plastic,18.0,18.0,,,,5.0,none,0.0,,,
+BASS-II,PMMA rod,plastic,14.8,14.8,,,,5.0,none,0.0,,,Extinction
+BASS-II,PMMA rod,plastic,15.1,15.1,,,0.0,10.0,none,0.0,,,
+BASS-II,PMMA rod,plastic,14.2,14.2,,,5.0,5.0,none,0.0,,,
+BASS-II,PMMA rod,plastic,16.7,16.7,,,,,none,0.0,,,Extinction
+BASS-II,PMMA rod,plastic,16.0,16.0,,,,,none,0.0,,,Blowoff
+BASS-II,PMMA rod,plastic,15.7,15.7,,,,,none,0.0,,,Extinction
+BASS-II,PMMA rod,plastic,15.5,15.5,,,,,none,0.0,,,Blowoff
+BASS-II,PMMA rod,plastic,15.0,15.0,,,,,none,0.0,,,Blowoff
+BASS-II,PMMA rod,plastic,16.7,16.7,,,0.0,5.0,none,0.0,,,
+BASS-II,Black rod,unknown,15.4,15.4,,,,5.0,none,0.0,,,Blowoff
+BASS-II,PMMA rod,plastic,13.6,13.6,,,,,none,0.0,,,No ignition
+BASS-II,PMMA rod,plastic,15.9,15.9,,,0.0,5.0,none,0.0,,,
+BASS-II,PMMA rod,plastic,14.6,14.6,,,4.0,7.0,none,0.0,,,
+BASS-II,Black rod,unknown,16.3,16.3,,,,5.0,none,0.0,,,Extinction
+BASS-II,PMMA rod,plastic,17.1,17.1,,,0.0,5.0,none,0.0,,,
+BASS-II,PMMA rod,plastic,16.7,16.7,,,0.0,5.0,none,0.0,,,
+BASS-II,PMMA rod,plastic,14.5,14.5,,,5.0,5.0,none,0.0,,,
+BASS-II,PMMA rod,plastic,15.1,15.1,,,0.0,11.0,none,0.0,,,
+BASS-II,PMMA rod,plastic,15.2,15.2,,,0.0,11.0,none,0.0,,,
+BASS-II,PMMA rod,plastic,15.3,15.3,,,,5.0,none,0.0,,,Extinction
+BASS-II,PMMA rod,plastic,16.5,16.5,,,5.0,38.5,none,0.0,,,
+BASS-II,PMMA rod,plastic,15.9,15.9,,,,28.0,none,0.0,,,
+BASS-II,PMMA rod,plastic,15.4,15.4,,,4.0,26.5,none,0.0,,,Blowoff
+BASS-II,Black rod,unknown,17.7,17.7,,,,5.0,none,0.0,,,Extinction
+BASS-II,Black rod,unknown,17.4,17.4,,,,5.0,none,0.0,,,
+BASS-II,PMMA rod,plastic,17.7,17.7,,,,5.0,none,0.0,,,
+BASS-II,PMMA rod,plastic,17.4,17.4,,,,5.0,none,0.0,,,
+BASS-II,Black rod,unknown,18.5,18.5,,,,5.0,none,0.0,,,Extinction
+BASS-II,Black rod,unknown,19.3,19.3,,,,5.0,none,0.0,,,Extinction
+BASS-II,Black rod,unknown,18.9,18.9,,,,5.0,none,0.0,,,Extinction
+BASS-II,Black rod,unknown,16.4,16.4,,,5.0,15.0,none,0.0,,,Extinction
+BASS-II,Black rod,unknown,17.6,17.6,,,,5.0,none,0.0,,,Extinction
+BASS-II,Black rod,unknown,17.0,17.0,,,,5.0,none,0.0,,,Extinction
+BASS-II,Black rod,unknown,17.5,17.5,,,,5.0,none,0.0,,,
+BASS-II,Black rod,unknown,20.7,20.7,,,,5.0,none,0.0,,,Extinction
+BASS-II,Black rod,unknown,20.6,20.6,,,,5.0,none,0.0,,,Extinction
+BASS-II,Black rod,unknown,18.4,18.4,,,,5.0,none,0.0,,,
+BASS-II,Black rod,unknown,18.0,18.0,,,,5.0,none,0.0,,,
+BASS-II,Black rod,unknown,18.2,18.2,,,,8.0,none,0.0,,,
+BASS-II,Black rod,unknown,16.8,16.8,,,,22.0,none,0.0,,,
+BASS-II,Black rod,unknown,20.0,20.0,,,0.0,2.0,none,0.0,,,
+BASS-II,Black rod,unknown,17.5,17.5,,,0.0,8.0,none,0.0,,,
+BASS-II,Black rod,unknown,19.0,19.0,,,0.0,2.0,none,0.0,,,
+BASS-II,Black rod,unknown,16.3,16.3,,,5.0,5.0,none,0.0,,,
+BASS-II,Black rod,unknown,16.3,16.3,,,5.0,5.0,none,0.0,,,
+BASS-II,Black rod,unknown,20.8,20.8,,,,5.0,none,0.0,,,Extinction
+BASS-II,Black rod,unknown,20.0,20.0,,,,5.0,none,0.0,,,Extinction
+BASS-II,Black rod,unknown,18.2,18.2,,,0.0,2.0,none,0.0,,,
+BASS-II,Black rod,unknown,19.0,19.0,,,0.0,2.0,none,0.0,,,
+BASS-II,PMMA rod,plastic,20.9,20.9,,,,5.0,none,0.0,,,Extinction
+BASS-II,Cotton-Fiberglass (SIBAL),fabric,18.5,18.5,,,10.0,10.0,none,0.0,,,
+BASS-II,Cotton-Fiberglass (SIBAL),fabric,18.5,18.5,,,4.0,9.0,none,0.0,,,
+BASS-II,Spherical section,unknown,17.2,17.2,,,10.0,10.0,none,0.0,,,
+BASS-II,Cotton-Fiberglass (SIBAL),fabric,18.7,18.7,,,1.0,9.0,none,0.0,,,
+BASS-II,Cotton-Fiberglass (SIBAL),fabric,18.8,18.8,,,1.0,10.0,none,0.0,,,
+BASS-II,Cotton-Fiberglass (SIBAL),fabric,18.8,18.8,,,,5.0,none,0.0,,,
+BASS-II,Spherical section,unknown,17.3,17.3,,,,10.0,none,0.0,,,
+BASS-II,Cotton-Fiberglass (SIBAL),fabric,16.4,16.4,,,10.0,10.0,none,0.0,,,
+BASS-II,Cotton-Fiberglass (SIBAL),fabric,16.4,16.4,,,5.0,5.0,none,0.0,,,
+BASS-II,Cotton-Fiberglass (SIBAL),fabric,17.1,17.1,,,5.0,5.0,none,0.0,,,
+BASS-II,Cotton-Fiberglass (SIBAL),fabric,16.8,16.8,,,5.0,5.0,none,0.0,,,
+BASS-II,Cotton-Fiberglass (SIBAL),fabric,17.5,17.5,,,1.0,5.0,none,0.0,,,
+BASS-II,Cotton-Fiberglass (SIBAL),fabric,16.9,16.9,,,3.0,5.0,none,0.0,,,
+BASS-II,Cotton-Fiberglass (SIBAL),fabric,18.7,18.7,,,9.0,29.0,none,0.0,,,
+BASS-II,Cotton-Fiberglass (SIBAL),fabric,17.6,17.6,,,3.0,5.0,none,0.0,,,
+BASS-II,Cotton-Fiberglass (SIBAL),fabric,16.9,16.9,,,6.0,6.0,none,0.0,,,
+BASS-II,Cotton-Fiberglass (SIBAL),fabric,17.4,17.4,,,2.0,5.0,none,0.0,,,
+BASS-II,Cotton-Fiberglass (SIBAL),fabric,17.2,17.2,,,11.0,11.0,none,0.0,,,
+BASS-II,Cotton-Fiberglass (SIBAL),fabric,17.2,17.2,,,3.0,11.0,none,0.0,,,
+BASS-II,Cotton-Fiberglass (SIBAL),fabric,17.2,17.2,,,11.0,11.0,none,0.0,,,
+BASS-II,Cotton-Fiberglass (SIBAL),fabric,17.1,17.1,,,5.0,10.0,none,0.0,,,
+BASS-II,Cotton-Fiberglass (SIBAL),fabric,17.2,17.2,,,10.0,10.0,none,0.0,,,
+BASS-II,Cotton-Fiberglass (SIBAL),fabric,18.2,18.2,,,10.0,10.0,none,0.0,,,
+BASS-II,Cotton-Fiberglass (SIBAL),fabric,20.8,20.8,,,2.5,5.0,none,0.0,,,
+BASS-II,Cotton-Fiberglass (SIBAL),fabric,20.8,20.8,,,2.5,5.0,none,0.0,,,
+BASS-II,Cotton-Fiberglass (SIBAL),fabric,20.7,20.7,,,2.0,5.0,none,0.0,,,
+BASS-II,Cotton-Fiberglass (SIBAL),fabric,20.7,20.7,,,5.0,5.0,none,0.0,,,
+BASS-II,Cotton-Fiberglass (SIBAL),fabric,20.7,20.7,,,5.0,5.0,none,0.0,,,
+BASS-II,Cotton-Fiberglass (SIBAL),fabric,20.7,20.7,,,2.0,5.0,none,0.0,,,

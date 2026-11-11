@@ -182,6 +182,9 @@ For Gemini: put `GEMINI_API_KEY=...` in `.env` (git-ignored, see `.env.example`)
 - **v2 on the real Gemini (D15, `tests/prompt_v2.md`):** 10 takeaways, all citing a passage with the
   answer; "not found" for Q6, Q9 and Q10 (none of their passages answers them). v1: 34 takeaways,
   10 citing the answer, and it summarized Q9 and Q10 anyway.
+- **BASS-II is the 4th report (D16-DAT):** 4 more chunks (22 in all), tagged `BASS-II`, and the
+  index was rebuilt. The D14 checkpoint was re-run: same scores on both question sets. Rebuild
+  the index after pulling (`scripts/day8_embed_chunks.py` or `make ingest`).
 - **Real Gemini calls crashed before D15:** the client was created inline and cleaned up before the
   request, so it failed with "client has been closed", which the fallback didn't catch. Fixed in
   `summarizer.py`, with a test that fails on the old code.
