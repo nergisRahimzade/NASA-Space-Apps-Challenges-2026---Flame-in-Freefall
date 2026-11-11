@@ -4,7 +4,8 @@ The signatures and return shapes must stay exactly as in docs/contract.md.
 Day 5 (BE): summarize is real now; the Gemini work lives in summarizer.py.
 Day 9 (BE): get_table is real now; it reads data/master.csv (built by the data role).
 Day 10 (BE): search is real now; it ranks the report chunks with retrieval.find_passages.
-Day 11 (BE): every call is timed (speed.py), and repeated questions come from memory."""
+Day 11 (BE): every call is timed (speed.py), and repeated questions come from memory.
+Day 15 (BE): summarize() checks its own answer against the contract before handing it out."""
 
 import copy
 import threading
@@ -18,6 +19,7 @@ from flame_in_freefall.cache import memo
 from flame_in_freefall.retrieval import find_passages
 from flame_in_freefall.store import _paths
 from flame_in_freefall.summarizer import summarize_passages
+from flame_in_freefall.summary_check import check_summary
 
 # Build the paths from this file's own location (up 2 folders = repo root),
 # so they work no matter which folder the app is started from.
@@ -35,6 +37,8 @@ ALLOWED_FILTERS = TEXT_FILTERS | NUMBER_FILTERS
 MIN_SCORE = 0.30
 # The fields summarize() needs in every passage (chunk fields, docs/contract.md section 2).
 PASSAGE_KEYS = {"id", "text", "source", "page"}
+# Day 15: these become a takeaway's chunk_id, text and source, which must be non-empty text.
+PASSAGE_TEXT_KEYS = ("id", "text", "source")
 
 # Two people searching at the same moment must not both build the index (Streamlit runs
 # each visitor in its own thread).
@@ -92,6 +96,11 @@ def _check_passages(passages: list[dict]) -> None:
         missing = PASSAGE_KEYS - set(p)
         if missing:
             raise ValueError(f"passage {n} is missing {sorted(missing)}")
+        # Day 15: blank text would be quoted as an empty takeaway, a number would crash the
+        # quoting, and source=None would be shown as the source.
+        for key in PASSAGE_TEXT_KEYS:
+            if not isinstance(p[key], str) or not p[key].strip():
+                raise ValueError(f"passage {n} {key} must be non-empty text")
 
 
 def summarize(passages: list[dict]) -> dict:
@@ -99,6 +108,12 @@ def summarize(passages: list[dict]) -> dict:
     _check_passages(passages)
     start = time.perf_counter()
     summary = summarize_passages(passages)
+    # Day 15: every path (Gemini, quoting fallback, nothing found) is checked against the
+    # contract. Gemini's replies are already checked inside summarizer.py, and the passages were
+    # checked above, so a problem here is a bug in our code: fail loudly, don't show it.
+    problems = check_summary(summary, passages)
+    if problems:
+        raise RuntimeError(f"summarize() broke its contract: {'; '.join(problems)}")
     speed.record("summarize", f"{len(passages)} passages", time.perf_counter() - start)
     return summary
 

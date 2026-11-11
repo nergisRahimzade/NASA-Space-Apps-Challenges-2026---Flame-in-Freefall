@@ -2,7 +2,11 @@
 
 Every takeaway must cite the chunk it came from (chunk_id), and that chunk must be one of
 the passages the summary was made from. A takeaway that cites nothing, or cites a chunk
-we never sent, could be made up, so it's reported as a problem."""
+we never sent, could be made up, so it's reported as a problem.
+Day 15 (BE): each takeaway must also have exactly the contract's keys (text, source, chunk_id),
+each one text, so the app can show any takeaway without checking it first."""
+
+TAKEAWAY_KEYS = {"text", "source", "chunk_id"}  # docs/contract.md, summarize()
 
 
 def check_summary(summary: dict, passages: list[dict]) -> list[str]:
@@ -23,6 +27,16 @@ def check_summary(summary: dict, passages: list[dict]) -> list[str]:
 
     sources = {p["id"]: p["source"] for p in passages}  # chunk id -> its source
     for n, t in enumerate(takeaways, start=1):  # n counts from 1, like the app shows them
+        # Day 15: the rules below read t like a dict, so anything else is reported, not a crash.
+        if not isinstance(t, dict):
+            problems.append(f"takeaway {n} must be a dict, got {type(t).__name__}")
+            continue
+        if set(t) != TAKEAWAY_KEYS:
+            problems.append(f"takeaway {n} keys must be {sorted(TAKEAWAY_KEYS)}, got {sorted(t)}")
+        # A number as text would pass the "has text" rule below, then break the app's display.
+        not_text = [key for key in sorted(TAKEAWAY_KEYS & set(t)) if not isinstance(t[key], str)]
+        if not_text:
+            problems.append(f"takeaway {n} {', '.join(not_text)} must be text")
         chunk_id = t.get("chunk_id")
         if not str(t.get("text") or "").strip():
             problems.append(f"takeaway {n} has no text")
