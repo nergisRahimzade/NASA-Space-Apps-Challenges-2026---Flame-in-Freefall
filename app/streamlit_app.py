@@ -38,6 +38,16 @@ from flame_in_freefall.result_cards import (  # noqa: E402
     snippet,
     source_line,
 )
+from flame_in_freefall.style import (  # noqa: E402
+    CELL_TEXT_COLOR,
+    COVERAGE_SCALE,
+    EXPERIMENT_COLORS,
+    EXPERIMENT_SYMBOLS,
+    FUEL_COLORS,
+    FUEL_DASHES,
+    FUEL_SYMBOLS,
+    RISK_COLOR,
+)
 from flame_in_freefall.summary_box import (  # noqa: E402
     LOADING_TEXT,
     NOT_FOUND_TEXT,
@@ -147,7 +157,7 @@ else:
                 results = search(query, experiment=search_experiment)
             seconds = time.perf_counter() - start  # FIF-D11-BE: shown under "Results"
     except Exception:
-        st.error(SEARCH_FAILED)
+        st.error(SEARCH_FAILED, icon=":material/error:")
         # FIF-D16-FE: clicking reruns the page, which searches again
         st.button(TRY_AGAIN, key="retry_search")
     else:
@@ -158,7 +168,7 @@ else:
             st.subheader(f"Results (0){from_text}")
             st.caption(f"Searched in {seconds:.2f} s")
             with st.container(border=True):
-                st.markdown(f"**{no_results_title(search_experiment)}**")
+                st.markdown(f":material/search_off: **{no_results_title(search_experiment)}**")
                 st.markdown(no_results_tips(search_experiment))
         else:
             st.subheader("Summary")
@@ -171,12 +181,12 @@ else:
 
             st.subheader(f"Results ({len(results)}){from_text}")
             # FIF-D11-BE: the first search after a deploy takes ~15 s, later ones ~0.1 s
-            st.caption(f"Searched in {seconds:.2f} s")
+            # FIF-D18-FE: one caption line instead of three stacked ones
             note = slow_search_note(seconds)
-            if note:
-                st.caption(note)
             st.caption(
-                "The closest passages, best first. They may not answer your question. "
+                f"Searched in {seconds:.2f} s. "
+                + (f"{note} " if note else "")
+                + "The closest passages, best first. They may not answer your question. "
                 "Match is how close the wording and meaning are, from 0 to 1."
             )
             links = load_source_links()
@@ -199,13 +209,13 @@ else:
                 summary = summarize(results, question=query)
             except Exception:
                 with summary_box.container():
-                    st.error(SUMMARY_FAILED)
+                    st.error(SUMMARY_FAILED, icon=":material/error:")
                     # FIF-D16-FE: clicking reruns the page, which asks for the summary again
                     st.button(TRY_AGAIN, key="retry_summary")
             else:
                 with summary_box.container():
                     if summary["not_found"]:
-                        st.info(NOT_FOUND_TEXT)
+                        st.info(NOT_FOUND_TEXT, icon=":material/search_off:")
                     else:
                         ai = bool(get_settings().gemini_api_key)
                         st.caption(summary_label(ai_available=ai))
@@ -218,13 +228,16 @@ if glossary:
             st.markdown(f"**{t['term']}**: {t['tooltip']}")
 
 st.divider()
-st.subheader("Experiment data")
+st.header("Experiment data")
 
 if table_error:
-    st.error("Experiment data isn't available right now. Please try again in a moment.")
+    st.error(
+        "Experiment data isn't available right now. Please try again in a moment.",
+        icon=":material/error:",
+    )
     st.stop()
 if all_rows.empty:
-    st.info("No experiment data has been loaded yet.")
+    st.info("No experiment data has been loaded yet.", icon=":material/info:")
     st.stop()
 
 # FIF-D17-FE: every chart below uses this one filter state
@@ -233,7 +246,10 @@ table = pd.DataFrame(get_table(f.table_filters()))
 
 st.caption(f"{len(table)} rows")
 if table.empty:
-    st.info("No experiments match these filters. Try widening them in the sidebar.")
+    st.info(
+        "No experiments match these filters. Try widening them in the sidebar.",
+        icon=":material/info:",
+    )
 else:
     # Hovering a column header shows its plain-word tooltip (FIF-D15-DAT)
     st.dataframe(
@@ -251,14 +267,21 @@ else:
         # The low end of each row's oxygen range (FIF-D09-BE: master.csv has min/max columns)
         x="oxygen_pct_min",
         y="spread_rate_mm_s",
-        color="material",
-        hover_data=["experiment", "oxygen_pct_max", "pressure_kpa_min", "flow_cm_s_min"],
+        # FIF-D18-FE: one color and marker per experiment, the same everywhere. Coloring by
+        # material ran past the palette (20 materials), so material moves to the hover.
+        color="experiment",
+        symbol="experiment",
+        color_discrete_map=EXPERIMENT_COLORS,
+        symbol_map=EXPERIMENT_SYMBOLS,
+        hover_data=["material", "oxygen_pct_max", "pressure_kpa_min", "flow_cm_s_min"],
         labels={
             "oxygen_pct_min": "Oxygen (%)",
             "spread_rate_mm_s": "Flame spread rate (mm/s)",
+            "experiment": "Experiment",
             "material": "Material",
         },
     )
+    fig.update_traces(marker_size=10)
     st.plotly_chart(fig)
 
 st.subheader("Riskiest materials")
@@ -266,7 +289,7 @@ st.subheader("Riskiest materials")
 # its own measure, so each gets its own chart; their ranks can't be compared.
 ranking = load_ranking()
 if ranking.empty:
-    st.info("The riskiness ranking hasn't been built yet.")
+    st.info("The riskiness ranking hasn't been built yet.", icon=":material/info:")
 else:
     ranked = filter_ranking(
         ranking,
@@ -281,12 +304,19 @@ else:
         st.info(
             "No ranking for BASS-II: its crews lowered the airflow until each flame went out, "
             "so how a test ended doesn't show how risky the material is. See its rows in the "
-            "table above."
+            "table above.",
+            icon=":material/info:",
         )
     elif f.experiment and f.experiment not in set(ranking["experiment"]):
-        st.info(f"No ranking for {f.experiment}: its tests have no recorded results.")
+        st.info(
+            f"No ranking for {f.experiment}: its tests have no recorded results.",
+            icon=":material/info:",
+        )
     elif ranked.empty:
-        st.info("No ranked materials match these filters. Try widening them in the sidebar.")
+        st.info(
+            "No ranked materials match these filters. Try widening them in the sidebar.",
+            icon=":material/info:",
+        )
 
     sheets = ranked[ranked["experiment"] == "Saffire-II"]
     if not sheets.empty:
@@ -316,7 +346,7 @@ else:
         # One color: the bar length already shows the value. Labels sit outside the bars so
         # Silicone's 0 (never spread) still shows a number.
         fig.update_traces(
-            marker_color="#F77F00", texttemplate="%{x:.2f} mm/s", textposition="outside",
+            marker_color=RISK_COLOR, texttemplate="%{x:.2f} mm/s", textposition="outside",
             cliponaxis=False,
         )  # fmt: skip
         # Leave room past the longest bar so its label isn't cut off
@@ -338,6 +368,12 @@ else:
             x="oxygen_pct",
             y="risk_value",
             color="material",
+            symbol="material",
+            line_dash="material",
+            # FIF-D18-FE: orange vs light amber, plus a marker and dash per fuel
+            color_discrete_map=FUEL_COLORS,
+            symbol_map=FUEL_SYMBOLS,
+            line_dash_map=FUEL_DASHES,
             markers=True,
             hover_data={
                 "tests": True,
@@ -369,15 +405,20 @@ st.caption(
 )
 grid = material_oxygen_test_counts(table) if not table.empty else pd.DataFrame()
 if grid.empty:
-    st.info("No tests match these filters. Try widening them in the sidebar.")
+    st.info(
+        "No tests match these filters. Try widening them in the sidebar.", icon=":material/info:"
+    )
 else:
     fig = px.imshow(
         grid,
-        color_continuous_scale="Oranges",
+        # FIF-D18-FE: neutral blue, so "many tests" doesn't look like "dangerous"
+        color_continuous_scale=COVERAGE_SCALE,
         text_auto=True,
         aspect="auto",
         labels={"x": "Oxygen", "y": "Material", "color": "Tests"},
     )
     # Plotly reads "16%" as a number, so force labels to keep the cells evenly spaced
     fig.update_xaxes(type="category")
+    # One light text color: every cell of COVERAGE_SCALE keeps it at 5:1 or more (WCAG AA)
+    fig.update_traces(textfont_color=CELL_TEXT_COLOR)
     st.plotly_chart(fig)

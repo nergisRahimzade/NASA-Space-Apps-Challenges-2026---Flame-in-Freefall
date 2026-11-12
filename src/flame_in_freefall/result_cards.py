@@ -62,7 +62,7 @@ def _highlight(word: str, terms: set[str]) -> str:
     before, core, after = _WORD.match(word).groups()
     # Bold as well as the color, so the highlight doesn't rely on color alone.
     return (
-        f"{escape_markdown(before)}**:orange-background[{escape_markdown(core)}]**"
+        f"{escape_markdown(before)}**:blue-background[{escape_markdown(core)}]**"
         f"{escape_markdown(after)}"
     )
 
@@ -87,8 +87,9 @@ def snippet(text: str, query: str, size: int = SNIPPET_WORDS) -> str:
 
 def score_badge(score: float) -> str:
     # One color for every score: Day 9 found scores can't tell good results from bad ones yet,
-    # so a green "good" badge would promise more than the number means.
-    return f":orange-badge[Match {score:.2f}]"
+    # so a green "good" badge would promise more than the number means. Neutral grey since
+    # FIF-D18-FE: orange is kept for fire-risk data.
+    return f":gray-badge[Match {score:.2f}]"
 
 
 def load_source_links(path: str | Path = SOURCES_CSV) -> dict[str, str]:
@@ -124,5 +125,6 @@ def source_line(source: str, page: int, links: dict[str, str]) -> str:
     if url:
         # Parentheses in a URL would end the Markdown link early, so encode them.
         url = url.replace("(", "%28").replace(")", "%29")
-        title = f"[{title}]({url})"
+        # The icon says the link leaves the app for the report's page (FIF-D18-FE)
+        title = f"[{title} :material/open_in_new:]({url})"
     return f"{title} · page {page}"

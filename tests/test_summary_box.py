@@ -39,16 +39,16 @@ def test_chip_names_the_experiment_and_page_and_links_to_the_report():
     links = {FLEX_TITLE: "https://example.org/flex"}
     chip = source_chip(_summary("x")["takeaways"][0], RESULTS, links)
     # Hovering the link shows the full report title
-    assert chip == (rf'[:orange-badge[FLEX · p\. 1]](https://example.org/flex "{FLEX_TITLE}")')
+    assert chip == (rf'[:gray-badge[FLEX · p\. 1]](https://example.org/flex "{FLEX_TITLE}")')
 
 
 def test_chip_without_a_link_is_just_the_badge():
-    assert source_chip(_summary("x")["takeaways"][0], RESULTS, {}) == r":orange-badge[FLEX · p\. 1]"
+    assert source_chip(_summary("x")["takeaways"][0], RESULTS, {}) == r":gray-badge[FLEX · p\. 1]"
 
 
 def test_chip_falls_back_to_a_short_title_and_unknown_page():
     takeaway = _summary("x", source="BASS report (mock)", chunk_id="missing")["takeaways"][0]
-    assert source_chip(takeaway, RESULTS, {}) == r":orange-badge[BASS report · p\. \?]"
+    assert source_chip(takeaway, RESULTS, {}) == r":gray-badge[BASS report · p\. \?]"
 
 
 def test_short_source_keeps_the_name_before_the_description():
@@ -65,8 +65,8 @@ def test_each_takeaway_is_a_bullet_with_its_chip():
         "not_found": False,
     }
     assert takeaway_markdown(two, RESULTS, {}).splitlines() == [
-        r"- One\. :orange-badge[FLEX · p\. 1]",
-        r"- Two\. :orange-badge[FLEX · p\. 1]",
+        r"- One\. :gray-badge[FLEX · p\. 1]",
+        r"- Two\. :gray-badge[FLEX · p\. 1]",
     ]
 
 
