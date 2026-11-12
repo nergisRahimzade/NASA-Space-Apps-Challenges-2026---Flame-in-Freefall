@@ -27,7 +27,9 @@ the open questions.
 | D12-BE | `search()` takes an `experiment` filter; contract v1.4 | `api.py`, `docs/contract.md`, `tests/test_search.py` | #146 |
 | D13-BE | Edge cases for all three functions; `search()` "no match" (min score 0.30); contract v1.5 | `api.py`, `docs/contract.md`, `tests/test_api_edge_cases.py`, `tests/conftest.py` | #148 |
 | D14-BE | End-to-end check: ingest → search → table | `tests/test_end_to_end.py`, `scripts/day14_end_to_end.py` | #149 |
-| D15-BE | Sources in output: `summarize()` checks its answer's shape on every path; contract v1.6 | `api.py`, `summarizer.py`, `summary_check.py` (D06-AI's file), `docs/contract.md`, `tests/test_summary_shape.py`, `tests/test_summary_check.py` | FIF-D15-BE PR |
+| D15-BE | Sources in output: `summarize()` checks its answer's shape on every path; contract v1.6 | `api.py`, `summarizer.py`, `summary_check.py` (D06-AI's file), `docs/contract.md`, `tests/test_summary_shape.py`, `tests/test_summary_check.py` | #154 |
+| fix (D08) | New chunks always rebuild the index, so the flaky ingest test is deterministic | `ingest.py`, `tests/test_ingest.py` | #155 |
+| fix (D05) | The quoting fallback quotes the first full sentence, not a fragment | `summarizer.py`, `tests/test_summarizer.py` | FIF-D05-BE fallback PR |
 
 ## 2. What each BE file does
 
@@ -271,6 +273,27 @@ The app (`app/streamlit_app.py`) belongs to FE and only calls `api.py`.
   confirmed to fail its test when removed (on a scratch copy).
 - **Plan vs contract:** the plan asks for `{takeaways: [{text, source}]}`. We keep `chunk_id` and
   `not_found` (contract v1.0), so nothing that calls `summarize()` has to change.
+
+### Fixes after D15: the ingest test and the quoting fallback
+
+- **Flaky ingest test (#155).** `ingest.run()` decided whether to rebuild the index by comparing
+  file times. The test failed about half the time on Nergis's laptop (Windows) but passed 400 of
+  400 runs on WSL. Most likely cause (never reproduced): Windows file times move in steps of about
+  16 ms, so in a fast test the old index and the freshly rebuilt chunks could get the same time,
+  and the index looked up to date. Now, if the chunks were rebuilt
+  in this run, the index is rebuilt too, whatever the file times say. A new test pushes the old
+  index's time ahead, so the tie happens on every run.
+- **The quoting fallback showed fragments** (reported by Nathan in #160). With no key, or when
+  Gemini fails, `summarize()` quotes one sentence per passage. Chunks overlap by 30 words, so 17 of
+  the 22 chunks start in the middle of a sentence, and the old code quoted that first piece:
+  "the experiment module.", "of the experiment.". Now `_first_sentence` skips a piece that starts
+  with a lowercase letter, skips pieces under 4 words (list numbers, "Fig. 5."), and only takes a
+  piece that ends in `.`, `!` or `?`, so the chunk's own cut-off end isn't quoted as a whole
+  sentence. If a passage has no whole sentence, it's quoted as it is: never empty, never reworded.
+  Checked on the real chunks: 17 fragments before, 0 after, every quote a word-for-word piece of
+  its chunk, and no passage needed the whole-text case.
+- **The label under the summary** (`summary_box.QUOTED_LABEL`, FE's file) says the quotes are
+  "from the start of each passage", which isn't exactly true any more. Left for FE to reword.
 
 ## 6. Where the next ticket starts (FIF-D16-BE: protect the app)
 

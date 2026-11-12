@@ -1,6 +1,7 @@
 """Day 5 (BE): summarize_passages with a fake Gemini client (no network, no key)."""
 
 import json
+from pathlib import Path
 from types import SimpleNamespace
 
 import httpx
@@ -86,6 +87,65 @@ def test_no_key_quotes_passages():
         "source": "BASS",
         "chunk_id": "bass-001-p3-c0",
     }
+
+
+# --- Day 16 (BE): the fallback quotes a whole sentence, not a fragment -------------------------
+
+
+def _quote(text: str) -> str:
+    # What the app shows for one passage when Gemini isn't used (no key in tests).
+    passage = {"id": "x-p1-c0", "text": text, "source": "FLEX", "page": 1}
+    return summarize_passages([passage])["takeaways"][0]["text"]
+
+
+def test_quote_skips_the_end_of_a_sentence_the_chunk_started_in_the_middle_of():
+    # Chunks overlap by 30 words, so most start mid-sentence, and this fragment is long enough
+    # (4+ words) that only the lowercase start, not the short-sentence rule, gives it away.
+    text = "and enhancing fire safety for future missions. Samples burned for two minutes. End."
+    assert _quote(text) == "Samples burned for two minutes."
+
+
+def test_quote_of_a_passage_that_starts_a_sentence_is_unchanged():
+    assert _quote("Droplets burned for two seconds. More text here.") == (
+        "Droplets burned for two seconds."
+    )
+
+
+def test_quote_skips_list_numbers_and_headings_that_are_too_short_to_be_sentences():
+    assert _quote("Fig. 5. The flame went out at 13 percent oxygen.") == (
+        "The flame went out at 13 percent oxygen."
+    )
+
+
+def test_quote_never_uses_a_sentence_the_chunk_cut_off():
+    # The chunk ends mid-sentence, so the only candidate has no full stop. Quote it as it is
+    # rather than a half sentence dressed up as a whole one, and never return nothing.
+    text = "the end of one. Another sentence that stops before the"
+    assert _quote(text) == text
+
+
+def test_quote_of_a_lone_fragment_is_the_fragment_not_nothing():
+    assert _quote("the experiment module.") == "the experiment module."
+
+
+def test_quote_keeps_the_passages_own_words():
+    text = "and so on. Flames spread slowly (about 1.2 mm/s) in microgravity! Next."
+    assert _quote(text) == "Flames spread slowly (about 1.2 mm/s) in microgravity!"
+
+
+def test_quotes_of_the_real_chunks_are_whole_sentences_in_the_passages_own_words():
+    # The real data this fixes: 17 of the 22 chunks start in the middle of a sentence.
+    path = Path(__file__).resolve().parents[1] / "data" / "processed" / "chunks.jsonl"
+    chunks = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+    quoted = summarizer._quote_passages(chunks)["takeaways"]
+    assert len(quoted) == len(chunks) >= 22
+    for chunk, takeaway in zip(chunks, quoted, strict=True):
+        assert takeaway["text"].strip()
+        assert takeaway["text"] in chunk["text"]  # word for word, nothing reworded
+        # No fragment from mid-sentence. The one allowed exception: a chunk with no whole
+        # sentence is quoted in full (none of today's chunks needs that).
+        if takeaway["text"] != chunk["text"].strip():
+            assert not takeaway["text"][0].islower(), chunk["id"]
 
 
 def test_timeout_falls_back(use_fake):
