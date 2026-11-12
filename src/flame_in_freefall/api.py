@@ -5,7 +5,8 @@ Day 5 (BE): summarize is real now; the Gemini work lives in summarizer.py.
 Day 9 (BE): get_table is real now; it reads data/master.csv (built by the data role).
 Day 10 (BE): search is real now; it ranks the report chunks with retrieval.find_passages.
 Day 11 (BE): every call is timed (speed.py), and repeated questions come from memory.
-Day 15 (BE): summarize() checks its own answer against the contract before handing it out."""
+Day 15 (BE): summarize() checks its own answer against the contract before handing it out.
+Day 16 (BE): questions over MAX_QUERY_CHARS are rejected."""
 
 import copy
 import threading
@@ -35,6 +36,11 @@ ALLOWED_FILTERS = TEXT_FILTERS | NUMBER_FILTERS
 # answerable questions scored 0.42-0.69, clearly off-topic ones -0.01-0.26. Retune it if the
 # embedding model or the chunking changes (the scores move with them).
 MIN_SCORE = 0.30
+# Day 16: the longest question search() and summarize() accept, counted after trimming spaces.
+# Our longest test question is under 100 characters, and the embedding model reads only about 200
+# words anyway, so a longer text would be silently cut off. The app's search box stops at this
+# number too (app/streamlit_app.py), so visitors never see the error below.
+MAX_QUERY_CHARS = 300
 # The fields summarize() needs in every passage (chunk fields, docs/contract.md section 2).
 PASSAGE_KEYS = {"id", "text", "source", "page"}
 # Day 15: these become a takeaway's chunk_id, text and source, which must be non-empty text.
@@ -61,12 +67,20 @@ def _find(query: str, k: int, experiment: str | None) -> list[dict]:
     return find_passages(query, k, folder=INDEX, experiment=experiment)
 
 
+def _check_length(text: str, name: str) -> None:
+    # Day 16: say how long it was and what the limit is, so the fix is obvious.
+    length = len(text.strip())
+    if length > MAX_QUERY_CHARS:
+        raise ValueError(f"{name} is too long: {length} characters, the limit is {MAX_QUERY_CHARS}")
+
+
 def search(query: str, k: int = 5, experiment: str | None = None) -> list[dict]:
     # Contract v1.1: k defaults to 5. Day 12 (v1.4): experiment="FLEX-2" (or "Saffire-II",
     # "FLEX") searches only that experiment's chunks; None searches all of them.
     # Fail loudly on a blank (or non-text) question instead of running an empty search.
     if not isinstance(query, str) or not query.strip():
         raise ValueError("query must be non-empty text")
+    _check_length(query, "query")
     # bool is a kind of int in Python, so True would pass as k=1 without this check.
     if isinstance(k, bool) or not isinstance(k, int) or k <= 0:
         raise ValueError("k must be a whole number above 0")
@@ -111,6 +125,8 @@ def summarize(passages: list[dict], question: str | None = None) -> dict:
     # None means "no question"; blank text is a mistake, as in search().
     if question is not None and (not isinstance(question, str) or not question.strip()):
         raise ValueError("question must be non-empty text, or None")
+    if question is not None:
+        _check_length(question, "question")
     start = time.perf_counter()
     summary = summarize_passages(passages, question)
     # Day 15: every path (Gemini, quoting fallback, nothing found) is checked against the

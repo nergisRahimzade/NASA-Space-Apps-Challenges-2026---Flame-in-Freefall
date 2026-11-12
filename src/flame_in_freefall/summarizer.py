@@ -2,7 +2,8 @@
 
 Fails safely: with no API key, a timeout after retries, or a broken reply, it quotes the
 passages instead (real text, real sources), so the app keeps working and nothing is invented.
-Day 16 (BE): the quote is the first full sentence of each passage, not a fragment.
+Day 16 (BE): the quote is the first full sentence of each passage, not a fragment. Gemini calls
+are also limited per minute (rate_limit.py), and a call that never answers ends in about 32 s.
 The prompt text lives in src/prompts/ (written by the AI tickets: v1 FIF-D05-AI, v2 FIF-D15-AI).
 Day 15 (AI): prompt v2 also gets the user's question, so it can say "not found" when the
 passages are about fire but don't answer it (Q9 and Q10 in tests/retest.md)."""
@@ -10,6 +11,7 @@ passages are about fire but don't answer it (Q9 and Q10 in tests/retest.md)."""
 import json
 import logging
 import re
+import threading
 from pathlib import Path
 
 import httpx
@@ -17,18 +19,38 @@ from google import genai
 from google.genai import errors, types
 
 from flame_in_freefall.config import get_settings
+from flame_in_freefall.rate_limit import RateLimiter
 from flame_in_freefall.summary_check import check_summary
 
 # Built from this file's location (up 1 folder = src/), so it works from any folder.
 PROMPT_PATH = Path(__file__).resolve().parents[1] / "prompts" / "summary_v2.txt"
-TIMEOUT_MS = 30_000  # give up on one attempt after 30 s (the Gemini client counts milliseconds)
-# First try + 2 retries. The client then retries timeouts, rate limits (429) and server errors
-# (5xx) itself; without retry options it would never retry.
-ATTEMPTS = 3
+# Day 16: 15 s per attempt, 2 attempts (the first try + 1 retry), so a summary that never comes
+# back ends after about 32 s (15 + a 1-2 s wait + 15) instead of about 95 s (3 x 30 s + waits).
+# The page tells visitors a summary "can take up to 30 seconds" (summary_box.LOADING_TEXT).
+# The Gemini client counts milliseconds, and retries timeouts, rate limits (429) and server
+# errors (5xx) itself; without retry options it would never retry.
+TIMEOUT_MS = 15_000
+ATTEMPTS = 2
 # Day 16: the quoting fallback skips "sentences" shorter than this many words (see _first_sentence).
 MIN_QUOTE_WORDS = 4
 
 log = logging.getLogger(__name__)
+
+# Day 16: one limiter for the whole app (every visitor shares one Gemini key). None until the
+# first summary needs it, so GEMINI_CALLS_PER_MINUTE is read then, not when the file is imported.
+# Tests set it back to None, which gives the next test a fresh, empty limiter.
+_limiter: RateLimiter | None = None
+_limiter_lock = threading.Lock()
+
+
+def _gemini_call_allowed() -> bool:
+    # Counts one call against the limit when it returns True.
+    global _limiter
+    with _limiter_lock:  # two visitors arriving together must not each create a limiter
+        if _limiter is None:
+            _limiter = RateLimiter(get_settings().gemini_calls_per_minute, per_seconds=60)
+    return _limiter.allow()
+
 
 # Structured output: the model must reply with JSON in exactly this shape.
 # It only gives chunk_id; we fill in source ourselves, so a source can't be made up.
@@ -133,6 +155,15 @@ def summarize_passages(passages: list[dict], question: str | None = None) -> dic
     # None = no key set (e.g. in CI), so don't even try to call Gemini.
     if not settings.gemini_api_key:
         log.warning("GEMINI_API_KEY not set; quoting passages instead of summarizing")
+        return _quote_passages(passages)
+    # Day 16: over the limit, quote the passages like the "no key" case. The app keeps working,
+    # and the key's quota is left for the visitors who come next. A call counts here once, even
+    # if the client then retries it.
+    if not _gemini_call_allowed():
+        log.warning(
+            "Gemini limit of %d calls a minute reached; quoting passages instead of summarizing",
+            settings.gemini_calls_per_minute,
+        )
         return _quote_passages(passages)
     # Read outside the try: a missing prompt file is our bug, so it should fail loudly.
     instructions = PROMPT_PATH.read_text(encoding="utf-8")

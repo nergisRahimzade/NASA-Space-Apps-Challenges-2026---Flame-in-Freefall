@@ -15,7 +15,7 @@ import pandas as pd
 import pytest
 from streamlit.testing.v1 import AppTest
 
-from flame_in_freefall.api import get_table
+from flame_in_freefall.api import MAX_QUERY_CHARS, get_table
 from flame_in_freefall.page_states import SLOW_SEARCH_NOTE
 from flame_in_freefall.summary_box import AI_LABEL, NOT_FOUND_TEXT, QUOTED_LABEL
 
@@ -44,6 +44,13 @@ def test_search_shows_results(app):
     app.text_input[0].input("Which materials burn fastest in microgravity?").run()
     _assert_healthy(app)
     assert any(h.value.startswith("Results") for h in app.subheader)
+
+
+def test_search_box_stops_at_the_longest_question_search_accepts(app):
+    # FIF-D16-BE: a visitor can't type past api.MAX_QUERY_CHARS, so they never meet the
+    # "query is too long" error from search(). (AppTest has no max_chars attribute; the
+    # setting is on the box's protobuf message.)
+    assert app.text_input[0].proto.max_chars == MAX_QUERY_CHARS == 300
 
 
 def test_search_shows_how_long_it_took(app):

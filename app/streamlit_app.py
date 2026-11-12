@@ -9,7 +9,7 @@ import streamlit as st
 # Make src/ importable when the package isn't installed (e.g. Streamlit Community Cloud).
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from flame_in_freefall.api import get_table, search, summarize  # noqa: E402
+from flame_in_freefall.api import MAX_QUERY_CHARS, get_table, search, summarize  # noqa: E402
 from flame_in_freefall.config import get_settings  # noqa: E402
 from flame_in_freefall.filters import (  # noqa: E402
     ALL,
@@ -133,7 +133,8 @@ if not all_rows.empty:
         st.button("Reset filters", on_click=reset_filters)
     f = from_choices(experiment, material, oxygen)
 
-query = st.text_input("Search the research reports")
+# FIF-D16-BE: the box stops at the longest question search() accepts (api.MAX_QUERY_CHARS)
+query = st.text_input("Search the research reports", max_chars=MAX_QUERY_CHARS)
 # Only experiments with reports can be searched; search() rejects any other name
 searchable = f.experiment in load_experiments()
 if f.experiment:

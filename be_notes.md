@@ -1,4 +1,4 @@
-# BE notes: what's built and how it runs (Days 1–15, FIF-D01-BE … FIF-D15-BE)
+# BE notes: what's built and how it runs (Days 1–16, FIF-D01-BE … FIF-D16-BE)
 
 For anyone reviewing BE PRs, and for teammates whose code calls the backend. Like
 `data_notes.md` and `ai_notes.md`, this file records what exists, the decisions behind it, and
@@ -29,7 +29,8 @@ the open questions.
 | D14-BE | End-to-end check: ingest → search → table | `tests/test_end_to_end.py`, `scripts/day14_end_to_end.py` | #149 |
 | D15-BE | Sources in output: `summarize()` checks its answer's shape on every path; contract v1.6 | `api.py`, `summarizer.py`, `summary_check.py` (D06-AI's file), `docs/contract.md`, `tests/test_summary_shape.py`, `tests/test_summary_check.py` | #154 |
 | fix (D08) | New chunks always rebuild the index, so the flaky ingest test is deterministic | `ingest.py`, `tests/test_ingest.py` | #155 |
-| fix (D05) | The quoting fallback quotes the first full sentence, not a fragment | `summarizer.py`, `tests/test_summarizer.py` | FIF-D05-BE fallback PR |
+| fix (D05) | The quoting fallback quotes the first full sentence, not a fragment | `summarizer.py`, `tests/test_summarizer.py` | #165 |
+| D16-BE | Protect the app: 300-character question limit, Gemini calls limited to 10 a minute, a summary that never comes ends in ~32 s; contract v1.9 | `api.py`, `rate_limit.py`, `summarizer.py`, `config.py`, `docs/contract.md`, `tests/test_rate_limit.py`, `tests/test_api_edge_cases.py`, `tests/test_summarizer.py`, `tests/test_infra.py`, `tests/conftest.py`, 2 lines in `app/streamlit_app.py` (FE's file) | FIF-D16-BE PR |
 
 ## 2. What each BE file does
 
@@ -43,7 +44,8 @@ All code is in `src/flame_in_freefall/`.
 | `speed.py` | Times every backend call into `artifacts/speed.log`; `uv run python -m flame_in_freefall.speed` lists the slowest | in use since D11 |
 | `store.py` | Saves/loads the search index as `embeddings.npz` + `chunks.json` | used by the AI scripts and `ingest.py` |
 | `ingest.py` | One command builds the search index: `uv run python -m flame_in_freefall.ingest` (`--force` redoes every step) | in use; same files as the AI scripts for Days 7–8 |
-| `summarizer.py` | Calls Gemini for takeaways; falls back to quoting passages on any failure | in use through `api.summarize()` |
+| `summarizer.py` | Calls Gemini for takeaways; falls back to quoting passages on any failure, or when the call limit is reached | in use through `api.summarize()` |
+| `rate_limit.py` | `RateLimiter`: at most N calls in any window, safe with many visitors at once | used by `summarizer.py` since D16 (10 a minute) |
 
 The app (`app/streamlit_app.py`) belongs to FE and only calls `api.py`.
 
@@ -134,8 +136,18 @@ The app (`app/streamlit_app.py`) belongs to FE and only calls `api.py`.
   through other packages. They are listed in `app/requirements.txt`.
 - **`summarize()` never sees the user's question**, only the passages. Changing that is a
   contract change.
-- **Worst-case wait for a summary is about 95 s** (3 tries × 30 s + waits between them) before the
-  fallback.
+- **Worst-case wait for a summary is about 32 s since D16** (2 tries × 15 s + a 1–2 s wait
+  between them) before the fallback; it was about 95 s. **Measured with a real key on
+  2026-11-11:** `gemini-flash-lite-latest` answered 3 real summaries in 1.2, 6.0 and 8.7 s, inside
+  15 s. The default `gemini-flash-latest` answered every call with `503 UNAVAILABLE` ("high
+  demand") or `504`, and each summary fell back to quotes after 8–18 s, the same overload the AI
+  role saw on 2026-11-10. If that keeps happening, the team may want `GEMINI_MODEL =
+  "gemini-flash-lite-latest"` in the app's Secrets (an open question in `ai_notes.md` too).
+- **Every widget change re-runs `summarize()`** (checked with AppTest): Streamlit re-runs the whole
+  page when a visitor moves a slider, and with a question in the box that's another Gemini call.
+  Summaries aren't cached yet, so a visitor adjusting filters spends a call each time and can use up
+  the 10-a-minute limit on their own; after that the summary is quoted. D17-BE (cache summaries)
+  fixes this.
 - **The 0.30 cutoff has no safe value with today's ranking** (2026-11-10, real model). It drops two
   of Q2's answer passages (0.295, 0.281; `tests/retest.md`). Lowering it to 0.27 (suggested in #151)
   lets "How much thrust does a rocket engine produce?" (0.2755) through, and the short query "rocket
@@ -295,19 +307,65 @@ The app (`app/streamlit_app.py`) belongs to FE and only calls `api.py`.
 - **The label under the summary** (`summary_box.QUOTED_LABEL`, FE's file) says the quotes are
   "from the start of each passage", which isn't exactly true any more. Left for FE to reword.
 
-## 6. Where the next ticket starts (FIF-D16-BE: protect the app)
+### Protect the app (D16)
+
+Plan: *1) Reject empty/very long queries. 2) Rate limit. 3) Timeouts. Done when: bad input
+handled.* Empty queries already raised since D13.
+
+- **Long questions:** `api.MAX_QUERY_CHARS = 300`, counted after trimming spaces. `search()` and
+  `summarize(question=...)` raise `ValueError("query is too long: 412 characters, the limit is
+  300")`. Our longest test question is under 100 characters, and MiniLM reads only about 200 words,
+  so a longer text would be silently cut off. The app's search box has `max_chars=300` (2 lines in
+  FE's file), so visitors can't type past it and never see the error.
+- **Rate limit:** `rate_limit.RateLimiter(max_calls, per_seconds)` is a sliding window behind a
+  lock, because Streamlit runs each visitor in its own thread. `summarizer.py` keeps one for the
+  whole process: **10 Gemini summaries a minute, shared by every visitor** (`GEMINI_CALLS_PER_MINUTE`,
+  a whole number above 0 or `get_settings()` raises). All visitors use one free-tier key, so this
+  protects the key's quota. Over the limit, `summarize()` doesn't fail: it quotes the passages, the
+  same path as "no key". Calls that never reach Gemini (no passages, no key) don't count, and a
+  call counts once even if the client then retries it.
+- **The limit is per process, not per visitor.** One person clicking fast can use up the minute for
+  everyone else. A per-visitor limit belongs in the page (FE's file, `st.session_state`), and
+  `RateLimiter` can be reused there. Community Cloud runs one process per app, so the limit
+  isn't multiplied by several copies.
+- **Search has no limit and no timeout.** It runs locally and repeated questions are cached, and
+  its only slow case is the one-time index build after a deploy (15–45 s), which can't be stopped
+  half-way safely; the page already explains that wait (D16-FE).
+- **Timeouts:** Gemini calls now give up after 15 s per try with 2 tries (`TIMEOUT_MS`, `ATTEMPTS`),
+  so the worst case is about 32 s, as the page says ("up to 30 seconds"). The SDK waits 1–2 s
+  between tries. Measured with a real key: answers came in 1.2–8.7 s on the lite model (§5).
+- **A wrong `GEMINI_CALLS_PER_MINUTE` fails loudly, and widely.** Every `get_settings()` call
+  raises, and `embedding.py` uses it too, so **search** breaks as well as summaries: the page shows
+  "search failed" and the log says `GEMINI_CALLS_PER_MINUTE must be a whole number above 0, got
+  'ten'`. On purpose (a wrong limit should be noticed at once, not run quietly), but whoever edits
+  the app's Secrets should know a typo there takes the whole search down.
+- **Tests:** `tests/test_rate_limit.py` (fake clock; also a thread test that fails every time if
+  the lock is removed), plus limit, setting and search-box tests. `conftest.py` gives every test a
+  fresh limiter, because the real one lives for the whole process and the 11th test that reached
+  Gemini would otherwise be told "limit reached".
+- **Since D15, from teammates:** BASS-II is the 4th experiment (419 rows, 22 chunks, contract
+  v1.8) and `master.csv` is frozen as data v1.0 (`data/freeze.json`, checked by CI). `summarize()`
+  takes the user's `question` (v1.7, prompt v2).
+- **Seen while building this, not fixed (needs a contract change):** the page labels a summary
+  "AI-generated" whenever a key is set (`bool(get_settings().gemini_api_key)`), not by what
+  `summarize()` did. When Gemini fails or the call limit is reached, quoted text gets the AI label.
+  Fixing it needs a new field in `summarize()`'s result, so the team should agree first.
+
+## 6. Where the next ticket starts (FIF-D17-BE: cache repeated questions)
 
 **Still open from D14:** tag #149's merge commit (`bf28918`) `v0.2` once the team agrees
 (`git tag v0.2 bf28918`, then `git push origin v0.2`). Pushing a tag is visible to everyone.
 
-The D16 plan: *1) Reject empty/very long queries. 2) Rate limit. 3) Timeouts. Done when: bad input
-handled.*
+The D17 plan: *1) Cache by query. 2) Log cost per call. Done when: repeat is instant.*
 
-- **Already done:** empty, blank and non-text queries raise `ValueError` (D13), and Gemini calls
-  time out after 30 s with 3 tries, then fall back (D05).
-- **Still to do:** a maximum query length in `search()` (no limit today), a rate limit (one per
-  visitor session would fit Streamlit), and deciding what
-  "timeout" means for `search()`, whose first call after a deploy takes 15–45 s.
+- **Already done:** `search()` has been cached in memory since D11 (`@memo`), so a repeated search
+  is instant. **`summarize()` isn't cached**, and it's the slow, paid call: a repeat takes up to
+  ~32 s and counts against the 10-a-minute limit. It also runs again on every widget change
+  (moving a slider re-runs the page, §5), so this cache is what stops one visitor from using up
+  the limit by adjusting filters. Test that case in the app, not only in `summarizer.py`.
+- **Still to do:** cache summaries (key: question, passage ids, prompt and model), never cache the
+  quoting fallback, and log the tokens (and cost, once the team sets a price) of every Gemini call.
+  A cached answer must not count against the limiter.
 
 ## 7. Rules to keep
 

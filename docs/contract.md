@@ -1,4 +1,4 @@
-# Flame in Freefall — Contract v1.8
+# Flame in Freefall — Contract v1.9
 
 Everyone codes against these shapes. Change them only by pull request, and bump the version.
 
@@ -43,6 +43,15 @@ record in `data/freeze.json`). From here on, `get_table()` returns the same 419 
 columns. A change to them needs the team's agreement and a new data version, and CI
 (`tests/test_freeze.py`) fails until one is recorded. The function signatures don't change.
 
+**v1.9 (FIF-D16-BE):** the backend protects itself. A `query` (`search()`) or `question`
+(`summarize()`) of more than 300 characters, counted after trimming spaces (`api.MAX_QUERY_CHARS`),
+raises `ValueError`; the app's search box stops at 300, so visitors never see the error.
+`summarize()` sends at most 10 requests a minute to Gemini, shared by all visitors (setting
+`GEMINI_CALLS_PER_MINUTE`); past that, the takeaways are quoted from the passages, exactly as with
+no key or when Gemini fails, so the return shape doesn't change. A Gemini request that never
+answers now ends after about 32 seconds (15 s per try, 2 tries) instead of about 95. `search()` has
+no timeout of its own: its only slow case is the one-time index build after a deploy.
+
 ## 1. Functions (in `src/flame_in_freefall/api.py`)
 
 ```python
@@ -55,8 +64,9 @@ def search(query: str, k: int = 5, experiment: str | None = None) -> list[dict]:
     and no match (an off-topic question) -> [].
     experiment: "FLEX-2", "Saffire-II", "FLEX" or "BASS-II" keeps only that experiment's chunks (before
     ranking, so all results come from it); None (the default) searches every experiment.
-    Empty, blank or non-text query, k that isn't a whole number above 0, a blank experiment,
-    or an unknown experiment -> ValueError (the message lists the valid experiments).
+    Empty, blank or non-text query, a query over 300 characters, k that isn't a whole number
+    above 0, a blank experiment, or an unknown experiment -> ValueError (the message lists the
+    valid experiments, or the length and the limit).
     The first call builds the search index if it's missing or older than chunks.jsonl,
     so it can take ~15 s."""
 
@@ -72,8 +82,10 @@ def summarize(passages: list[dict], question: str | None = None) -> dict:
     passages' ids and source is that passage's source. not_found is True only when there are
     no takeaways.
     No passages -> {"takeaways": [], "not_found": True}.
-    Not a list, a passage that isn't a dict or misses a field, or a passage whose id, text or
-    source isn't non-empty text -> ValueError."""
+    When Gemini isn't used (no key, over the 10-a-minute limit, or it failed), each takeaway is
+    the first full sentence of its passage, quoted word for word.
+    Not a list, a passage that isn't a dict or misses a field, a passage whose id, text or
+    source isn't non-empty text, or a question over 300 characters -> ValueError."""
 
 
 def get_table(filters: dict | None = None) -> list[dict]:
