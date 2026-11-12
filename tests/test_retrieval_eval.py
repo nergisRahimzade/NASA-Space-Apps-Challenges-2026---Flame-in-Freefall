@@ -16,6 +16,7 @@ from flame_in_freefall.retrieval_eval import (
     HELD_OUT,
     NAMED_EXPERIMENT,
     QUESTIONS,
+    SUMMARY_EXTRA,
     chance_of_a_hit,
     contains_evidence,
     is_relevant,
@@ -161,3 +162,15 @@ def test_held_out_questions_are_answerable_and_new():
         assert any(contains_evidence(phrases, c["text"]) for c in chunks), question
         if named:
             assert named in tags and named.lower() in question.lower(), question
+
+
+def test_bass2_summary_questions_are_answerable_and_new():
+    # Day 16: every phrase must sit whole inside one real chunk, or no passage could ever match.
+    chunks = chunk_reports(SOURCES, REPORTS, 150, 30)
+    held = {q for q, _, _ in HELD_OUT}
+    assert len(SUMMARY_EXTRA) == 2
+    for question, phrases, named in SUMMARY_EXTRA:
+        assert named == "BASS-II" and named.lower() in question.lower(), question
+        assert question not in QUESTIONS and question not in held, question
+        for phrase in phrases:
+            assert any(contains_evidence([phrase], c["text"]) for c in chunks), phrase

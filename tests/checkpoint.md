@@ -112,7 +112,8 @@ aren't in the repo.
 Not done today. It touches BE's files and the contract:
 
 1. **Sentence vectors in the index.** 120 sentences for 18 chunks (about 7 times more), built by
-   `make ingest`. Today `store.py` and `ingest.py` (BE) save one vector per chunk.
+   `uv run python -m flame_in_freefall.ingest` (there's no Makefile). Today `store.py` and
+   `ingest.py` (BE) save one vector per chunk.
 2. **Ranking in `find_passages`** (AI): BM25 over the chunks plus fusion with the sentence ranking.
    The code is in `scripts/day14_checkpoint.py` (`best_sentence`, `bm25`, `fuse`).
 3. **`score` changes meaning** from chunk cosine to best-sentence cosine. That needs a contract
