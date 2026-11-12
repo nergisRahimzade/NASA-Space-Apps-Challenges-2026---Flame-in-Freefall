@@ -1,4 +1,4 @@
-# Flame in Freefall — Contract v1.9
+# Flame in Freefall — Contract v1.10
 
 Everyone codes against these shapes. Change them only by pull request, and bump the version.
 
@@ -51,6 +51,16 @@ raises `ValueError`; the app's search box stops at 300, so visitors never see th
 no key or when Gemini fails, so the return shape doesn't change. A Gemini request that never
 answers now ends after about 32 seconds (15 s per try, 2 tries) instead of about 95. `search()` has
 no timeout of its own: its only slow case is the one-time index build after a deploy.
+
+**v1.10 (FIF-D17-BE):** a repeated `summarize()` call returns the remembered answer: the same
+question (capitals and spaces ignored), the same passages in the same order, the same prompt and
+model give the answer Gemini gave the first time, instantly, without a Gemini call and without
+counting against the 10-a-minute limit. Only answers Gemini gave are remembered (a "not found"
+included), never the quoting fallback, and the memory holds the latest 256. With no Gemini key
+set, the passages are quoted as before, even for a remembered question. The return shape
+doesn't change. Each Gemini call's token counts are logged to `artifacts/usage.log`
+(`uv run python -m flame_in_freefall.usage` reports them); the optional settings
+`GEMINI_USD_PER_M_INPUT` and `GEMINI_USD_PER_M_OUTPUT` add a cost.
 
 ## 1. Functions (in `src/flame_in_freefall/api.py`)
 

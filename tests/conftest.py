@@ -5,7 +5,7 @@ import zlib
 import numpy as np
 import pytest
 
-from flame_in_freefall import api, embedding, speed, summarizer
+from flame_in_freefall import api, embedding, speed, summarizer, usage
 
 
 @pytest.fixture(autouse=True)
@@ -15,6 +15,9 @@ def _no_real_gemini_key(monkeypatch):
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
     # Same for the call limit: a GEMINI_CALLS_PER_MINUTE in your shell must not change the tests.
     monkeypatch.delenv("GEMINI_CALLS_PER_MINUTE", raising=False)
+    # Day 17: and for the prices, so a shell's price can't change a cost in the tests.
+    monkeypatch.delenv("GEMINI_USD_PER_M_INPUT", raising=False)
+    monkeypatch.delenv("GEMINI_USD_PER_M_OUTPUT", raising=False)
 
 
 @pytest.fixture(autouse=True)
@@ -57,3 +60,11 @@ def _fresh_speed_log_and_cache(monkeypatch, tmp_path):
     # remembered, and answers from another test's index can't leak in.
     monkeypatch.setattr(speed, "SPEED_LOG", tmp_path / "speed.log")
     api._find.cache.clear()
+
+
+@pytest.fixture(autouse=True)
+def _fresh_summary_cache_and_usage_log(monkeypatch, tmp_path):
+    # Day 17: a remembered summary would let one test's answer leak into another (and skip its
+    # fake Gemini), and token counts go to a throwaway log, not artifacts/usage.log in the repo.
+    summarizer.clear_summary_cache()
+    monkeypatch.setattr(usage, "USAGE_LOG", tmp_path / "usage.log")

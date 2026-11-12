@@ -6,8 +6,11 @@ Day 16 (BE): the quote is the first full sentence of each passage, not a fragmen
 are also limited per minute (rate_limit.py), and a call that never answers ends in about 32 s.
 The prompt text lives in src/prompts/ (written by the AI tickets: v1 FIF-D05-AI, v2 FIF-D15-AI).
 Day 15 (AI): prompt v2 also gets the user's question, so it can say "not found" when the
-passages are about fire but don't answer it (Q9 and Q10 in tests/retest.md)."""
+passages are about fire but don't answer it (Q9 and Q10 in tests/retest.md).
+Day 17 (BE): an answer Gemini gave is remembered, so the same question about the same passages
+is instant and free, and every Gemini call's token count goes to usage.py."""
 
+import copy
 import json
 import logging
 import re
@@ -18,6 +21,8 @@ import httpx
 from google import genai
 from google.genai import errors, types
 
+from flame_in_freefall import usage
+from flame_in_freefall.cache import normalize
 from flame_in_freefall.config import get_settings
 from flame_in_freefall.rate_limit import RateLimiter
 from flame_in_freefall.summary_check import check_summary
@@ -50,6 +55,50 @@ def _gemini_call_allowed() -> bool:
         if _limiter is None:
             _limiter = RateLimiter(get_settings().gemini_calls_per_minute, per_seconds=60)
     return _limiter.allow()
+
+
+# Day 17: answers Gemini gave, so a repeat is instant and free. Only real answers go in (a
+# quoted fallback would keep showing quotes after a short outage). Oldest out first when full.
+MAX_CACHED_SUMMARIES = 256
+_summary_cache: dict[tuple, dict] = {}
+_summary_cache_lock = threading.Lock()  # visitors run in separate threads
+
+
+def _cache_key(passages: list[dict], question: str | None, model: str) -> tuple:
+    # Everything that can change the answer: the question (capitals and spaces ignored, like
+    # search()), the passages in order, the prompt file and the model. Source and page are sent
+    # to Gemini too; keeping them in the key prevents stale citations after metadata corrections.
+    # The page goes in as text, the way Gemini sees it ("p. 3"), so any page value can be a key.
+    return (
+        None if question is None else normalize(question),
+        tuple((p["id"], p["text"], p["source"], str(p["page"])) for p in passages),
+        PROMPT_PATH.name,
+        model,
+    )
+
+
+def summary_is_cached(passages: list[dict], question: str | None = None) -> bool:
+    """True when summarize_passages() would answer from memory (api.py logs it as "cached")."""
+    settings = get_settings()
+    if not settings.gemini_api_key:
+        return False  # with no key, summarize_passages() quotes before looking in memory
+    key = _cache_key(passages, question, settings.gemini_model)
+    with _summary_cache_lock:
+        return key in _summary_cache
+
+
+def clear_summary_cache() -> None:
+    # For tests, and for scripts that must see every real Gemini reply.
+    with _summary_cache_lock:
+        _summary_cache.clear()
+
+
+def _remember(key: tuple, summary: dict) -> None:
+    with _summary_cache_lock:
+        if len(_summary_cache) >= MAX_CACHED_SUMMARIES and key not in _summary_cache:
+            del _summary_cache[next(iter(_summary_cache))]  # dicts keep insertion order: the oldest
+        # A copy, so the caller changing the answer it gets can't change what's remembered.
+        _summary_cache[key] = copy.deepcopy(summary)
 
 
 # Structured output: the model must reply with JSON in exactly this shape.
@@ -153,9 +202,18 @@ def summarize_passages(passages: list[dict], question: str | None = None) -> dic
         return {"takeaways": [], "not_found": True}
     settings = get_settings()
     # None = no key set (e.g. in CI), so don't even try to call Gemini.
+    # Checked before the memory: the page labels the summary by whether a key is set, so with no
+    # key a remembered Gemini answer would be shown as "quoted word for word".
     if not settings.gemini_api_key:
         log.warning("GEMINI_API_KEY not set; quoting passages instead of summarizing")
         return _quote_passages(passages)
+    # Day 17: asked before, with the same passages, prompt and model? Answer from memory: no
+    # Gemini call and nothing counted against the per-minute limit below.
+    key = _cache_key(passages, question, settings.gemini_model)
+    with _summary_cache_lock:
+        remembered = _summary_cache.get(key)
+    if remembered is not None:
+        return copy.deepcopy(remembered)  # a copy, as search() does
     # Day 16: over the limit, quote the passages like the "no key" case. The app keeps working,
     # and the key's quota is left for the visitors who come next. A call counts here once, even
     # if the client then retries it.
@@ -181,11 +239,19 @@ def summarize_passages(passages: list[dict], question: str | None = None) -> dic
                 response_json_schema=REPLY_SCHEMA,
             ),
         )
+        # Day 17: the call is paid for, even if the reply turns out to be unusable, so log it now.
+        usage_info = getattr(response, "usage_metadata", None)  # None if Google sent none
+        usage.record(
+            settings.gemini_model,
+            getattr(usage_info, "prompt_token_count", None),
+            getattr(usage_info, "candidates_token_count", None),
+        )
         summary = _parse_reply(response.text, passages)
         # Day 6 auto-check (summary_check.py): e.g. a takeaway with no text never reaches users.
         problems = check_summary(summary, passages)
         if problems:
             raise ValueError("; ".join(problems))  # caught below, like any other bad reply
+        _remember(key, summary)  # only here: a real, checked answer from Gemini
         return summary
     # APIError: bad key, unknown model, rate limit or server error after retries.
     # httpx.TransportError: timeout or no connection (Gemini's client is built on httpx).

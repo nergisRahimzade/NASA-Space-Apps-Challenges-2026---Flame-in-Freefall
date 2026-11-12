@@ -6,7 +6,8 @@ Day 9 (BE): get_table is real now; it reads data/master.csv (built by the data r
 Day 10 (BE): search is real now; it ranks the report chunks with retrieval.find_passages.
 Day 11 (BE): every call is timed (speed.py), and repeated questions come from memory.
 Day 15 (BE): summarize() checks its own answer against the contract before handing it out.
-Day 16 (BE): questions over MAX_QUERY_CHARS are rejected."""
+Day 16 (BE): questions over MAX_QUERY_CHARS are rejected.
+Day 17 (BE): summarize() remembers Gemini's answers (summarizer.py) and logs tokens (usage.py)."""
 
 import copy
 import threading
@@ -19,7 +20,7 @@ from flame_in_freefall import ingest, speed
 from flame_in_freefall.cache import memo
 from flame_in_freefall.retrieval import find_passages
 from flame_in_freefall.store import _paths
-from flame_in_freefall.summarizer import summarize_passages
+from flame_in_freefall.summarizer import summarize_passages, summary_is_cached
 from flame_in_freefall.summary_check import check_summary
 
 # Build the paths from this file's own location (up 2 folders = repo root),
@@ -128,6 +129,8 @@ def summarize(passages: list[dict], question: str | None = None) -> dict:
     if question is not None:
         _check_length(question, "question")
     start = time.perf_counter()
+    # Day 17: asked before the call, like search(), so the speed log can say "cached".
+    cached = summary_is_cached(passages, question)
     summary = summarize_passages(passages, question)
     # Day 15: every path (Gemini, quoting fallback, nothing found) is checked against the
     # contract. Gemini's replies are already checked inside summarizer.py, and the passages were
@@ -135,7 +138,7 @@ def summarize(passages: list[dict], question: str | None = None) -> dict:
     problems = check_summary(summary, passages)
     if problems:
         raise RuntimeError(f"summarize() broke its contract: {'; '.join(problems)}")
-    speed.record("summarize", f"{len(passages)} passages", time.perf_counter() - start)
+    speed.record("summarize", f"{len(passages)} passages", time.perf_counter() - start, cached)
     return summary
 
 
