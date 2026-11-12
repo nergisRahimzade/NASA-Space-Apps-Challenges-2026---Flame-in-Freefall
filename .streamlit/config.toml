@@ -1,10 +1,21 @@
-# Fire-safety look: dark background, flame orange for buttons and sliders
+# Mission-control look (FIF-D18-FE): dark, neutral steel controls, hot colors only for risk data.
+# Colors are checked for WCAG contrast on #14161A; see src/flame_in_freefall/style.py.
 [theme]
 base = "dark"
-primaryColor = "#F77F00"
+primaryColor = "#A9B8C9"  # steel: sliders, buttons, focus (9:1)
 backgroundColor = "#14161A"
 secondaryBackgroundColor = "#1F2329"
 textColor = "#F5F3EF"
 font = "sans-serif"
-# Colors Plotly uses for categories (e.g. one per material)
-chartCategoricalColors = ["#F77F00", "#D62828", "#FCBF49", "#4EA8DE", "#8AB17D", "#B392F0"]
+linkColor = "#8EC5FF"  # 10:1
+borderColor = "#4A515C"  # cards and inputs, easier to see than the default
+# Clear heading steps: title, section (st.header), chart (st.subheader)
+headingFontSizes = ["2.75rem", "1.75rem", "1.3rem"]
+headingFontWeights = [800, 700, 600]
+# Info boxes and search highlights in calm blue; badges and chips in neutral grey
+blueTextColor = "#9CCBFF"  # 7.9:1 on its box
+blueBackgroundColor = "#1C3A5A"  # search highlight: page text on it is 10.5:1
+grayTextColor = "#D0D7E0"
+grayBackgroundColor = "#2A2F37"  # Match badge and source chips: 9.3:1
+# Category colors, matching the experiment colors in style.py
+chartCategoricalColors = ["#56B4E9", "#5FC9A8", "#CC79A7", "#B8C4D6", "#F77F00", "#FCBF49"]
