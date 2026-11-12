@@ -31,8 +31,10 @@ SKELETON_HTML = """
 LOADING_TEXT = "Writing a summary from these passages. This can take up to 30 seconds..."
 
 AI_LABEL = "AI-generated from the passages below. Check each source before relying on it."
+# Says "word for word", not where in the passage: the fallback quotes the first full sentence
+# (FIF-D05-BE, #165), which isn't always at the start.
 QUOTED_LABEL = (
-    "The AI summary isn't available, so these are quoted from the start of each passage below."
+    "The AI summary isn't available, so these are quoted word for word from the passages below."
 )
 NOT_FOUND_TEXT = (
     "Not found: the passages below don't answer this question. Try different words, "
