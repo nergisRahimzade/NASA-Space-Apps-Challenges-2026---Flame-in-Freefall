@@ -5,7 +5,7 @@ import zlib
 import numpy as np
 import pytest
 
-from flame_in_freefall import api, embedding, speed
+from flame_in_freefall import api, embedding, speed, summarizer
 
 
 @pytest.fixture(autouse=True)
@@ -13,6 +13,15 @@ def _no_real_gemini_key(monkeypatch):
     # Even if your shell has a real key, tests never call Gemini (no network, no cost).
     # Tests that need a key set a fake one themselves.
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    # Same for the call limit: a GEMINI_CALLS_PER_MINUTE in your shell must not change the tests.
+    monkeypatch.delenv("GEMINI_CALLS_PER_MINUTE", raising=False)
+
+
+@pytest.fixture(autouse=True)
+def _fresh_gemini_limiter(monkeypatch):
+    # Day 16: the call limit lives for the whole process, so without this the 11th test that
+    # reaches Gemini would be told "limit reached". None = the next summary makes a new one.
+    monkeypatch.setattr(summarizer, "_limiter", None)
 
 
 class _WordCountModel:

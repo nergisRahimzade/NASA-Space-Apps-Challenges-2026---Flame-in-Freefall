@@ -9,6 +9,7 @@ import pytest
 from google.genai import errors
 
 from flame_in_freefall import summarizer
+from flame_in_freefall.rate_limit import RateLimiter
 from flame_in_freefall.summarizer import summarize_passages
 
 PASSAGES = [
@@ -242,6 +243,84 @@ class _ClosingClient:
 
     def __del__(self):
         self.models.closed = True
+
+
+# --- Day 16 (BE): the call limit and the timeout ------------------------------------------------
+
+QUOTED_FIRST = "Spread was 1.2 mm/s."  # what the fallback quotes from PASSAGES[0]
+
+
+def _gemini_answer() -> str:
+    return _reply([{"text": "Spread is slow.", "chunk_id": "bass-001-p3-c0"}])
+
+
+def test_over_the_limit_quotes_the_passages_and_does_not_call_gemini(use_fake, monkeypatch):
+    monkeypatch.setenv("GEMINI_CALLS_PER_MINUTE", "2")
+    fake = use_fake(reply=_gemini_answer())
+    results = [summarize_passages(PASSAGES) for _ in range(3)]
+    assert len(fake.calls) == 2  # the third summary never reached Gemini
+    assert [r["takeaways"][0]["text"] for r in results] == [
+        "Spread is slow.",
+        "Spread is slow.",
+        QUOTED_FIRST,  # quoted, and no error: the app keeps working
+    ]
+    assert results[2]["not_found"] is False
+
+
+def test_the_default_limit_is_10_calls_a_minute(use_fake):
+    fake = use_fake(reply=_gemini_answer())
+    for _ in range(11):
+        summarize_passages(PASSAGES)
+    assert len(fake.calls) == 10
+
+
+def test_a_slot_frees_up_when_the_minute_has_passed(use_fake, monkeypatch):
+    class Clock:
+        now = 0.0
+
+        def __call__(self) -> float:
+            return self.now
+
+    clock = Clock()
+    monkeypatch.setattr(summarizer, "_limiter", RateLimiter(1, 60, clock=clock))
+    fake = use_fake(reply=_gemini_answer())
+    summarize_passages(PASSAGES)
+    summarize_passages(PASSAGES)  # refused: quoted
+    assert len(fake.calls) == 1
+    clock.now += 60
+    summarize_passages(PASSAGES)
+    assert len(fake.calls) == 2
+
+
+def test_calls_that_never_reach_gemini_do_not_use_up_the_limit(use_fake, monkeypatch):
+    # No passages, and no key, both return before Gemini, so neither may count against it.
+    monkeypatch.setenv("GEMINI_CALLS_PER_MINUTE", "1")
+    monkeypatch.delenv("GEMINI_API_KEY")
+    for _ in range(3):
+        summarize_passages([])
+        summarize_passages(PASSAGES)  # no key: quoted
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")  # a key now (use_fake only swaps the client)
+    fake = use_fake(reply=_gemini_answer())
+    # The limit is 1, and still unused, so this call reaches Gemini.
+    assert summarize_passages(PASSAGES)["takeaways"][0]["text"] == "Spread is slow."
+    assert len(fake.calls) == 1
+
+
+def test_a_gemini_call_ends_within_about_30_seconds(monkeypatch):
+    # Before Day 16: 3 tries of 30 s, about 95 s with the waits, while the page says "up to 30".
+    # Checks what is handed to Gemini's client. The 1-2 s wait between tries comes on top.
+    seen = {}
+
+    def fake_client(**kwargs):
+        seen.update(kwargs)
+        return object()
+
+    monkeypatch.setattr(summarizer.genai, "Client", fake_client)
+    summarizer._get_client("test-key")
+    options = seen["http_options"]
+    assert options.timeout == summarizer.TIMEOUT_MS == 15_000  # milliseconds, per attempt
+    assert options.retry_options.attempts == summarizer.ATTEMPTS == 2  # first try + 1 retry
+    assert summarizer.TIMEOUT_MS / 1000 * summarizer.ATTEMPTS <= 30
 
 
 def test_client_stays_open_for_the_whole_call(monkeypatch):

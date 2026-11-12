@@ -18,6 +18,22 @@ def test_search_rejects_empty_or_non_text_query(query):
         api.search(query)
 
 
+def test_search_rejects_a_query_over_the_length_limit():
+    # Day 16: one character over. The message gives the length and the limit.
+    too_long = "a" * (api.MAX_QUERY_CHARS + 1)
+    with pytest.raises(ValueError, match=rf"{api.MAX_QUERY_CHARS + 1} characters.*limit.*300"):
+        api.search(too_long)
+
+
+def test_search_accepts_a_query_exactly_at_the_limit():
+    api.search("a" * api.MAX_QUERY_CHARS)
+
+
+def test_search_does_not_count_spaces_around_the_query():
+    # The app trims the box the same way, so padding must not push a 300-character query over.
+    api.search("  " + "a" * api.MAX_QUERY_CHARS + "  ")
+
+
 @pytest.mark.parametrize("k", [0, -1, 2.5, "3", True])
 def test_search_rejects_bad_k(k):
     with pytest.raises(ValueError):
@@ -82,6 +98,16 @@ def test_summarize_rejects_a_blank_or_non_text_question(question):
     # v1.7 (FIF-D15-AI): None means "no question"; blank text is a mistake.
     with pytest.raises(ValueError, match="question"):
         api.summarize([PASSAGE], question=question)
+
+
+def test_summarize_rejects_a_question_over_the_length_limit():
+    # Day 16: the same limit as search(), so a long text can't reach the Gemini prompt either.
+    with pytest.raises(ValueError, match="question is too long"):
+        api.summarize([PASSAGE], question="a" * (api.MAX_QUERY_CHARS + 1))
+
+
+def test_summarize_accepts_a_question_exactly_at_the_limit():
+    api.summarize([PASSAGE], question="a" * api.MAX_QUERY_CHARS)
 
 
 def test_summarize_passes_the_question_on(monkeypatch):
