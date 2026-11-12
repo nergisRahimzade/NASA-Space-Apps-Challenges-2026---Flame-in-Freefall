@@ -23,8 +23,7 @@ def test_query_terms_skip_common_and_short_words_but_keep_o2():
 def test_highlight_matches_plurals_and_keeps_punctuation_outside():
     out = snippet("Suppressants (CO2), were tested.", "suppressant co2")
     assert (
-        out
-        == r"**:orange-background[Suppressants]** \(**:orange-background[CO2]**\)\, were tested\."
+        out == r"**:blue-background[Suppressants]** \(**:blue-background[CO2]**\)\, were tested\."
     )
 
 
@@ -38,12 +37,12 @@ def test_snippet_moves_to_where_the_question_words_are():
     words[20] = "flame"
     out = snippet(" ".join(words), "flame", size=5)
     assert out.startswith("… ") and out.endswith(" …")
-    assert "**:orange-background[flame]**" in out
+    assert "**:blue-background[flame]**" in out
 
 
 def test_short_text_has_no_ellipsis():
     assert snippet("Flames spread slowly.", "flame") == (
-        r"**:orange-background[Flames]** spread slowly\."
+        r"**:blue-background[Flames]** spread slowly\."
     )
 
 
@@ -53,18 +52,18 @@ def test_escape_markdown_keeps_dollars_and_stars_literal():
 
 def test_plural_forms_match():
     out = snippet("Gases and flames.", "gas flame")
-    assert out == r"**:orange-background[Gases]** and **:orange-background[flames]**\."
+    assert out == r"**:blue-background[Gases]** and **:blue-background[flames]**\."
 
 
 def test_score_badge_rounds_to_two_places():
-    assert score_badge(0.7461) == ":orange-badge[Match 0.75]"
+    assert score_badge(0.7461) == ":gray-badge[Match 0.75]"
 
 
 def test_source_line_links_only_known_sources():
     links = {"FLEX report": "https://example.org/a(1)"}
     assert (
         source_line("FLEX report", 1, links)
-        == "[FLEX report](https://example.org/a%281%29) · page 1"
+        == "[FLEX report :material/open_in_new:](https://example.org/a%281%29) · page 1"
     )
     assert source_line("Other_report", 2, links) == r"Other\_report · page 2"
 

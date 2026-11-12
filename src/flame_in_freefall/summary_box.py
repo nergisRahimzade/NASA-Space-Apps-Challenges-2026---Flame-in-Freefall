@@ -58,7 +58,7 @@ def source_chip(takeaway: dict, results: list[dict], links: dict[str, str]) -> s
     result = {r["id"]: r for r in results}.get(takeaway["chunk_id"], {})
     name = result.get("experiment") or short_source(takeaway["source"])
     page = result.get("page", "?")
-    chip = f":orange-badge[{escape_markdown(f'{name} · p. {page}')}]"
+    chip = f":gray-badge[{escape_markdown(f'{name} · p. {page}')}]"
     url = links.get(takeaway["source"])
     if not url:
         return chip

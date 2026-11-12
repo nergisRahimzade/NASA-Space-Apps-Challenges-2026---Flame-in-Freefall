@@ -82,9 +82,9 @@ def test_result_card_shows_badge_source_and_snippet():
     _assert_healthy(at)
     cards = [m.value for m in at.markdown]
     # An unknown source gets no link, just its name and page
-    assert ":orange-badge[Match 0.81] BASS report · page 3" in cards
+    assert ":gray-badge[Match 0.81] BASS report · page 3" in cards
     # "spread" from the question is highlighted, and $ and * are escaped
-    assert any("**:orange-background[Spread]**" in c and r"\$5" in c for c in cards)
+    assert any("**:blue-background[Spread]**" in c and r"\$5" in c for c in cards)
     # The snippet already shows this short passage in full, so there's no "Full passage"
     assert _result_expanders(at) == []
     assert not at.text
@@ -111,7 +111,7 @@ def test_no_results_shows_one_clear_empty_state():
     at = _run_search(return_value=[])
     _assert_healthy(at)
     texts = [m.value for m in at.markdown]
-    assert "**Nothing in the reports matches this question.**" in texts
+    assert ":material/search_off: **Nothing in the reports matches this question.**" in texts
     assert any(t.startswith("- Try different or fewer words.") for t in texts)
     assert "Summary" not in [h.value for h in at.subheader]
     assert not any("fif-skeleton" in t for t in texts)
@@ -145,12 +145,13 @@ def test_slow_search_explains_why():
         at = _run_search(return_value=[RESULT])
     _assert_healthy(at)
     check.assert_called()
-    assert SLOW_SEARCH_NOTE in [c.value for c in at.caption]
+    # FIF-D18-FE: the note is part of the single caption line above the cards
+    assert any(SLOW_SEARCH_NOTE in c.value for c in at.caption)
 
 
 def test_fast_search_has_no_slow_note():
     at = _run_search(return_value=[RESULT])
-    assert SLOW_SEARCH_NOTE not in [c.value for c in at.caption]
+    assert not any(SLOW_SEARCH_NOTE in c.value for c in at.caption)
 
 
 # FIF-D12-FE: the sidebar's Experiment choice filters search as well as the table.
@@ -193,7 +194,7 @@ def test_all_searches_every_experiment():
 def test_no_results_in_one_experiment_suggests_all():
     at, _ = _search_in("FLEX", return_value=[])
     texts = [m.value for m in at.markdown]
-    assert "**Nothing in the FLEX reports matches this question.**" in texts
+    assert ":material/search_off: **Nothing in the FLEX reports matches this question.**" in texts
     assert any(t.startswith("- Choose All in the sidebar") for t in texts)
 
 
@@ -334,7 +335,7 @@ def test_summary_shows_takeaways_with_sources(monkeypatch):
     fake_summarize.assert_called_once_with([RESULT], question="flame spread")
     assert AI_LABEL in [c.value for c in at.caption]
     # FIF-D15-FE: the source is a chip; mock results have no experiment, so the short title shows
-    chip = r":orange-badge[BASS report · p\. 3]"
+    chip = r":gray-badge[BASS report · p\. 3]"
     assert rf"- Spread rose to \$5 \* 2\. {chip}" in [m.value for m in at.markdown]
     # The skeleton is replaced once the summary is ready
     assert not any("fif-skeleton" in m.value for m in at.markdown)
