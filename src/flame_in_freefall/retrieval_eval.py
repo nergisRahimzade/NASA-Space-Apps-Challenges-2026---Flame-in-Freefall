@@ -94,6 +94,22 @@ HELD_OUT: list[tuple[str, list[str], str | None]] = [
     ),
 ]
 
+# Day 16: 2 questions about BASS-II, the report added on Day 16 (DAT), so the summary test covers
+# all 4 experiments. Same layout as HELD_OUT. Kept apart so QUESTIONS and HELD_OUT, and the D14
+# scores built on them, don't change.
+SUMMARY_EXTRA: list[tuple[str, list[str], str | None]] = [
+    (
+        "How fast could the air blow in the BASS-II wind tunnel?",
+        ["airflow speeds up to 40 cm/s"],
+        "BASS-II",
+    ),
+    (
+        "How did BASS-II lower the oxygen level?",
+        ["oxygen varied below 21% by adding nitrogen", "nitrogen vitiation"],
+        "BASS-II",
+    ),
+]
+
 # Day 13: questions whose evidence only mentions the topic without answering it in full. They can
 # still pass, but the reason says "weak", as in the Day 9 hand judgments.
 WEAK = {3: "cool flames are mentioned but never defined"}
