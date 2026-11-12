@@ -2,6 +2,7 @@
 
 Fails safely: with no API key, a timeout after retries, or a broken reply, it quotes the
 passages instead (real text, real sources), so the app keeps working and nothing is invented.
+Day 16 (BE): the quote is the first full sentence of each passage, not a fragment.
 The prompt text lives in src/prompts/ (written by the AI tickets: v1 FIF-D05-AI, v2 FIF-D15-AI).
 Day 15 (AI): prompt v2 also gets the user's question, so it can say "not found" when the
 passages are about fire but don't answer it (Q9 and Q10 in tests/retest.md)."""
@@ -24,6 +25,8 @@ TIMEOUT_MS = 30_000  # give up on one attempt after 30 s (the Gemini client coun
 # First try + 2 retries. The client then retries timeouts, rate limits (429) and server errors
 # (5xx) itself; without retry options it would never retry.
 ATTEMPTS = 3
+# Day 16: the quoting fallback skips "sentences" shorter than this many words (see _first_sentence).
+MIN_QUOTE_WORDS = 4
 
 log = logging.getLogger(__name__)
 
@@ -71,8 +74,22 @@ def _build_contents(passages: list[dict], question: str | None) -> str:
 
 
 def _first_sentence(text: str) -> str:
-    # Split after the first . ! or ? that is followed by a space; no match = keep it all.
-    return re.split(r"(?<=[.!?])\s", text.strip(), maxsplit=1)[0]
+    # Day 16: the first sentence that is whole. Chunks are cut every 150 words with a 30-word
+    # overlap (chunking.py), so a passage can start or end in the middle of a sentence, and
+    # quoting its first piece showed fragments like "the experiment module."
+    text = text.strip()
+    pieces = re.split(r"(?<=[.!?])\s+", text)  # split after a . ! or ? followed by a space
+    # A lowercase first letter means the passage starts mid-sentence, so the first piece is only
+    # the end of someone else's sentence. Skip it.
+    if text[:1].islower():
+        pieces = pieces[1:]
+    for piece in pieces:
+        # Ending in . ! or ? means the chunk didn't cut it off; a few words is a list number or
+        # a heading ("2.", "Fig. 5."), not a sentence worth quoting.
+        if len(piece.split()) >= MIN_QUOTE_WORDS and piece.endswith((".", "!", "?")):
+            return piece
+    # No whole sentence in this passage: quote it as it is. Never empty, never reworded.
+    return text
 
 
 def _quote_passages(passages: list[dict]) -> dict:
