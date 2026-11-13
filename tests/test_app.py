@@ -16,6 +16,7 @@ import pytest
 from streamlit.testing.v1 import AppTest
 
 from flame_in_freefall.api import MAX_QUERY_CHARS, get_table
+from flame_in_freefall.demo_questions import load_demo_questions
 from flame_in_freefall.page_states import SLOW_SEARCH_NOTE
 from flame_in_freefall.summary_box import AI_LABEL, NOT_FOUND_TEXT, QUOTED_LABEL
 
@@ -128,7 +129,7 @@ def test_search_failure_shows_an_error_not_a_crash():
     at = _run_search(side_effect=RuntimeError("index missing"))
     assert not at.exception
     assert len(at.error) == 1
-    assert [b.label for b in at.main.button] == ["Try again"]
+    assert [b.label for b in at.main.button if b.label == "Try again"] == ["Try again"]
 
 
 def test_try_again_searches_again():
@@ -138,7 +139,7 @@ def test_try_again_searches_again():
     ):
         at = AppTest.from_file(str(APP), default_timeout=30).run()
         at.text_input[0].input("flame spread").run()
-        at.main.button[0].click().run()
+        next(b for b in at.main.button if b.label == "Try again").click().run()
     _assert_healthy(at)
     assert "Results (1)" in [h.value for h in at.subheader]
 
@@ -372,7 +373,7 @@ def test_summary_failure_keeps_the_result_cards():
     ]
     assert "Results (1)" in [h.value for h in at.subheader]
     # FIF-D16-FE: a retry button for the summary
-    assert [b.label for b in at.main.button] == ["Try again"]
+    assert [b.label for b in at.main.button if b.label == "Try again"] == ["Try again"]
 
 
 # FIF-D17-FE: one filter state for search, the table and every chart.
@@ -422,3 +423,70 @@ def test_reset_filters_puts_everything_back(app):
     assert _sidebar_box(app, "Material").value == "All"
     # Every row is back (compared with get_table(), so new data like BASS-II doesn't break this)
     assert len(app.dataframe[0].value) == len(get_table())
+
+
+# FIF-D19-FE: example question buttons from demo_questions.md; a click fills the search box.
+
+
+def _example_buttons(at: AppTest) -> list:
+    return [b for b in at.main.button if b.key and b.key.startswith("example_")]
+
+
+def test_one_button_per_demo_question(app):
+    _assert_healthy(app)
+    questions = [item["question"] for item in load_demo_questions()]
+    assert len(questions) == 5
+    assert [b.label for b in _example_buttons(app)] == questions
+
+
+def test_clicking_an_example_fills_the_search_and_searches():
+    question = load_demo_questions()[0]["question"]
+    with mock.patch("flame_in_freefall.api.search", return_value=[RESULT]) as fake_search:
+        at = AppTest.from_file(str(APP), default_timeout=30).run()
+        _example_buttons(at)[0].click().run()
+    _assert_healthy(at)
+    assert at.text_input[0].value == question
+    fake_search.assert_called_with(question)
+    assert "Results (1)" in [h.value for h in at.subheader]
+
+
+def test_example_widens_a_filter_that_would_hide_its_answer():
+    # Example 1 is a FLEX question; with FLEX-2 picked, search would never find it
+    first = load_demo_questions()[0]
+    assert first["source"] == "FLEX"
+    with mock.patch("flame_in_freefall.api.search", return_value=[RESULT]) as fake_search:
+        at = AppTest.from_file(str(APP), default_timeout=30).run()
+        at.sidebar.selectbox[0].select("FLEX-2").run()
+        _example_buttons(at)[0].click().run()
+    _assert_healthy(at)
+    assert at.sidebar.selectbox[0].value == "All"
+    fake_search.assert_called_with(first["question"])  # no experiment filter
+    assert "Experiment set to All, so this example can find its FLEX answer." in [
+        c.value for c in at.caption
+    ]
+
+
+def test_example_keeps_a_filter_that_matches_it():
+    first = load_demo_questions()[0]
+    with mock.patch("flame_in_freefall.api.search", return_value=[RESULT]) as fake_search:
+        at = AppTest.from_file(str(APP), default_timeout=30).run()
+        at.sidebar.selectbox[0].select(first["source"]).run()
+        _example_buttons(at)[0].click().run()
+    assert at.sidebar.selectbox[0].value == first["source"]
+    fake_search.assert_called_with(first["question"], experiment=first["source"])
+
+
+def test_typing_after_an_example_still_works():
+    with mock.patch("flame_in_freefall.api.search", return_value=[RESULT]) as fake_search:
+        at = AppTest.from_file(str(APP), default_timeout=30).run()
+        _example_buttons(at)[1].click().run()
+        at.text_input[0].input("flame spread").run()
+    fake_search.assert_called_with("flame spread")
+
+
+def test_no_buttons_without_the_demo_file():
+    with mock.patch("flame_in_freefall.demo_questions.load_demo_questions", return_value=[]):
+        at = AppTest.from_file(str(APP), default_timeout=30).run()
+    _assert_healthy(at)
+    assert _example_buttons(at) == []
+    assert any(c.value.startswith("Try a question like") for c in at.caption)
