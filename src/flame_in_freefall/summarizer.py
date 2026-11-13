@@ -8,7 +8,8 @@ The prompt text lives in src/prompts/ (written by the AI tickets: v1 FIF-D05-AI,
 Day 15 (AI): prompt v2 also gets the user's question, so it can say "not found" when the
 passages are about fire but don't answer it (Q9 and Q10 in tests/retest.md).
 Day 17 (BE): an answer Gemini gave is remembered, so the same question about the same passages
-is instant and free, and every Gemini call's token count goes to usage.py."""
+is instant and free, and every Gemini call's token count goes to usage.py.
+Day 18 (BE): a Gemini failure (quoted instead) and a reached call limit go to the error log."""
 
 import copy
 import json
@@ -21,7 +22,7 @@ import httpx
 from google import genai
 from google.genai import errors, types
 
-from flame_in_freefall import usage
+from flame_in_freefall import error_log, usage
 from flame_in_freefall.cache import normalize
 from flame_in_freefall.config import get_settings
 from flame_in_freefall.rate_limit import RateLimiter
@@ -119,6 +120,11 @@ REPLY_SCHEMA = {
     },
     "required": ["takeaways", "not_found"],
 }
+
+
+def _detail(passages: list[dict], question: str | None) -> str:
+    # What the error log says the call was about: the question, or how many passages.
+    return question.strip() if question else f"{len(passages)} passages"
 
 
 def _get_client(api_key: str) -> genai.Client:
@@ -222,6 +228,13 @@ def summarize_passages(passages: list[dict], question: str | None = None) -> dic
             "Gemini limit of %d calls a minute reached; quoting passages instead of summarizing",
             settings.gemini_calls_per_minute,
         )
+        error_log.record(
+            "summarize",
+            "limit",
+            "LimitReached",
+            f"{settings.gemini_calls_per_minute} Gemini calls a minute",
+            _detail(passages, question),
+        )
         return _quote_passages(passages)
     # Read outside the try: a missing prompt file is our bug, so it should fail loudly.
     instructions = PROMPT_PATH.read_text(encoding="utf-8")
@@ -259,4 +272,7 @@ def summarize_passages(passages: list[dict], question: str | None = None) -> dic
     # cover JSON in the wrong shape (TypeError also catches an empty reply, where text is None).
     except (errors.APIError, httpx.TransportError, ValueError, KeyError, TypeError) as e:
         log.warning("summarize fell back to quoting passages: %s", e)
+        error_log.record(
+            "summarize", "fallback", type(e).__name__, str(e), _detail(passages, question)
+        )
         return _quote_passages(passages)

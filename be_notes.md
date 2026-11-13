@@ -1,4 +1,4 @@
-# BE notes: what's built and how it runs (Days 1–17, FIF-D01-BE … FIF-D17-BE)
+# BE notes: what's built and how it runs (Days 1–18, FIF-D01-BE … FIF-D18-BE)
 
 For anyone reviewing BE PRs, and for teammates whose code calls the backend. Like
 `data_notes.md` and `ai_notes.md`, this file records what exists, the decisions behind it, and
@@ -31,7 +31,8 @@ the open questions.
 | fix (D08) | New chunks always rebuild the index, so the flaky ingest test is deterministic | `ingest.py`, `tests/test_ingest.py` | #155 |
 | fix (D05) | The quoting fallback quotes the first full sentence, not a fragment | `summarizer.py`, `tests/test_summarizer.py` | #165 |
 | D16-BE | Protect the app: 300-character question limit, Gemini calls limited to 10 a minute, a summary that never comes ends in ~32 s; contract v1.9 | `api.py`, `rate_limit.py`, `summarizer.py`, `config.py`, `docs/contract.md`, `tests/test_rate_limit.py`, `tests/test_api_edge_cases.py`, `tests/test_summarizer.py`, `tests/test_infra.py`, `tests/conftest.py`, 2 lines in `app/streamlit_app.py` (FE's file) | #167 |
-| D17-BE | Cache summaries (a repeat is instant, free and not counted by the limit); log every Gemini call's tokens and cost; contract v1.10 | `summarizer.py`, `usage.py`, `api.py`, `config.py`, `docs/contract.md`, `.env.example`, `tests/test_summary_cache.py`, `tests/test_usage.py`, `tests/test_summarizer.py`, `tests/test_day16_script.py`, `tests/conftest.py`, `scripts/day16_test_summaries.py` (AI's, 1 line) | FIF-D17-BE PR |
+| D17-BE | Cache summaries (a repeat is instant, free and not counted by the limit); log every Gemini call's tokens and cost; contract v1.10 | `summarizer.py`, `usage.py`, `api.py`, `config.py`, `docs/contract.md`, `.env.example`, `tests/test_summary_cache.py`, `tests/test_usage.py`, `tests/test_summarizer.py`, `tests/test_day16_script.py`, `tests/conftest.py`, `scripts/day16_test_summaries.py` (AI's, 1 line) | #169 |
+| D18-BE | Monitoring: an error log (why a call failed) and an uptime check run on a schedule by GitHub | `error_log.py`, `uptime.py`, `.github/workflows/uptime.yml`, `api.py`, `summarizer.py`, `tests/test_error_log.py`, `tests/test_uptime.py`, `tests/test_app.py`, `tests/conftest.py` | FIF-D18-BE PR |
 
 ## 2. What each BE file does
 
@@ -47,6 +48,8 @@ All code is in `src/flame_in_freefall/`.
 | `ingest.py` | One command builds the search index: `uv run python -m flame_in_freefall.ingest` (`--force` redoes every step) | in use; same files as the AI scripts for Days 7–8 |
 | `summarizer.py` | Calls Gemini for takeaways; falls back to quoting passages on any failure, or when the call limit is reached; remembers the answers Gemini gave (D17) | in use through `api.summarize()` |
 | `usage.py` | Logs the tokens (and cost, if a price is set) of every Gemini call to `artifacts/usage.log`; `uv run python -m flame_in_freefall.usage` reports the total | in use since D17 |
+| `error_log.py` | Writes every failed call to `artifacts/errors.log` (`error`, `fallback`, `limit`); `uv run python -m flame_in_freefall.error_log` reports them | in use since D18 |
+| `uptime.py` | Asks the live app's health address whether it is up, asleep or down; the exit code feeds the scheduled GitHub job | run by `.github/workflows/uptime.yml` since D18 |
 | `rate_limit.py` | `RateLimiter`: at most N calls in any window, safe with many visitors at once | used by `summarizer.py` since D16 (10 a minute) |
 
 The app (`app/streamlit_app.py`) belongs to FE and only calls `api.py`.
@@ -71,12 +74,20 @@ The app (`app/streamlit_app.py`) belongs to FE and only calls `api.py`.
   this app back up!" and waits about a minute.
 - **Checked on 2026-11-04:** page loads, search shows the mock results and the summary
   placeholder, the table and sidebar filters work, and all 3 charts draw.
-- **Health check (D07):** the live URL can't be checked from CI. `/_stcore/health` redirects
+- **Health check (D07; partly outdated, see the D18 measurement below):** the live URL can't be
+  checked from CI the way the Docker image is. `/_stcore/health` redirects
   automated requests to a Streamlit sign-in page, and `/healthz` answers `{"status":"ok"}` even
   for an app name that doesn't exist (it's the hosting platform, not our app). So the app is
   checked **before** it can reach `main`: `tests/test_app.py` runs the real
   `app/streamlit_app.py` with Streamlit's `AppTest` in CI and fails on a crash or a red error
   box. Tried on purpose: a failing `get_table()` and renamed `master.csv` columns both fail it.
+- **Measured again on 2026-11-13 (D18):** the *app's own* health address does work from outside,
+  but under `/~/+/`: `https://crc-flame-in-freefall.streamlit.app/~/+/_stcore/health` answered the
+  plain text `ok` in 0.4 s while the app was awake. Without `/~/+/`, `/_stcore/health` answers the
+  platform's wrapper page (HTTP 200, HTML), as found in D07. An app name that doesn't exist answers
+  404. That `ok` means Streamlit's server runs, **not** that the page works (D18 below), so
+  `tests/test_app.py` stays the check for the page. **Not observed:** what a sleeping app answers;
+  we could not make it sleep.
 
 ### Docker (backup host, D07)
 
@@ -163,6 +174,14 @@ The app (`app/streamlit_app.py`) belongs to FE and only calls `api.py`.
   plus a contract note. Neither is in the sprint plan.
 - **Our off-topic test questions aren't in the repo,** so the AI role can't retune the cutoff
   against them (#152). They should be committed with the next cutoff change.
+- **The page never calls `setup_logging()`** (FE's file, found in D18). Streamlit leaves Python's
+  logging alone, so on the live host only WARNING and ERROR lines reach the log (no time), and every
+  INFO line (the speed and usage lines) is dropped. D18's ERROR line carries its own time, so the
+  error log works anyway. One line in the page would fix the rest; it's Nathan's call.
+- **A sleeping app fails the uptime check** (D18). Until someone visits, the check reports "asleep"
+  and every scheduled run fails: up to 48 emails a day if the check's own requests don't count as
+  traffic (Streamlit's docs don't say). Counting "asleep" as a pass with a warning is a one-line
+  change; it's the team's call. A sleeping app's real answer was never observed (D18 section).
 
 ### Ingest (D08)
 
@@ -414,25 +433,104 @@ cached since D11; this adds the slow, paid call.
   A second review added tests for: a remembered answer with no key set, a page value that isn't a
   plain number, a damaged usage-log line, and threads filling the cache past its limit.
 
-## 6. Where the next ticket starts (FIF-D18-BE: monitoring)
+### Monitoring (D18)
+
+Plan: *1) Error log. 2) Uptime check. Done when: Alerts work.*
+
+- **Why an error log:** the page catches every failure of `search()` and `summarize()` and shows a
+  red box, and nothing wrote the reason down. Now `api.py` records an exception before it leaves
+  `search()`, `summarize()` or `get_table()`, then raises it unchanged (the three signatures and
+  the page's behaviour are the same). Each public function calls a private body (`_search`,
+  `_summarize`, `_get_table`) inside a `try/except`.
+- **Three kinds of event** in `artifacts/errors.log` (one JSON line each: `at`, `call`, `kind`,
+  `error_type`, `message` cut to 300 characters, `detail` cut to 100): `error` (an exception left
+  the function: the visitor saw a red box), `fallback` (Gemini failed and the passages were
+  quoted instead) and `limit` (the 10-a-minute limit was reached). "No key set" is **not** logged:
+  it's a setup state and would add a line to every summary.
+- **It must never make things worse.** `record()` never raises (a full disk is a warning, like
+  `speed.py`); it does **not** read `get_settings()`, because a bad setting such as
+  `GEMINI_CALLS_PER_MINUTE=ten` is one of the failures it has to write down (a test covers this);
+  and it replaces the Gemini key with `<key>` if one ever shows up in a message. A wrong `call` or
+  `kind` raises, because that's a bug in our code. `record_exception()` (the one `api.py` calls)
+  never raises at all: if logging itself fails, it writes a warning and the visitor's real error
+  is raised as before, never a different one.
+- **On the live host** `artifacts/` is wiped on every reboot and nobody can open it, so the host's
+  own log ("Manage app") is the error log there: `record_exception()` also writes an ERROR line
+  with the time, the reason and the traceback. The traceback is built and scrubbed by our code,
+  not added by Python's logging (`exc_info`), because logging would print the exception's message
+  again with the key still in it; chained errors ("the direct cause...") are scrubbed too.
+  Checked on the laptop with **no** logging set up (as on the host): the line and traceback
+  appeared on stderr, the caller still got the `ValueError`, and the report listed the event.
+- **Uptime states.** `uptime.check()` asks the app's health address first. `ok` = **up**. If that
+  isn't `ok` but the page still answers 200 = **asleep** (or starting). A server error (5xx) from the
+  health address = **down**, with that status, even if the platform's page in front still answers.
+  Anything else (404, no answer, timeout, a broken reply) = **down**. **Asleep is unverified:** it
+  is "the address exists but the app isn't saying ok", not something we saw (if a sleeping app's
+  health address answers a 5xx, it shows as down). Run on 2026-11-13: the live app was UP (0.55 s,
+  exit 0), a made-up app name was DOWN (404, exit 1).
+- **"Up" does not mean the page works.** In Streamlit 1.66.1 the health address answers `ok`
+  whenever the server is running (`Runtime.is_ready_for_browser_connection`); it never runs the
+  page. A page that crashes for every visitor, like the `KeyError` on 2026-11-06, still shows as
+  up. The page is checked before each merge by `tests/test_app.py`, not by this check.
+- **The scheduled job** (`.github/workflows/uptime.yml`) runs the check at minutes 7 and 37 of every
+  hour, by hand from the Actions tab (with an optional `url`, to prove an alert), and on PRs that
+  touch the check. It uses only the standard library, so it needs no `uv sync`. A run that isn't
+  *up* fails, which is what sends the email. Limits: scheduled runs can be late or skipped when
+  GitHub is busy; the check shows the server answers, not that the page works or runs the newest
+  code; and a sleeping app counts as a failure. Streamlit's docs say an app sleeps after 12 hours
+  without traffic, and don't say whether this check's requests count as traffic. If they don't,
+  every run fails while the app sleeps: **up to 48 failure emails a day** until someone visits.
+- **Alerts work: not yet proven.** Two separate things to show after the merge (a workflow can only
+  be started by hand once it is on `main`):
+  1. *The check fails when it should:* Actions → Uptime → Run workflow with `url` set to a made-up
+     address. The run must fail. Its email most likely goes to whoever clicked "Run workflow"
+     (GitHub's docs say you get notified about runs you trigger), so it doesn't show who gets the
+     *scheduled* alerts.
+  2. *Who gets the scheduled alerts:* GitHub's docs disagree. The "Events that trigger workflows"
+     page says notifications go to "the user who last modified the cron syntax in the workflow
+     file"; the "Notifications for workflow runs" page says "the user who initially created the
+     workflow". With the file added in our PR and merged by Nergis, which of us that is isn't
+     known. Watch the first real scheduled failure (e.g. while the app sleeps) and ask Nergis
+     whether she got it. Both need Settings → Notifications → Actions → "failed workflows only".
+  Record the dates and who got the email here when done.
+- **Tests:** `tests/test_error_log.py` (22) and `tests/test_uptime.py` (14), plus one page test
+  (`tests/test_app.py`: the visitor sees the generic box *and* the log has the reason).
+  `conftest.py` points the error log at a throwaway file for every test.
+- **Deliberate breakages:** 30, each caught by a test. In the first round (25), 22 were caught at
+  first: one breakage never ran (the mutation script's search text no longer matched the
+  reformatted code), one was badly designed, and one showed a real gap (a broken HTTP reply wasn't
+  tested), which got its own test. Two reviews then found three real problems, each fixed with a
+  test: the Gemini key could reach the host's log through the traceback (also in a chained error),
+  a problem while logging could replace the visitor's real error, and a server error from the
+  health address showed as "asleep". The breakages were updated for that code (one old one no
+  longer applied; six new ones).
+
+## 6. Where the next ticket starts (FIF-D19-BE: auto deploy)
 
 **Still open from D14:** tag #149's merge commit (`bf28918`) `v0.2` once the team agrees
 (`git tag v0.2 bf28918`, then `git push origin v0.2`). Pushing a tag is visible to everyone.
 
 **Open from D17, for the team:** future calls need `GEMINI_USD_PER_M_INPUT` and
 `GEMINI_USD_PER_M_OUTPUT` (from Google's pricing page, in the app's Secrets and in `.env`) and
-reported token counts to have a cost. Old entries without costs remain unknown. Nergis reboots
-the app after this PR, as after any `src/` change.
+reported token counts to have a cost. Old entries without costs remain unknown.
 
-The D18 plan: monitoring (an error log, an uptime check). Where it can build on what exists:
+**Open from D18:** Nergis reboots the app after the D18 PR (it changes `src/`, as every backend merge
+did so far). After that PR is on `main`, prove the alert by hand (D18 section: "Alerts work: not yet
+proven") and write the dates there.
 
-- **Already logged:** `artifacts/speed.log` (every call's time, now with `cached` for summaries
-  too) and `artifacts/usage.log` (every Gemini call's tokens). Failures are only in the normal log
-  (`summarize fell back to quoting passages: ...`), not in a file of their own.
-- **`artifacts/` on the live host is wiped on every reboot**, so any log there is short-lived;
-  decide what a monitoring log is for before choosing where it lives.
-- **For an uptime check,** `tests/test_app.py` already runs the whole page with Streamlit's test
-  tool, and the live URL can't be checked from CI (it redirects to a sign-in page, §3).
+**After the hackathon:** in a public repo, GitHub turns off scheduled workflows after 60 days
+without repository activity (GitHub's docs), so the Uptime job stops by itself then. Turn it off
+sooner (Actions → Uptime → "Disable workflow") if the emails aren't wanted.
+
+The D19 plan: auto deploy (*1) CI deploy on merge. 2) Smoke test. Done when: Deploy automatic*). What
+exists, and the gap:
+
+- **Community Cloud already redeploys on every merge**, and `tests/test_app.py` is the smoke
+  test that runs before a merge. The gap: the live app keeps running the *old backend code* until
+  someone reboots it (§5). Streamlit only reloads modules in the page's own folder (or on
+  `PYTHONPATH`), and our code is in `src/`.
+- **After a merge, nothing looks at the live app.** `uptime.py` and the Uptime workflow (D18) can be
+  run after each merge to `main`.
 
 ## 7. Rules to keep
 

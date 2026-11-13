@@ -1,0 +1,48 @@
+# Day 18 (BE): checks every ~30 minutes that the live app answers. A run that fails (the app is
+# down or asleep) is how the team finds out: GitHub emails whoever set the schedule up, and the
+# Actions tab shows a red run. Nothing here changes the app or the repo.
+name: Uptime
+
+on:
+  schedule:
+    # Minutes 7 and 37, not :00: GitHub delays jobs that start on the hour. Scheduled runs can
+    # still be late or skipped when GitHub is busy.
+    - cron: "7,37 * * * *"
+  # Run it by hand (Actions tab -> Uptime -> Run workflow). Give another address in "url" to prove
+  # that a down app fails the run and sends the email.
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "Address to check (leave empty for the live app)"
+        required: false
+        default: ""
+  # So the PR that changes this check shows a real run of it. Other PRs don't trigger it.
+  pull_request:
+    paths:
+      - ".github/workflows/uptime.yml"
+      - "src/flame_in_freefall/uptime.py"
+
+permissions:
+  contents: read
+
+jobs:
+  uptime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+      - name: Install Python (version from .python-version)
+        run: uv python install
+      - name: Check the app
+        # The address goes in through env, never straight into the command line.
+        env:
+          CHECK_URL: ${{ github.event.inputs.url }}
+          PYTHONPATH: src
+        run: |
+          if [ -n "$CHECK_URL" ]; then
+            uv run --no-project python -m flame_in_freefall.uptime --url "$CHECK_URL"
+          else
+            uv run --no-project python -m flame_in_freefall.uptime
+          fi
