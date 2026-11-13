@@ -1,0 +1,727 @@
+[
+  {
+    "id": "Q1-picked",
+    "question": "What gases were tested as fire suppressants in microgravity?",
+    "experiment": null,
+    "evidence": [
+      "CO2, He, and SF6"
+    ],
+    "passage_ids": [
+      "flex-p1-c5",
+      "flex-p1-c6",
+      "flex-p1-c0",
+      "bass2-p1-c0",
+      "flex-p1-c4"
+    ],
+    "passage_sha256": [
+      "9dad9dd2c39d7229fe835d254ce81457bd602a632c931d50f91d87013284c3b9",
+      "537538e0b11835f15828708811a7d7ebf8bd1650e926fa426ebed3f8713d2082",
+      "d3ca3d3ae958f3cbb7bb6759d5d82cd3465c3e9b05e23e69cde076dd31ffd012",
+      "d96d58e070abd68d694e8c3a983321bb94d3c8f611c679877ba46f51c2d1bf83",
+      "3bbeaf58cbbd0745ed8d838af72ad45033840a1c6e8c79442d6229825ce3e7d2"
+    ],
+    "raw_reply": "{\n  \"takeaways\": [\n    {\n      \"text\": \"The FLEX investigation aims to measure the effectiveness of various gaseous fire suppressants such as CO2, He, and SF6 in microgravity environments.\",\n      \"chunk_id\": \"flex-p1-c0\"\n    }\n  ],\n  \"not_found\": false\n}",
+    "model": "gemini-flash-lite-latest",
+    "prompt": "summary_v2.txt",
+    "recorded": "2026-11-12"
+  },
+  {
+    "id": "Q2-picked",
+    "question": "What is the Limiting Oxygen Index and how did FLEX measure it?",
+    "experiment": "FLEX",
+    "evidence": [
+      "Limiting Oxygen Index",
+      "for the LOI tests",
+      "to determine the LOI"
+    ],
+    "passage_ids": [
+      "flex-p1-c1"
+    ],
+    "passage_sha256": [
+      "a4bc157954ec4670e4b8802e0c502350311a9df90644d580918de328aaf76627"
+    ],
+    "raw_reply": "{\"takeaways\": [{\"text\": \"A primary objective of the FLEX experiments is to determine the Limiting Oxygen Index (LOI) as a function of ambient pressure and determine how the presence of a suppressant influences the LOI.\", \"chunk_id\": \"flex-p1-c1\"}], \"not_found\": false}",
+    "model": "gemini-flash-lite-latest",
+    "prompt": "summary_v2.txt",
+    "recorded": "2026-11-12"
+  },
+  {
+    "id": "Q3-picked",
+    "question": "What is a cool flame?",
+    "experiment": null,
+    "evidence": [
+      "cool flames"
+    ],
+    "passage_ids": [
+      "bass2-p1-c3",
+      "flex-p1-c0",
+      "flex-p1-c6",
+      "saffire2-p1-c3",
+      "flex2-p1-c5"
+    ],
+    "passage_sha256": [
+      "c9711cd825d05748deba1818b0601858995918e39b62ba0a5c1447f3b165d836",
+      "d3ca3d3ae958f3cbb7bb6759d5d82cd3465c3e9b05e23e69cde076dd31ffd012",
+      "537538e0b11835f15828708811a7d7ebf8bd1650e926fa426ebed3f8713d2082",
+      "0c0fa433ef80e6a58e255f408d74885922a49ebecd9fb9dc334db6a883a975d2",
+      "9c08790b75750d1659487ea4a7930d63b7ee091de86168aa1e20b637fce24b3a"
+    ],
+    "raw_reply": "{\n  \"takeaways\": [\n    {\n      \"text\": \"The study of cool flames and low-temperature combustion processes observed in microgravity can inform the design of advanced combustion engines, leading to improved fuel efficiency and reduced emissions in automotive and industrial applications.\",\n      \"chunk_id\": \"flex-p1-c6\"\n    }\n  ],\n  \"not_found\": false\n}",
+    "model": "gemini-flash-lite-latest",
+    "prompt": "summary_v2.txt",
+    "recorded": "2026-11-12"
+  },
+  {
+    "id": "Q4-picked",
+    "question": "What oxygen levels and pressures were used in the FLEX-2 chamber?",
+    "experiment": "FLEX-2",
+    "evidence": [
+      "0.5 atm to 3.0 atm",
+      "0.1 to 0.4 mole fraction"
+    ],
+    "passage_ids": [
+      "flex2-p1-c3",
+      "flex2-p1-c1",
+      "flex2-p1-c2",
+      "flex2-p1-c4"
+    ],
+    "passage_sha256": [
+      "5f58e3c1ed81cf362ed1bb11f09c8b1431c1cee918cc64bbddf0fcbc3fb9790b",
+      "be82b324aec2dbbc5b1b0e8fa1989ecd3f07d0d02c58800466f0cacda276b547",
+      "b31c33aab88e21866ea079587d60de5d48905a9a4ad488b497319b0508ed3972",
+      "1a3c80b1c4014e1c007e3ab508f3535ec7c1d50cd0192ffc3576344f80631a43"
+    ],
+    "raw_reply": "{\n  \"takeaways\": [\n    {\n      \"text\": \"In the FLEX-2 investigation, the chamber was varied in pressure between 0.5 atm to 3.0 atm.\",\n      \"chunk_id\": \"flex2-p1-c1\"\n    },\n    {\n      \"text\": \"In the FLEX-2 investigation, the chamber O2 concentration was varied between 0.1 to 0.4 mole fraction with the diluent gas making up the balance.\",\n      \"chunk_id\": \"flex2-p1-c1\"\n    }\n  ],\n  \"not_found\": false\n}",
+    "model": "gemini-flash-lite-latest",
+    "prompt": "summary_v2.txt",
+    "recorded": "2026-11-12"
+  },
+  {
+    "id": "Q5-picked",
+    "question": "How were fuel droplets deployed and ignited in FLEX-2?",
+    "experiment": "FLEX-2",
+    "evidence": [
+      "Deploy the droplet(s)",
+      "power to the ignitor",
+      "dispensing needles were retracted"
+    ],
+    "passage_ids": [
+      "flex2-p1-c3",
+      "flex2-p1-c0",
+      "flex2-p1-c1",
+      "flex2-p1-c4",
+      "flex2-p1-c2"
+    ],
+    "passage_sha256": [
+      "5f58e3c1ed81cf362ed1bb11f09c8b1431c1cee918cc64bbddf0fcbc3fb9790b",
+      "0a8e89b937d473edb3d62b84652b6ab5a642e4b4b7d82c35278c6b290e5619c3",
+      "be82b324aec2dbbc5b1b0e8fa1989ecd3f07d0d02c58800466f0cacda276b547",
+      "1a3c80b1c4014e1c007e3ab508f3535ec7c1d50cd0192ffc3576344f80631a43",
+      "b31c33aab88e21866ea079587d60de5d48905a9a4ad488b497319b0508ed3972"
+    ],
+    "raw_reply": "{\n  \"takeaways\": [\n    {\n      \"text\": \"In the FLEX-2 investigation approach, droplets are deployed while carefully controlling the droplet diameter.\",\n      \"chunk_id\": \"flex2-p1-c3\"\n    },\n    {\n      \"text\": \"For tests in FLEX-2 where the droplet is not freely deployed, a predetermined amount of fuel is dispensed onto the support fiber based on the target droplet size.\",\n      \"chunk_id\": \"flex2-p1-c1\"\n    },\n    {\n      \"text\": \"In FLEX-2, once sufficient fuel is dispensed, the dispensing needles are retracted and a dwell period of at least 10 seconds is allowed for droplet internal fluid motion induced by deployment to subside.\",\n      \"chunk_id\": \"flex2-p1-c2\"\n    },\n    {\n      \"text\": \"In FLEX-2, power is initiated to the ignitor for a selectable amount of time ranging from 1 second to 5 seconds after which the ignitor is retracted from the field of view.\",\n      \"chunk_id\": \"flex2-p1-c2\"\n    }\n  ],\n  \"not_found\": false\n}",
+    "model": "gemini-flash-lite-latest",
+    "prompt": "summary_v2.txt",
+    "recorded": "2026-11-12"
+  },
+  {
+    "id": "Q6-picked",
+    "question": "How fast does a large fire grow in low gravity?",
+    "experiment": null,
+    "evidence": [
+      "how rapidly a large scale fire grows"
+    ],
+    "passage_ids": [
+      "flex-p1-c0",
+      "bass2-p1-c0",
+      "flex-p1-c5",
+      "flex-p1-c4",
+      "flex-p1-c6"
+    ],
+    "passage_sha256": [
+      "d3ca3d3ae958f3cbb7bb6759d5d82cd3465c3e9b05e23e69cde076dd31ffd012",
+      "d96d58e070abd68d694e8c3a983321bb94d3c8f611c679877ba46f51c2d1bf83",
+      "9dad9dd2c39d7229fe835d254ce81457bd602a632c931d50f91d87013284c3b9",
+      "3bbeaf58cbbd0745ed8d838af72ad45033840a1c6e8c79442d6229825ce3e7d2",
+      "537538e0b11835f15828708811a7d7ebf8bd1650e926fa426ebed3f8713d2082"
+    ],
+    "raw_reply": "{\n  \"takeaways\": [],\n  \"not_found\": true\n}",
+    "model": "gemini-flash-lite-latest",
+    "prompt": "summary_v2.txt",
+    "recorded": "2026-11-12"
+  },
+  {
+    "id": "Q7-picked",
+    "question": "What airflow speeds were used in Saffire-II?",
+    "experiment": "Saffire-II",
+    "evidence": [
+      "20 or 30 cm/s"
+    ],
+    "passage_ids": [
+      "saffire2-p1-c0",
+      "saffire2-p1-c1"
+    ],
+    "passage_sha256": [
+      "56cf44a23de1d1c5c30afb5f51891f4f5aa50bc607f744080ec1113ae93c50d2",
+      "8c87a622e3271fce310169df4d9955cf2308144fdc8f9cc5a65c1827ec02aad7"
+    ],
+    "raw_reply": "{\"takeaways\": [{\"text\": \"Depending on the sample material, the Saffire-II was conducted at an air flow velocity of either 20 or 30 cm/s, the flow being either concurrent or opposed.\", \"chunk_id\": \"saffire2-p1-c1\"}], \"not_found\": false}",
+    "model": "gemini-flash-lite-latest",
+    "prompt": "summary_v2.txt",
+    "recorded": "2026-11-12"
+  },
+  {
+    "id": "Q8-picked",
+    "question": "Why are normal-gravity fire tests risky for designing spacecraft safety systems?",
+    "experiment": null,
+    "evidence": [
+      "fire standards to design spacecraft fire safety systems"
+    ],
+    "passage_ids": [
+      "saffire2-p1-c2",
+      "flex-p1-c5",
+      "saffire2-p1-c3",
+      "flex-p1-c6",
+      "bass2-p1-c0"
+    ],
+    "passage_sha256": [
+      "e488ac63dd7ae180a506cffed703ccac27ea0f332433c5ec4551cd064a955ebb",
+      "9dad9dd2c39d7229fe835d254ce81457bd602a632c931d50f91d87013284c3b9",
+      "0c0fa433ef80e6a58e255f408d74885922a49ebecd9fb9dc334db6a883a975d2",
+      "537538e0b11835f15828708811a7d7ebf8bd1650e926fa426ebed3f8713d2082",
+      "d96d58e070abd68d694e8c3a983321bb94d3c8f611c679877ba46f51c2d1bf83"
+    ],
+    "raw_reply": "{\n  \"takeaways\": [\n    {\n      \"text\": \"The use of terrestrial fires and fire standards to design spacecraft fire safety systems presents an inherent risk to the vehicle due to large differences between fire behavior in normal and reduced gravity and a significant level of uncertainty, as stated in the Saffire-II experiment description.\",\n      \"chunk_id\": \"saffire2-p1-c2\"\n    }\n  ],\n  \"not_found\": false\n}",
+    "model": "gemini-flash-lite-latest",
+    "prompt": "summary_v2.txt",
+    "recorded": "2026-11-12"
+  },
+  {
+    "id": "Q9-picked",
+    "question": "Which spacecraft materials are the most dangerous at 30 percent oxygen?",
+    "experiment": null,
+    "evidence": [],
+    "passage_ids": [
+      "saffire2-p1-c3",
+      "bass2-p1-c2",
+      "flex-p1-c5",
+      "bass2-p1-c1",
+      "flex-p1-c6"
+    ],
+    "passage_sha256": [
+      "0c0fa433ef80e6a58e255f408d74885922a49ebecd9fb9dc334db6a883a975d2",
+      "902fa7d8c8a3a7b3299ab63b7139bfae98865813b056a25f25e4714c61172e2b",
+      "9dad9dd2c39d7229fe835d254ce81457bd602a632c931d50f91d87013284c3b9",
+      "3054c1d36c254bca2d6d7df55612ccf8d96eeea59e66cacd6c6611d2923d1afe",
+      "537538e0b11835f15828708811a7d7ebf8bd1650e926fa426ebed3f8713d2082"
+    ],
+    "raw_reply": "{\n  \"takeaways\": [],\n  \"not_found\": true\n}",
+    "model": "gemini-flash-lite-latest",
+    "prompt": "summary_v2.txt",
+    "recorded": "2026-11-12"
+  },
+  {
+    "id": "Q10-picked",
+    "question": "How do you put out a lithium battery fire on Mars?",
+    "experiment": null,
+    "evidence": [],
+    "passage_ids": [
+      "flex-p1-c5",
+      "flex-p1-c6",
+      "flex-p1-c0",
+      "bass2-p1-c0",
+      "saffire2-p1-c3"
+    ],
+    "passage_sha256": [
+      "9dad9dd2c39d7229fe835d254ce81457bd602a632c931d50f91d87013284c3b9",
+      "537538e0b11835f15828708811a7d7ebf8bd1650e926fa426ebed3f8713d2082",
+      "d3ca3d3ae958f3cbb7bb6759d5d82cd3465c3e9b05e23e69cde076dd31ffd012",
+      "d96d58e070abd68d694e8c3a983321bb94d3c8f611c679877ba46f51c2d1bf83",
+      "0c0fa433ef80e6a58e255f408d74885922a49ebecd9fb9dc334db6a883a975d2"
+    ],
+    "raw_reply": "{\n  \"takeaways\": [],\n  \"not_found\": true\n}",
+    "model": "gemini-flash-lite-latest",
+    "prompt": "summary_v2.txt",
+    "recorded": "2026-11-12"
+  },
+  {
+    "id": "H1-picked",
+    "question": "Which materials were burned in Saffire-II?",
+    "experiment": "Saffire-II",
+    "evidence": [
+      "SIBAL, silicone, structure PMMA"
+    ],
+    "passage_ids": [
+      "saffire2-p1-c1",
+      "saffire2-p1-c3",
+      "saffire2-p1-c0",
+      "saffire2-p1-c2"
+    ],
+    "passage_sha256": [
+      "8c87a622e3271fce310169df4d9955cf2308144fdc8f9cc5a65c1827ec02aad7",
+      "0c0fa433ef80e6a58e255f408d74885922a49ebecd9fb9dc334db6a883a975d2",
+      "56cf44a23de1d1c5c30afb5f51891f4f5aa50bc607f744080ec1113ae93c50d2",
+      "e488ac63dd7ae180a506cffed703ccac27ea0f332433c5ec4551cd064a955ebb"
+    ],
+    "raw_reply": "{\n  \"takeaways\": [\n    {\n      \"text\": \"As a follow on to the Saffire-I investigation, the Saffire-II investigation added more samples including SIBAL, silicone, structure PMMA, flat PMMA, and PMMA with Nomex.\",\n      \"chunk_id\": \"saffire2-p1-c0\"\n    }\n  ],\n  \"not_found\": false\n}",
+    "model": "gemini-flash-lite-latest",
+    "prompt": "summary_v2.txt",
+    "recorded": "2026-11-12"
+  },
+  {
+    "id": "H2-picked",
+    "question": "How big was each Saffire-II sample?",
+    "experiment": "Saffire-II",
+    "evidence": [
+      "each 5 cm x 29 cm"
+    ],
+    "passage_ids": [
+      "saffire2-p1-c0",
+      "saffire2-p1-c1"
+    ],
+    "passage_sha256": [
+      "56cf44a23de1d1c5c30afb5f51891f4f5aa50bc607f744080ec1113ae93c50d2",
+      "8c87a622e3271fce310169df4d9955cf2308144fdc8f9cc5a65c1827ec02aad7"
+    ],
+    "raw_reply": "{\n  \"takeaways\": [\n    {\n      \"text\": \"The Saffire-II experiment has a sample card that contains 9 samples, each 5 cm x 29 cm.\",\n      \"chunk_id\": \"saffire2-p1-c0\"\n    }\n  ],\n  \"not_found\": false\n}",
+    "model": "gemini-flash-lite-latest",
+    "prompt": "summary_v2.txt",
+    "recorded": "2026-11-12"
+  },
+  {
+    "id": "H3-picked",
+    "question": "How long did the gas sit in the chamber before a FLEX-2 test started?",
+    "experiment": "FLEX-2",
+    "evidence": [
+      "settling time of approximately 2 minutes"
+    ],
+    "passage_ids": [
+      "flex2-p1-c3",
+      "flex2-p1-c1",
+      "flex2-p1-c2",
+      "flex2-p1-c4"
+    ],
+    "passage_sha256": [
+      "5f58e3c1ed81cf362ed1bb11f09c8b1431c1cee918cc64bbddf0fcbc3fb9790b",
+      "be82b324aec2dbbc5b1b0e8fa1989ecd3f07d0d02c58800466f0cacda276b547",
+      "b31c33aab88e21866ea079587d60de5d48905a9a4ad488b497319b0508ed3972",
+      "1a3c80b1c4014e1c007e3ab508f3535ec7c1d50cd0192ffc3576344f80631a43"
+    ],
+    "raw_reply": "{\n  \"takeaways\": [\n    {\n      \"text\": \"A settling time of approximately 2 minutes elapsed prior to initiating the test in order to ensure that the temperature and pressure of the chamber gases have stabilized.\",\n      \"chunk_id\": \"flex2-p1-c1\"\n    }\n  ],\n  \"not_found\": false\n}",
+    "model": "gemini-flash-lite-latest",
+    "prompt": "summary_v2.txt",
+    "recorded": "2026-11-12"
+  },
+  {
+    "id": "H5-picked",
+    "question": "How small is the first droplet in the LOI tests?",
+    "experiment": null,
+    "evidence": [
+      "Select a smaller droplet size"
+    ],
+    "passage_ids": [
+      "flex-p1-c2",
+      "flex-p1-c3",
+      "flex-p1-c1",
+      "flex2-p1-c1",
+      "flex2-p1-c2"
+    ],
+    "passage_sha256": [
+      "b9be97c25e0edcb5f6fba3e48bd216ed437ed7de32801ec3ee46a54f36ce0a6f",
+      "ce08987e355bb905935c918df293e90b18121fbf69640229f83479e9ff7c4a47",
+      "a4bc157954ec4670e4b8802e0c502350311a9df90644d580918de328aaf76627",
+      "be82b324aec2dbbc5b1b0e8fa1989ecd3f07d0d02c58800466f0cacda276b547",
+      "b31c33aab88e21866ea079587d60de5d48905a9a4ad488b497319b0508ed3972"
+    ],
+    "raw_reply": "{\"takeaways\": [{\"text\": \"For the LOI tests in the FLEX experiments, the approach involves selecting a smaller droplet size of approximately 3 mm.\", \"chunk_id\": \"flex-p1-c1\"}], \"not_found\": false}",
+    "model": "gemini-flash-lite-latest",
+    "prompt": "summary_v2.txt",
+    "recorded": "2026-11-12"
+  },
+  {
+    "id": "H6-picked",
+    "question": "What instruments recorded data during the burn?",
+    "experiment": null,
+    "evidence": [
+      "two radiometers recorded flame radiation",
+      "thermocouples provided flow"
+    ],
+    "passage_ids": [
+      "saffire2-p1-c1",
+      "saffire2-p1-c3",
+      "bass2-p1-c3",
+      "flex-p1-c3",
+      "saffire2-p1-c2"
+    ],
+    "passage_sha256": [
+      "8c87a622e3271fce310169df4d9955cf2308144fdc8f9cc5a65c1827ec02aad7",
+      "0c0fa433ef80e6a58e255f408d74885922a49ebecd9fb9dc334db6a883a975d2",
+      "c9711cd825d05748deba1818b0601858995918e39b62ba0a5c1447f3b165d836",
+      "ce08987e355bb905935c918df293e90b18121fbf69640229f83479e9ff7c4a47",
+      "e488ac63dd7ae180a506cffed703ccac27ea0f332433c5ec4551cd064a955ebb"
+    ],
+    "raw_reply": "{\n  \"takeaways\": [\n    {\n      \"text\": \"In the Saffire-II experiment, flame images were captured using two cameras.\",\n      \"chunk_id\": \"saffire2-p1-c1\"\n    },\n    {\n      \"text\": \"In the Saffire-II experiment, thermocouples provided flow, flame, and plume temperatures.\",\n      \"chunk_id\": \"saffire2-p1-c1\"\n    },\n    {\n      \"text\": \"In the Saffire-II experiment, two radiometers recorded flame radiation.\",\n      \"chunk_id\": \"saffire2-p1-c1\"\n    },\n    {\n      \"text\": \"In the Saffire-II experiment, solid state sensors were used to measure pressure, CO2 and O2 mole faction.\",\n      \"chunk_id\": \"saffire2-p1-c1\"\n    },\n    {\n      \"text\": \"In the Saffire-II experiment, two anemometers tracked flow velocity.\",\n      \"chunk_id\": \"saffire2-p1-c1\"\n    }\n  ],\n  \"not_found\": false\n}",
+    "model": "gemini-flash-lite-latest",
+    "prompt": "summary_v2.txt",
+    "recorded": "2026-11-12"
+  },
+  {
+    "id": "H7-picked",
+    "question": "Which vehicle carried the fire experiment after it left the space station?",
+    "experiment": null,
+    "evidence": [
+      "Cygnus resupply vehicle"
+    ],
+    "passage_ids": [
+      "saffire2-p1-c3",
+      "saffire2-p1-c2",
+      "flex-p1-c5",
+      "flex-p1-c6",
+      "flex-p1-c0"
+    ],
+    "passage_sha256": [
+      "0c0fa433ef80e6a58e255f408d74885922a49ebecd9fb9dc334db6a883a975d2",
+      "e488ac63dd7ae180a506cffed703ccac27ea0f332433c5ec4551cd064a955ebb",
+      "9dad9dd2c39d7229fe835d254ce81457bd602a632c931d50f91d87013284c3b9",
+      "537538e0b11835f15828708811a7d7ebf8bd1650e926fa426ebed3f8713d2082",
+      "d3ca3d3ae958f3cbb7bb6759d5d82cd3465c3e9b05e23e69cde076dd31ffd012"
+    ],
+    "raw_reply": "{\n  \"takeaways\": [],\n  \"not_found\": true\n}",
+    "model": "gemini-flash-lite-latest",
+    "prompt": "summary_v2.txt",
+    "recorded": "2026-11-12"
+  },
+  {
+    "id": "H8-picked",
+    "question": "How could this research help car engines on Earth?",
+    "experiment": null,
+    "evidence": [
+      "design of advanced combustion engines",
+      "cleaner combustion technologies"
+    ],
+    "passage_ids": [
+      "flex2-p1-c6",
+      "bass2-p1-c3",
+      "flex-p1-c6",
+      "bass2-p1-c2",
+      "flex2-p1-c5"
+    ],
+    "passage_sha256": [
+      "8efe8533abb64639621f1c77c9ab45212eceb576524041483af626f25dbeb9db",
+      "c9711cd825d05748deba1818b0601858995918e39b62ba0a5c1447f3b165d836",
+      "537538e0b11835f15828708811a7d7ebf8bd1650e926fa426ebed3f8713d2082",
+      "902fa7d8c8a3a7b3299ab63b7139bfae98865813b056a25f25e4714c61172e2b",
+      "9c08790b75750d1659487ea4a7930d63b7ee091de86168aa1e20b637fce24b3a"
+    ],
+    "raw_reply": "{\n  \"takeaways\": [\n    {\n      \"text\": \"The study of cool flames and low-temperature combustion processes observed in microgravity can inform the design of advanced combustion engines, leading to improved fuel efficiency and reduced emissions in automotive and industrial applications.\",\n      \"chunk_id\": \"flex-p1-c6\"\n    },\n    {\n      \"text\": \"Insights gained from droplet combustion studies can lead to more efficient and cleaner combustion technologies which are crucial for reducing pollution and greenhouse gas emissions.\",\n      \"chunk_id\": \"flex2-p1-c5\"\n    }\n  ],\n  \"not_found\": false\n}",
+    "model": "gemini-flash-lite-latest",
+    "prompt": "summary_v2.txt",
+    "recorded": "2026-11-12"
+  },
+  {
+    "id": "H9-picked",
+    "question": "What did the scientists expect weightlessness to change about burning droplets?",
+    "experiment": null,
+    "evidence": [
+      "microgravity conditions fundamentally alter"
+    ],
+    "passage_ids": [
+      "flex-p1-c4",
+      "flex-p1-c0",
+      "flex-p1-c3",
+      "flex-p1-c1",
+      "flex2-p1-c1"
+    ],
+    "passage_sha256": [
+      "3bbeaf58cbbd0745ed8d838af72ad45033840a1c6e8c79442d6229825ce3e7d2",
+      "d3ca3d3ae958f3cbb7bb6759d5d82cd3465c3e9b05e23e69cde076dd31ffd012",
+      "ce08987e355bb905935c918df293e90b18121fbf69640229f83479e9ff7c4a47",
+      "a4bc157954ec4670e4b8802e0c502350311a9df90644d580918de328aaf76627",
+      "be82b324aec2dbbc5b1b0e8fa1989ecd3f07d0d02c58800466f0cacda276b547"
+    ],
+    "raw_reply": "{\n  \"takeaways\": [\n    {\n      \"text\": \"The primary hypothesis of the FLEX mission is that microgravity conditions fundamentally alter the combustion and extinction characteristics of liquid fuel droplets due to changes in species and energy transport dynamics, radiative heat loss, and chemical kinetics.\",\n      \"chunk_id\": \"flex-p1-c4\"\n    },\n    {\n      \"text\": \"The primary hypothesis of the FLEX mission posits that the lack of buoyant convection in microgravity will lead to significant differences in the flammability limits and suppression efficacy of various fire suppressant agents compared to normal gravity conditions.\",\n      \"chunk_id\": \"flex-p1-c4\"\n    }\n  ],\n  \"not_found\": false\n}",
+    "model": "gemini-flash-lite-latest",
+    "prompt": "summary_v2.txt",
+    "recorded": "2026-11-12"
+  },
+  {
+    "id": "H10-picked",
+    "question": "Why run a big fire test on a spacecraft with nobody on board?",
+    "experiment": null,
+    "evidence": [
+      "without risk to a crew",
+      "the risks are too high"
+    ],
+    "passage_ids": [
+      "saffire2-p1-c2",
+      "flex-p1-c5",
+      "saffire2-p1-c3",
+      "bass2-p1-c3",
+      "flex-p1-c6"
+    ],
+    "passage_sha256": [
+      "e488ac63dd7ae180a506cffed703ccac27ea0f332433c5ec4551cd064a955ebb",
+      "9dad9dd2c39d7229fe835d254ce81457bd602a632c931d50f91d87013284c3b9",
+      "0c0fa433ef80e6a58e255f408d74885922a49ebecd9fb9dc334db6a883a975d2",
+      "c9711cd825d05748deba1818b0601858995918e39b62ba0a5c1447f3b165d836",
+      "537538e0b11835f15828708811a7d7ebf8bd1650e926fa426ebed3f8713d2082"
+    ],
+    "raw_reply": "{\"takeaways\": [{\"text\": \"The Saffire-II investigation proposed to conduct large-scale fire safety experiments in an expendable spacecraft without risk to a crew to address the lack of microgravity data.\", \"chunk_id\": \"saffire2-p1-c2\"}], \"not_found\": false}",
+    "model": "gemini-flash-lite-latest",
+    "prompt": "summary_v2.txt",
+    "recorded": "2026-11-12"
+  },
+  {
+    "id": "B1-picked",
+    "question": "How fast could the air blow in the BASS-II wind tunnel?",
+    "experiment": "BASS-II",
+    "evidence": [
+      "airflow speeds up to 40 cm/s"
+    ],
+    "passage_ids": [
+      "bass2-p1-c1"
+    ],
+    "passage_sha256": [
+      "3054c1d36c254bca2d6d7df55612ccf8d96eeea59e66cacd6c6611d2923d1afe"
+    ],
+    "raw_reply": "{\"takeaways\": [{\"text\": \"Fuel samples were mounted inside a small wind tunnel which could impose airflow speeds up to 40 cm/s during BASS-II tests.\", \"chunk_id\": \"bass2-p1-c1\"}], \"not_found\": false}",
+    "model": "gemini-flash-lite-latest",
+    "prompt": "summary_v2.txt",
+    "recorded": "2026-11-12"
+  },
+  {
+    "id": "B2-picked",
+    "question": "How did BASS-II lower the oxygen level?",
+    "experiment": "BASS-II",
+    "evidence": [
+      "oxygen varied below 21% by adding nitrogen",
+      "nitrogen vitiation"
+    ],
+    "passage_ids": [
+      "bass2-p1-c2",
+      "bass2-p1-c3",
+      "bass2-p1-c1"
+    ],
+    "passage_sha256": [
+      "902fa7d8c8a3a7b3299ab63b7139bfae98865813b056a25f25e4714c61172e2b",
+      "c9711cd825d05748deba1818b0601858995918e39b62ba0a5c1447f3b165d836",
+      "3054c1d36c254bca2d6d7df55612ccf8d96eeea59e66cacd6c6611d2923d1afe"
+    ],
+    "raw_reply": "{\"takeaways\": [{\"text\": \"In the BASS-II investigation, oxygen was varied below 21% by adding nitrogen.\", \"chunk_id\": \"bass2-p1-c1\"}], \"not_found\": false}",
+    "model": "gemini-flash-lite-latest",
+    "prompt": "summary_v2.txt",
+    "recorded": "2026-11-12"
+  },
+  {
+    "id": "Q2-default",
+    "question": "What is the Limiting Oxygen Index and how did FLEX measure it?",
+    "experiment": null,
+    "evidence": [
+      "Limiting Oxygen Index",
+      "for the LOI tests",
+      "to determine the LOI"
+    ],
+    "passage_ids": [
+      "flex-p1-c1",
+      "saffire2-p1-c0"
+    ],
+    "passage_sha256": [
+      "a4bc157954ec4670e4b8802e0c502350311a9df90644d580918de328aaf76627",
+      "56cf44a23de1d1c5c30afb5f51891f4f5aa50bc607f744080ec1113ae93c50d2"
+    ],
+    "raw_reply": "{\n  \"takeaways\": [\n    {\n      \"text\": \"A primary objective of the FLEX experiments is to determine the Limiting Oxygen Index (LOI) as a function of ambient pressure and determine how the presence of a suppressant influences the LOI.\",\n      \"chunk_id\": \"flex-p1-c1\"\n    }\n  ],\n  \"not_found\": false\n}",
+    "model": "gemini-flash-lite-latest",
+    "prompt": "summary_v2.txt",
+    "recorded": "2026-11-12"
+  },
+  {
+    "id": "Q4-default",
+    "question": "What oxygen levels and pressures were used in the FLEX-2 chamber?",
+    "experiment": null,
+    "evidence": [
+      "0.5 atm to 3.0 atm",
+      "0.1 to 0.4 mole fraction"
+    ],
+    "passage_ids": [
+      "flex-p1-c1",
+      "flex2-p1-c3",
+      "saffire2-p1-c0",
+      "flex2-p1-c1",
+      "bass2-p1-c1"
+    ],
+    "passage_sha256": [
+      "a4bc157954ec4670e4b8802e0c502350311a9df90644d580918de328aaf76627",
+      "5f58e3c1ed81cf362ed1bb11f09c8b1431c1cee918cc64bbddf0fcbc3fb9790b",
+      "56cf44a23de1d1c5c30afb5f51891f4f5aa50bc607f744080ec1113ae93c50d2",
+      "be82b324aec2dbbc5b1b0e8fa1989ecd3f07d0d02c58800466f0cacda276b547",
+      "3054c1d36c254bca2d6d7df55612ccf8d96eeea59e66cacd6c6611d2923d1afe"
+    ],
+    "raw_reply": "{\n  \"takeaways\": [\n    {\n      \"text\": \"During FLEX-2 experiments, the chamber was filled with the appropriate atmosphere, which was varied in pressure between 0.5 atm to 3.0 atm.\",\n      \"chunk_id\": \"flex2-p1-c1\"\n    },\n    {\n      \"text\": \"During FLEX-2 experiments, the chamber atmosphere was varied in O2 concentration between 0.1 to 0.4 mole fraction with the diluent gas making up the balance.\",\n      \"chunk_id\": \"flex2-p1-c1\"\n    }\n  ],\n  \"not_found\": false\n}",
+    "model": "gemini-flash-lite-latest",
+    "prompt": "summary_v2.txt",
+    "recorded": "2026-11-12"
+  },
+  {
+    "id": "Q5-default",
+    "question": "How were fuel droplets deployed and ignited in FLEX-2?",
+    "experiment": null,
+    "evidence": [
+      "Deploy the droplet(s)",
+      "power to the ignitor",
+      "dispensing needles were retracted"
+    ],
+    "passage_ids": [
+      "flex2-p1-c3",
+      "flex-p1-c1",
+      "flex2-p1-c0",
+      "flex-p1-c0",
+      "flex2-p1-c1"
+    ],
+    "passage_sha256": [
+      "5f58e3c1ed81cf362ed1bb11f09c8b1431c1cee918cc64bbddf0fcbc3fb9790b",
+      "a4bc157954ec4670e4b8802e0c502350311a9df90644d580918de328aaf76627",
+      "0a8e89b937d473edb3d62b84652b6ab5a642e4b4b7d82c35278c6b290e5619c3",
+      "d3ca3d3ae958f3cbb7bb6759d5d82cd3465c3e9b05e23e69cde076dd31ffd012",
+      "be82b324aec2dbbc5b1b0e8fa1989ecd3f07d0d02c58800466f0cacda276b547"
+    ],
+    "raw_reply": "{\n  \"takeaways\": [\n    {\n      \"text\": \"In FLEX-2 experiments, droplets are deployed while carefully controlling the droplet diameter.\",\n      \"chunk_id\": \"flex2-p1-c3\"\n    },\n    {\n      \"text\": \"In FLEX-2 experiments, droplets are allowed to stabilize in the microgravity environment.\",\n      \"chunk_id\": \"flex2-p1-c3\"\n    },\n    {\n      \"text\": \"In FLEX-2 experiments, droplets are ignited in a uniform and controlled fashion.\",\n      \"chunk_id\": \"flex2-p1-c3\"\n    }\n  ],\n  \"not_found\": false\n}",
+    "model": "gemini-flash-lite-latest",
+    "prompt": "summary_v2.txt",
+    "recorded": "2026-11-12"
+  },
+  {
+    "id": "Q7-default",
+    "question": "What airflow speeds were used in Saffire-II?",
+    "experiment": null,
+    "evidence": [
+      "20 or 30 cm/s"
+    ],
+    "passage_ids": [
+      "saffire2-p1-c0",
+      "saffire2-p1-c1"
+    ],
+    "passage_sha256": [
+      "56cf44a23de1d1c5c30afb5f51891f4f5aa50bc607f744080ec1113ae93c50d2",
+      "8c87a622e3271fce310169df4d9955cf2308144fdc8f9cc5a65c1827ec02aad7"
+    ],
+    "raw_reply": "{\"takeaways\": [{\"text\": \"Depending on the sample material, the Saffire-II was conducted at an air flow velocity of either 20 or 30 cm/s.\", \"chunk_id\": \"saffire2-p1-c1\"}], \"not_found\": false}",
+    "model": "gemini-flash-lite-latest",
+    "prompt": "summary_v2.txt",
+    "recorded": "2026-11-12"
+  },
+  {
+    "id": "H1-default",
+    "question": "Which materials were burned in Saffire-II?",
+    "experiment": null,
+    "evidence": [
+      "SIBAL, silicone, structure PMMA"
+    ],
+    "passage_ids": [
+      "saffire2-p1-c1",
+      "saffire2-p1-c3",
+      "saffire2-p1-c0",
+      "saffire2-p1-c2",
+      "bass2-p1-c2"
+    ],
+    "passage_sha256": [
+      "8c87a622e3271fce310169df4d9955cf2308144fdc8f9cc5a65c1827ec02aad7",
+      "0c0fa433ef80e6a58e255f408d74885922a49ebecd9fb9dc334db6a883a975d2",
+      "56cf44a23de1d1c5c30afb5f51891f4f5aa50bc607f744080ec1113ae93c50d2",
+      "e488ac63dd7ae180a506cffed703ccac27ea0f332433c5ec4551cd064a955ebb",
+      "902fa7d8c8a3a7b3299ab63b7139bfae98865813b056a25f25e4714c61172e2b"
+    ],
+    "raw_reply": "{\n  \"takeaways\": [\n    {\n      \"text\": \"The Saffire-II investigation added samples including SIBAL, silicone, structure PMMA, flat PMMA, and PMMA with Nomex.\",\n      \"chunk_id\": \"saffire2-p1-c0\"\n    }\n  ],\n  \"not_found\": false\n}",
+    "model": "gemini-flash-lite-latest",
+    "prompt": "summary_v2.txt",
+    "recorded": "2026-11-12"
+  },
+  {
+    "id": "H2-default",
+    "question": "How big was each Saffire-II sample?",
+    "experiment": null,
+    "evidence": [
+      "each 5 cm x 29 cm"
+    ],
+    "passage_ids": [
+      "saffire2-p1-c0",
+      "saffire2-p1-c1"
+    ],
+    "passage_sha256": [
+      "56cf44a23de1d1c5c30afb5f51891f4f5aa50bc607f744080ec1113ae93c50d2",
+      "8c87a622e3271fce310169df4d9955cf2308144fdc8f9cc5a65c1827ec02aad7"
+    ],
+    "raw_reply": "{\n  \"takeaways\": [\n    {\n      \"text\": \"The Saffire-II experiment has a sample card that contains 9 samples, each measuring 5 cm x 29 cm.\",\n      \"chunk_id\": \"saffire2-p1-c0\"\n    }\n  ],\n  \"not_found\": false\n}",
+    "model": "gemini-flash-lite-latest",
+    "prompt": "summary_v2.txt",
+    "recorded": "2026-11-12"
+  },
+  {
+    "id": "H3-default",
+    "question": "How long did the gas sit in the chamber before a FLEX-2 test started?",
+    "experiment": null,
+    "evidence": [
+      "settling time of approximately 2 minutes"
+    ],
+    "passage_ids": [
+      "flex2-p1-c3",
+      "flex-p1-c1",
+      "flex2-p1-c1",
+      "saffire2-p1-c0",
+      "flex2-p1-c2"
+    ],
+    "passage_sha256": [
+      "5f58e3c1ed81cf362ed1bb11f09c8b1431c1cee918cc64bbddf0fcbc3fb9790b",
+      "a4bc157954ec4670e4b8802e0c502350311a9df90644d580918de328aaf76627",
+      "be82b324aec2dbbc5b1b0e8fa1989ecd3f07d0d02c58800466f0cacda276b547",
+      "56cf44a23de1d1c5c30afb5f51891f4f5aa50bc607f744080ec1113ae93c50d2",
+      "b31c33aab88e21866ea079587d60de5d48905a9a4ad488b497319b0508ed3972"
+    ],
+    "raw_reply": "{\n  \"takeaways\": [\n    {\n      \"text\": \"For the FLEX-2 experiment, a settling time of approximately 2 minutes elapsed prior to initiating the test in order to ensure that the temperature and pressure of the chamber gases have stabilized.\",\n      \"chunk_id\": \"flex2-p1-c1\"\n    }\n  ],\n  \"not_found\": false\n}",
+    "model": "gemini-flash-lite-latest",
+    "prompt": "summary_v2.txt",
+    "recorded": "2026-11-12"
+  },
+  {
+    "id": "B1-default",
+    "question": "How fast could the air blow in the BASS-II wind tunnel?",
+    "experiment": null,
+    "evidence": [
+      "airflow speeds up to 40 cm/s"
+    ],
+    "passage_ids": [
+      "bass2-p1-c1"
+    ],
+    "passage_sha256": [
+      "3054c1d36c254bca2d6d7df55612ccf8d96eeea59e66cacd6c6611d2923d1afe"
+    ],
+    "raw_reply": "{\"takeaways\":[{\"text\":\"Fuel samples were mounted inside a small wind tunnel which could impose airflow speeds up to 40 cm/s in the BASS-II investigation.\",\"chunk_id\":\"bass2-p1-c1\"}],\"not_found\":false}",
+    "model": "gemini-flash-lite-latest",
+    "prompt": "summary_v2.txt",
+    "recorded": "2026-11-12"
+  },
+  {
+    "id": "B2-default",
+    "question": "How did BASS-II lower the oxygen level?",
+    "experiment": null,
+    "evidence": [
+      "oxygen varied below 21% by adding nitrogen",
+      "nitrogen vitiation"
+    ],
+    "passage_ids": [
+      "bass2-p1-c2",
+      "bass2-p1-c3",
+      "bass2-p1-c1",
+      "flex-p1-c1"
+    ],
+    "passage_sha256": [
+      "902fa7d8c8a3a7b3299ab63b7139bfae98865813b056a25f25e4714c61172e2b",
+      "c9711cd825d05748deba1818b0601858995918e39b62ba0a5c1447f3b165d836",
+      "3054c1d36c254bca2d6d7df55612ccf8d96eeea59e66cacd6c6611d2923d1afe",
+      "a4bc157954ec4670e4b8802e0c502350311a9df90644d580918de328aaf76627"
+    ],
+    "raw_reply": "{\n  \"takeaways\": [\n    {\n      \"text\": \"In the BASS-II investigation, oxygen concentration was varied below 21% by adding nitrogen.\",\n      \"chunk_id\": \"bass2-p1-c1\"\n    }\n  ],\n  \"not_found\": false\n}",
+    "model": "gemini-flash-lite-latest",
+    "prompt": "summary_v2.txt",
+    "recorded": "2026-11-12"
+  }
+]
