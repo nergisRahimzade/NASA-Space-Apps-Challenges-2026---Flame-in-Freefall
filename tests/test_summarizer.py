@@ -257,7 +257,8 @@ def _gemini_answer() -> str:
 def test_over_the_limit_quotes_the_passages_and_does_not_call_gemini(use_fake, monkeypatch):
     monkeypatch.setenv("GEMINI_CALLS_PER_MINUTE", "2")
     fake = use_fake(reply=_gemini_answer())
-    results = [summarize_passages(PASSAGES) for _ in range(3)]
+    # Different questions: a repeated one would be answered from the cache (Day 17), not counted.
+    results = [summarize_passages(PASSAGES, f"question {n}") for n in range(3)]
     assert len(fake.calls) == 2  # the third summary never reached Gemini
     assert [r["takeaways"][0]["text"] for r in results] == [
         "Spread is slow.",
@@ -269,8 +270,8 @@ def test_over_the_limit_quotes_the_passages_and_does_not_call_gemini(use_fake, m
 
 def test_the_default_limit_is_10_calls_a_minute(use_fake):
     fake = use_fake(reply=_gemini_answer())
-    for _ in range(11):
-        summarize_passages(PASSAGES)
+    for n in range(11):
+        summarize_passages(PASSAGES, f"question {n}")  # different: a repeat wouldn't count
     assert len(fake.calls) == 10
 
 
@@ -284,11 +285,11 @@ def test_a_slot_frees_up_when_the_minute_has_passed(use_fake, monkeypatch):
     clock = Clock()
     monkeypatch.setattr(summarizer, "_limiter", RateLimiter(1, 60, clock=clock))
     fake = use_fake(reply=_gemini_answer())
-    summarize_passages(PASSAGES)
-    summarize_passages(PASSAGES)  # refused: quoted
+    summarize_passages(PASSAGES, "first")
+    summarize_passages(PASSAGES, "second")  # refused: quoted
     assert len(fake.calls) == 1
     clock.now += 60
-    summarize_passages(PASSAGES)
+    summarize_passages(PASSAGES, "second")  # the same question, now with a free slot
     assert len(fake.calls) == 2
 
 

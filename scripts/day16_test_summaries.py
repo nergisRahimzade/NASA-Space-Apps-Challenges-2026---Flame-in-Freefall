@@ -109,6 +109,8 @@ def run_one(label, question, phrases, filter_name, run, model) -> dict:
     if not passages:  # "no match": the app shows its empty state and never calls summarize()
         record.update(summary=None, fallback=False, seconds=0.0, claims=[], answer=[])
         return record
+    # Day 17: a remembered answer makes no Gemini call, so there'd be no reply to record.
+    summarizer.clear_summary_cache()
     real_get_client = summarizer._get_client
     summarizer._get_client = lambda key: _RecordingClient(real_get_client(key), record)
     try:

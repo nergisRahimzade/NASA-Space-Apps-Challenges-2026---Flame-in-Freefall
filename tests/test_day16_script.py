@@ -211,3 +211,18 @@ def test_run_one_puts_the_client_back_even_if_the_call_is_stopped(monkeypatch: p
     with pytest.raises(KeyboardInterrupt):
         module.run_one(BASS2_QUESTION, BASS2_QUESTION, [], "BASS-II", "picked", "test-model")
     assert module.summarizer._get_client is stopped_get_client
+
+
+def test_run_one_records_a_reply_even_when_the_same_question_was_answered_before(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    # Day 17: summarize() remembers answers, and a remembered one makes no Gemini call, so there
+    # would be no reply to record. The picked and default runs can send the same passages.
+    module = _load_script()
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    client = _client_citing_the_first_passage("Spread was slow.")
+    monkeypatch.setattr(module.summarizer, "_get_client", lambda key: client)
+    args = (BASS2_QUESTION, BASS2_QUESTION, [], "BASS-II")
+    first = module.run_one(*args, "picked", "test-model")
+    second = module.run_one(*args, "default", "test-model")
+    assert first["raw_reply"] and second["raw_reply"] and second["tokens"] == first["tokens"]

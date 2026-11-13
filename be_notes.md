@@ -1,4 +1,4 @@
-# BE notes: what's built and how it runs (Days 1–16, FIF-D01-BE … FIF-D16-BE)
+# BE notes: what's built and how it runs (Days 1–17, FIF-D01-BE … FIF-D17-BE)
 
 For anyone reviewing BE PRs, and for teammates whose code calls the backend. Like
 `data_notes.md` and `ai_notes.md`, this file records what exists, the decisions behind it, and
@@ -30,7 +30,8 @@ the open questions.
 | D15-BE | Sources in output: `summarize()` checks its answer's shape on every path; contract v1.6 | `api.py`, `summarizer.py`, `summary_check.py` (D06-AI's file), `docs/contract.md`, `tests/test_summary_shape.py`, `tests/test_summary_check.py` | #154 |
 | fix (D08) | New chunks always rebuild the index, so the flaky ingest test is deterministic | `ingest.py`, `tests/test_ingest.py` | #155 |
 | fix (D05) | The quoting fallback quotes the first full sentence, not a fragment | `summarizer.py`, `tests/test_summarizer.py` | #165 |
-| D16-BE | Protect the app: 300-character question limit, Gemini calls limited to 10 a minute, a summary that never comes ends in ~32 s; contract v1.9 | `api.py`, `rate_limit.py`, `summarizer.py`, `config.py`, `docs/contract.md`, `tests/test_rate_limit.py`, `tests/test_api_edge_cases.py`, `tests/test_summarizer.py`, `tests/test_infra.py`, `tests/conftest.py`, 2 lines in `app/streamlit_app.py` (FE's file) | FIF-D16-BE PR |
+| D16-BE | Protect the app: 300-character question limit, Gemini calls limited to 10 a minute, a summary that never comes ends in ~32 s; contract v1.9 | `api.py`, `rate_limit.py`, `summarizer.py`, `config.py`, `docs/contract.md`, `tests/test_rate_limit.py`, `tests/test_api_edge_cases.py`, `tests/test_summarizer.py`, `tests/test_infra.py`, `tests/conftest.py`, 2 lines in `app/streamlit_app.py` (FE's file) | #167 |
+| D17-BE | Cache summaries (a repeat is instant, free and not counted by the limit); log every Gemini call's tokens and cost; contract v1.10 | `summarizer.py`, `usage.py`, `api.py`, `config.py`, `docs/contract.md`, `.env.example`, `tests/test_summary_cache.py`, `tests/test_usage.py`, `tests/test_summarizer.py`, `tests/test_day16_script.py`, `tests/conftest.py`, `scripts/day16_test_summaries.py` (AI's, 1 line) | FIF-D17-BE PR |
 
 ## 2. What each BE file does
 
@@ -44,7 +45,8 @@ All code is in `src/flame_in_freefall/`.
 | `speed.py` | Times every backend call into `artifacts/speed.log`; `uv run python -m flame_in_freefall.speed` lists the slowest | in use since D11 |
 | `store.py` | Saves/loads the search index as `embeddings.npz` + `chunks.json` | used by the AI scripts and `ingest.py` |
 | `ingest.py` | One command builds the search index: `uv run python -m flame_in_freefall.ingest` (`--force` redoes every step) | in use; same files as the AI scripts for Days 7–8 |
-| `summarizer.py` | Calls Gemini for takeaways; falls back to quoting passages on any failure, or when the call limit is reached | in use through `api.summarize()` |
+| `summarizer.py` | Calls Gemini for takeaways; falls back to quoting passages on any failure, or when the call limit is reached; remembers the answers Gemini gave (D17) | in use through `api.summarize()` |
+| `usage.py` | Logs the tokens (and cost, if a price is set) of every Gemini call to `artifacts/usage.log`; `uv run python -m flame_in_freefall.usage` reports the total | in use since D17 |
 | `rate_limit.py` | `RateLimiter`: at most N calls in any window, safe with many visitors at once | used by `summarizer.py` since D16 (10 a minute) |
 
 The app (`app/streamlit_app.py`) belongs to FE and only calls `api.py`.
@@ -145,9 +147,9 @@ The app (`app/streamlit_app.py`) belongs to FE and only calls `api.py`.
   "gemini-flash-lite-latest"` in the app's Secrets (an open question in `ai_notes.md` too).
 - **Every widget change re-runs `summarize()`** (checked with AppTest): Streamlit re-runs the whole
   page when a visitor moves a slider, and with a question in the box that's another Gemini call.
-  Summaries aren't cached yet, so a visitor adjusting filters spends a call each time and can use up
-  the 10-a-minute limit on their own; after that the summary is quoted. D17-BE (cache summaries)
-  fixes this.
+  Before D17 a visitor adjusting filters spent a call each time and could use up the 10-a-minute
+  limit on their own. **Fixed in D17:** the repeats are answered from the summary cache
+  (`tests/test_summary_cache.py` moves the slider in the real page and counts Gemini calls: 1).
 - **The 0.30 cutoff has no safe value with today's ranking** (2026-11-10, real model). It drops two
   of Q2's answer passages (0.295, 0.281; `tests/retest.md`). Lowering it to 0.27 (suggested in #151)
   lets "How much thrust does a rocket engine produce?" (0.2755) through, and the short query "rocket
@@ -351,21 +353,86 @@ handled.* Empty queries already raised since D13.
   `summarize()` did. When Gemini fails or the call limit is reached, quoted text gets the AI label.
   Fixing it needs a new field in `summarize()`'s result, so the team should agree first.
 
-## 6. Where the next ticket starts (FIF-D17-BE: cache repeated questions)
+### Summary cache and usage log (D17)
+
+Plan: *1) Cache by query. 2) Log cost per call. Done when: repeat is instant.* `search()` has been
+cached since D11; this adds the slow, paid call.
+
+- **What is remembered:** the answers Gemini gave, including a real "not found". **Never the
+  quoting fallback**: after a short outage or a limit hit, the next visitor should get a real
+  summary, not stuck quotes. A reply that fails our checks is a fallback too, so it isn't
+  remembered.
+- **The key:** the question (`cache.normalize`: capitals and spaces ignored, as for `search()`),
+  every passage's **id, text, source and page** (as text, the way Gemini sees it) in order, the prompt file's name, and the model.
+  The plan said ids; text also matters because a re-ingested report keeps its ids but not its words.
+  Source and page are sent to Gemini too. Including them prevents a corrected source from reusing
+  a stale citation and failing `api.summarize()`'s contract check.
+  Editing a prompt file without renaming it does *not* change the key: a prompt change needs a new
+  file name (v3, as before) or a reboot, which empties the cache.
+- **A hit is free and instant:** it returns before the rate limiter, so it counts nothing, and it
+  works even when the minute's limit is used up. It comes *after* the "no key" check: the page
+  labels a summary by whether a key is set, so with no key a remembered Gemini answer would be
+  shown as "quoted word for word". With no key, the passages are really quoted. `api.summarize()` marks it `cached` in the speed
+  log, like `search()`.
+- **Size and safety:** at most 256 answers, the oldest dropped first, behind a lock (Streamlit
+  runs each visitor in its own thread). A caller gets a copy, so changing its answer can't change
+  the memory. It lives in the app's process, so a reboot empties it. Two visitors asking something
+  new at the same moment both go to Gemini (the lock guards the memory, not the call); the second
+  answer replaces the first, which is harmless.
+- **Questions that differ only in capitals share an answer**, though Gemini would see slightly
+  different text. Same rule as `search()`; fine for these reports.
+- **Usage log:** `usage.record()` writes one JSON line per real Gemini reply to
+  `artifacts/usage.log` (git-ignored): time, model, `input_tokens`, `output_tokens` (from
+  `usage_metadata`; `None` when Google sends none, never 0) and `cost_usd`. It's written even when
+  the reply turns out to be unusable, because that call was paid for. Cache hits and quoted
+  summaries are not logged: they cost nothing.
+- **Cost needs a price, and the code has none** (prices change): set `GEMINI_USD_PER_M_INPUT` and
+  `GEMINI_USD_PER_M_OUTPUT` (US dollars per million tokens, from Google's pricing page; leaving
+  them out is fine, and "0" is allowed for a free tier). Without both, `cost_usd` is `None` and the
+  report says cost is unavailable because a price or token count was missing when calls ran.
+  Log entries don't store which cause applies, so the report doesn't guess from today's settings.
+  A price that isn't a finite number, or is negative, fails loudly in
+  `get_settings()`, so, as with the call limit in D16, a typo in the Secrets takes search down too.
+  The cost is worked out when the call is logged, with the prices of that moment. Rejecting infinite
+  prices (including numeric overflow such as `1e309`) prevents `inf` or `nan` costs in the log.
+- **A damaged line in `usage.log`** (the app stopped mid-write) is skipped with a warning, so the
+  report still covers every other call.
+- **`artifacts/` on the live app is wiped on every reboot**, so `usage.log` there only covers the
+  time since the last one. To keep a total, read it from the host before rebooting.
+- **For the AI role:** `scripts/day16_test_summaries.py` clears the summary cache before each
+  question (1 line), because a remembered answer would make no Gemini call and leave no reply to
+  record. Its two runs per question can send identical passages.
+- **Tests:** `tests/test_summary_cache.py` (28) and `tests/test_usage.py`. 26 deliberate
+  breakages of the new code were each caught by a test; the first run missed 5 (an id-only key,
+  remembering before the checks, dropping an entry on a re-store, the size constant and the
+  lock), so those got their own tests. `conftest.py` empties the cache and points `USAGE_LOG` at
+  a throwaway file for every test. Three old limit tests in `test_summarizer.py` now send
+  different questions, because a repeat is no longer counted.
+- **Review regressions:** 14 additional cases failed before the review fixes: source and page
+  corrections, unknown or partial costs with configured prices, and infinite prices in either
+  setting. They cover the stale-source crash, misleading report messages, and non-finite costs.
+  A second review added tests for: a remembered answer with no key set, a page value that isn't a
+  plain number, a damaged usage-log line, and threads filling the cache past its limit.
+
+## 6. Where the next ticket starts (FIF-D18-BE: monitoring)
 
 **Still open from D14:** tag #149's merge commit (`bf28918`) `v0.2` once the team agrees
 (`git tag v0.2 bf28918`, then `git push origin v0.2`). Pushing a tag is visible to everyone.
 
-The D17 plan: *1) Cache by query. 2) Log cost per call. Done when: repeat is instant.*
+**Open from D17, for the team:** future calls need `GEMINI_USD_PER_M_INPUT` and
+`GEMINI_USD_PER_M_OUTPUT` (from Google's pricing page, in the app's Secrets and in `.env`) and
+reported token counts to have a cost. Old entries without costs remain unknown. Nergis reboots
+the app after this PR, as after any `src/` change.
 
-- **Already done:** `search()` has been cached in memory since D11 (`@memo`), so a repeated search
-  is instant. **`summarize()` isn't cached**, and it's the slow, paid call: a repeat takes up to
-  ~32 s and counts against the 10-a-minute limit. It also runs again on every widget change
-  (moving a slider re-runs the page, §5), so this cache is what stops one visitor from using up
-  the limit by adjusting filters. Test that case in the app, not only in `summarizer.py`.
-- **Still to do:** cache summaries (key: question, passage ids, prompt and model), never cache the
-  quoting fallback, and log the tokens (and cost, once the team sets a price) of every Gemini call.
-  A cached answer must not count against the limiter.
+The D18 plan: monitoring (an error log, an uptime check). Where it can build on what exists:
+
+- **Already logged:** `artifacts/speed.log` (every call's time, now with `cached` for summaries
+  too) and `artifacts/usage.log` (every Gemini call's tokens). Failures are only in the normal log
+  (`summarize fell back to quoting passages: ...`), not in a file of their own.
+- **`artifacts/` on the live host is wiped on every reboot**, so any log there is short-lived;
+  decide what a monitoring log is for before choosing where it lives.
+- **For an uptime check,** `tests/test_app.py` already runs the whole page with Streamlit's test
+  tool, and the live URL can't be checked from CI (it redirects to a sign-in page, §3).
 
 ## 7. Rules to keep
 
