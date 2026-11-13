@@ -1,5 +1,5 @@
 
-# AI notes: what's built and where to pick up (Days 1–16, FIF-D01-AI … FIF-D16-AI)
+# AI notes: what's built and where to pick up (Days 1–17, FIF-D01-AI … FIF-D17-AI)
 
 
 For whoever takes over the AI role, and for anyone reviewing AI PRs. Like `data_notes.md`,
@@ -34,6 +34,7 @@ with a citation for every claim.
 | D14-AI | Retrieval checkpoint: score recorded, ranking changes tried on the 10 questions and 10 held-out ones | `experiment_in_question` in `retrieval.py`, `HELD_OUT`, `contains_evidence` and `judge_against` in `retrieval_eval.py`, `scripts/day14_checkpoint.py`, `tests/checkpoint.md`, `tests/test_retrieval.py`, `tests/test_retrieval_eval.py` | #152 |
 | D15-AI | Summary prompt v2: gets the question, says "not found" when the passages don't answer it; fixed the closed-client crash | `src/prompts/summary_v2.txt`, `question=` in `summarizer.py` and `api.summarize` (contract v1.7), `scripts/day15_compare_prompts.py`, `tests/prompt_v2.md`, `tests/test_summarizer.py`, `tests/test_api_edge_cases.py` | #158 |
 | D16-AI | Test summaries on 22 questions with the real Gemini, judge every claim, check "not found"; a number/experiment checker; prompt v3 tried and not adopted | `src/flame_in_freefall/claim_check.py`, `SUMMARY_EXTRA` in `retrieval_eval.py`, `scripts/day16_test_summaries.py`, `tests/summaries.md`, `tests/test_claim_check.py`, `tests/test_day16_script.py`, `tests/test_retrieval_eval.py` | FIF-D16-AI PR |
+| D17-AI | Summary accuracy tests in CI: Gemini's real answers replayed (30 recorded, 21 questions), "not found" asserted, a staleness check, and an opt-in live test | `tests/test_summary_accuracy.py`, `tests/fixtures/summaries.json`, `scripts/day17_record_summaries.py`, `tests/test_day17_script.py`, `live` marker in `pyproject.toml` | FIF-D17-AI PR |
 
 
 Related BE pieces the AI code uses: `store.py` saves/loads the index (D04-BE), `summarizer.py`
@@ -58,7 +59,8 @@ summary ──check_summary()──> [] if every claim cites a real passage     
 
 ## 3. How to run things
 
-All from the project root. None of these need an API key except the Gemini part of Day 1.
+All from the project root. None of these need an API key except the Gemini part of Day 1 and the
+scripts and tests that say "real Gemini".
 
 ```
 uv run pytest -q                                # all tests; a fake model/client, no network
@@ -75,6 +77,8 @@ uv run python scripts/day13_retest.py           # real search(), pass/fail -> ar
 uv run python scripts/day14_checkpoint.py       # checkpoint score + ranking changes -> artifacts/day14_checkpoint_draft.md
 GEMINI_MODEL=gemini-flash-lite-latest uv run --env-file .env python scripts/day15_compare_prompts.py  # prompt v1 vs v2, real Gemini (~20 calls)
 GEMINI_MODEL=gemini-flash-lite-latest uv run --env-file .env python scripts/day16_test_summaries.py  # 22 questions, real Gemini (~32 calls, ~6 min)
+uv run python scripts/day17_record_summaries.py   # the Day 16 recording -> tests/fixtures/summaries.json (no Gemini)
+RUN_LIVE=1 GEMINI_MODEL=gemini-flash-lite-latest uv run --env-file .env pytest -m live  # opt-in: 2 real Gemini calls
 
 ```
 
@@ -214,6 +218,40 @@ For Gemini: put `GEMINI_API_KEY=...` in `.env` (git-ignored, see `.env.example`)
   passage ids and a hash of each passage's text, so D17-AI can replay them as tests without a key.
   Partial `--only` runs use separate names (e.g. `day16_only_Q1_Q8_replies.json`); unknown labels
   and empty selections are rejected before any calls, preserving the full recording.
+- **Summary accuracy tests replay Gemini's real answers (D17, `tests/test_summary_accuracy.py`).**
+  CI has no key, so `tests/fixtures/summaries.json` (committed, 33 KB) holds the 30 answers recorded
+  on 2026-11-12: 21 questions asked with the experiment picked, 9 of them again with nothing
+  picked. H4 (no passages, so the app never calls Gemini for it) is the 22nd question and has
+  nothing to replay. It is built from
+  `artifacts/day16_replies.json` by `scripts/day17_record_summaries.py`, which copies the replies
+  unchanged and refuses a quoting fallback, a Gemini error, a non-JSON reply or a repeat. Each test
+  runs the recorded reply through the real `api.summarize()` and asserts: it is Gemini's answer
+  (not the fallback) to the recorded passages and question; a question whose passages hold the
+  evidence phrase cites one that does (26 cases); a question whose passages don't gets `not_found`
+  with no takeaways (Q6, Q9, Q10, H7); `claim_check` finds nothing (`KNOWN_FALSE_ALARMS` is empty,
+  since D16 found no false alarm). "Answerable" is decided from the recorded passages, not
+  hard-coded. The replays don't call `search()`, so ranking, filter or cutoff changes require
+  re-recording to test their effect on which evidence reaches Gemini.
+- **Staleness is checked, and says how to fix it.** `test_the_recorded_passages_are_still_the_chunks`
+  fails, naming each question and chunk, if a chunk was removed or its text hash changed or the
+  app's prompt file has another name than the recording's; the replays then skip instead of testing
+  old passages. Stale entries are excluded from answerability classification during collection;
+  the derived coverage count also skips until the recording is current, leaving the dedicated
+  staleness test to explain the problem and give the re-record steps (below).
+  Four collection regressions cover a removed chunk, an edited chunk, a renamed prompt, and
+  removal of all chunks. All four failed before this guard was added. They use a made-up
+  recording and made-up chunks in place of the real files' contents (nothing on disk is read or
+  changed), plus a control showing the made-up recording is current before it's changed. So when
+  the real recording is stale, only the staleness test fails.
+- **What the replay tests can't prove:** that Gemini still answers this way. A prompt edited in
+  place, a new model, or a change at Google isn't noticed until someone re-records. The opt-in live
+  test (`pytest -m live`, needs `RUN_LIVE=1` and a key) asks the real Gemini the same passages for
+  Q1 (answerable) and Q9 (not) and asserts the same things, and also fails if the model was
+  overloaded and the passages were quoted instead. CI never runs it; it is skipped otherwise.
+- **To re-record** (after the chunks, prompt or model change): run `scripts/day16_test_summaries.py`
+  with the key (~32 calls, ~6 min), check the new answers by hand as in `tests/summaries.md`, run
+  `scripts/day17_record_summaries.py`, and commit the new fixture; its diff shows exactly which
+  replies changed. Never write a reply by hand.
 
 ## 5. Open questions and known issues
 
@@ -287,31 +325,34 @@ For Gemini: put `GEMINI_API_KEY=...` in `.env` (git-ignored, see `.env.example`)
 - **The corpus is small:** 3 reports, about 2,100 words in total. Keep that in mind for
   the "8 of 10 relevant" goal in D14-AI.
 
-## 6. Where the next ticket starts (FIF-D17-AI automated accuracy tests, and the open search work)
+## 6. Where the next ticket starts (FIF-D18-AI test hallucinations, and the open search work)
 
-The D17 plan: *1) Turn the 8 questions into pytest. 2) Assert "not found" works. Done when: tests
-in CI.*
+The D18 plan (issue #72): *1) Ask out-of-scope questions. 2) Check "not found". Done when: no
+invented answers.*
 
-- **CI has no key and no network,** so the tests replay Gemini's real answers instead of calling
-  it. D16 recorded them: `artifacts/day16_replies.json` (git-ignored, on the laptop that ran
-  D16) holds, per call, the question, the experiment picked, the passage ids, a sha256 of each
-  passage's text, Gemini's exact reply, the model (`gemini-flash-lite-latest`) and the prompt
-  (`summary_v2.txt`). Copy what the tests need into a committed fixture; if the file is gone,
-  re-run `scripts/day16_test_summaries.py` (needs the key). Never write a reply by hand.
-- **What the replay tests should assert,** per question: Gemini's answer passes our checks (it
-  isn't the quoting fallback); answerable questions cite a passage holding the evidence phrase;
-  Q6, Q9, Q10 and H7 give `not_found` with no takeaways; `claim_check.check_claims` finds nothing.
-  Plus a staleness test: if a chunk's text changes, the hashes no longer match and the test says
-  to re-record.
-- **What they can't do:** notice a prompt or model change until someone re-records. Say so in the
-  test file. An opt-in live test (skipped unless asked for) can cover that by hand.
+- **What exists to build on:** Q9 (dangerous spacecraft materials at 30 percent oxygen) and
+  Q10 ("How do you put out a lithium battery fire on Mars?")
+  are the only out-of-scope questions so far, and both give "not found" in the recording and in
+  the replay tests. The D18 set should be bigger and nastier: questions about fire that the four
+  reports don't cover (other fuels, other stations, numbers the reports never give), questions
+  that name a real experiment but ask for something it didn't measure, and questions with a
+  false premise. Judge each real answer by hand, as in `tests/summaries.md`.
+- **The retrieval side can't help:** no `MIN_SCORE` is safe with today's ranking (§5), so an
+  out-of-scope question reaches Gemini with five passages, and "not found" depends on prompt v2.
+  That is the thing to test. Record the real answers the same way (`scripts/day16_test_summaries.py`
+  takes its questions from `retrieval_eval.py`; add a `SUMMARY_EXTRA`-style list, not new entries
+  in `QUESTIONS` or `HELD_OUT`, which the D14 scores depend on), then replay them in CI as D17 did.
+- **A failure there is a prompt problem,** not a test problem. Prompt v3 (D16) was rejected, so any
+  new prompt needs the same tests as v2 (`tests/summaries.md`) and a new file name, so the staleness
+  check notices.
 - **Search work still waiting on team decisions** (unchanged since D14): "keywords + best
   sentence" (8 of 10, needs BE's index change and a new `MIN_SCORE`; code in
   `scripts/day14_checkpoint.py`), and calling `experiment_in_question` in `search()` when nothing
   is picked (4 → 7 of 10 in the app's default run; BE's file). Judge every change on both
   question sets (`TUNING` and `HELD` in the D14 script).
 - **The missing context contributing to the two slips** (§5) is for whoever owns chunking next;
-  Q2's omission of available steps also remains open.
+  Q2's omission of available steps also remains open. Changing the chunks makes the staleness test
+  fail until the D16 run is repeated and re-recorded.
 
 ## 7. Rules to keep
 

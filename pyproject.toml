@@ -34,6 +34,8 @@ dev = [
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
+# Day 17: tests that ask the real Gemini. They are skipped unless RUN_LIVE=1 and a key are set.
+markers = ["live: asks the real Gemini (RUN_LIVE=1 and GEMINI_API_KEY); never runs in CI"]
 
 [tool.ruff]
 line-length = 100
