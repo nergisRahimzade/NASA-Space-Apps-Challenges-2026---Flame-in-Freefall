@@ -5,7 +5,7 @@ import zlib
 import numpy as np
 import pytest
 
-from flame_in_freefall import api, embedding, speed, summarizer, usage
+from flame_in_freefall import api, embedding, error_log, speed, summarizer, usage
 
 
 @pytest.fixture(autouse=True)
@@ -68,3 +68,10 @@ def _fresh_summary_cache_and_usage_log(monkeypatch, tmp_path):
     # fake Gemini), and token counts go to a throwaway log, not artifacts/usage.log in the repo.
     summarizer.clear_summary_cache()
     monkeypatch.setattr(usage, "USAGE_LOG", tmp_path / "usage.log")
+
+
+@pytest.fixture(autouse=True)
+def _fresh_error_log(monkeypatch, tmp_path):
+    # Day 18: many tests raise errors on purpose (empty question, bad filter...). Those events go
+    # to a throwaway log, not artifacts/errors.log in the repo.
+    monkeypatch.setattr(error_log, "ERROR_LOG", tmp_path / "errors.log")

@@ -15,9 +15,10 @@ import pandas as pd
 import pytest
 from streamlit.testing.v1 import AppTest
 
+from flame_in_freefall import error_log
 from flame_in_freefall.api import MAX_QUERY_CHARS, get_table
 from flame_in_freefall.demo_questions import load_demo_questions
-from flame_in_freefall.page_states import SLOW_SEARCH_NOTE
+from flame_in_freefall.page_states import SEARCH_FAILED, SLOW_SEARCH_NOTE
 from flame_in_freefall.summary_box import AI_LABEL, NOT_FOUND_TEXT, QUOTED_LABEL
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -130,6 +131,16 @@ def test_search_failure_shows_an_error_not_a_crash():
     assert not at.exception
     assert len(at.error) == 1
     assert [b.label for b in at.main.button if b.label == "Try again"] == ["Try again"]
+
+
+def test_a_failed_search_leaves_its_reason_in_the_error_log(monkeypatch):
+    # FIF-D18-BE: the visitor only sees the generic box, so the reason must be written down.
+    monkeypatch.setenv("GEMINI_CALLS_PER_MINUTE", "ten")  # makes the real search() raise
+    at = AppTest.from_file(str(APP), default_timeout=30).run()
+    at.text_input[0].input("flame spread").run()
+    assert [e.value for e in at.error] == [SEARCH_FAILED]
+    [entry] = error_log.read_log()
+    assert entry["call"] == "search" and "GEMINI_CALLS_PER_MINUTE" in entry["message"]
 
 
 def test_try_again_searches_again():

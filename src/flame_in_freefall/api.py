@@ -7,7 +7,8 @@ Day 10 (BE): search is real now; it ranks the report chunks with retrieval.find_
 Day 11 (BE): every call is timed (speed.py), and repeated questions come from memory.
 Day 15 (BE): summarize() checks its own answer against the contract before handing it out.
 Day 16 (BE): questions over MAX_QUERY_CHARS are rejected.
-Day 17 (BE): summarize() remembers Gemini's answers (summarizer.py) and logs tokens (usage.py)."""
+Day 17 (BE): summarize() remembers Gemini's answers (summarizer.py) and logs tokens (usage.py).
+Day 18 (BE): a failure leaving any of the three functions is written to the error log first."""
 
 import copy
 import threading
@@ -16,7 +17,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from flame_in_freefall import ingest, speed
+from flame_in_freefall import error_log, ingest, speed
 from flame_in_freefall.cache import memo
 from flame_in_freefall.retrieval import find_passages
 from flame_in_freefall.store import _paths
@@ -76,7 +77,17 @@ def _check_length(text: str, name: str) -> None:
 
 
 def search(query: str, k: int = 5, experiment: str | None = None) -> list[dict]:
-    # Contract v1.1: k defaults to 5. Day 12 (v1.4): experiment="FLEX-2" (or "Saffire-II",
+    # Day 18: the work is in _search(); this wrapper only writes down a failure, then re-raises it
+    # unchanged, so callers (and the page's red box) behave exactly as before.
+    try:
+        return _search(query, k, experiment)
+    except Exception as e:
+        error_log.record_exception("search", str(query), e)
+        raise
+
+
+def _search(query: str, k: int, experiment: str | None) -> list[dict]:
+    # Contract v1.1: search() defaults k to 5. Day 12 (v1.4): experiment="FLEX-2" (or "Saffire-II",
     # "FLEX") searches only that experiment's chunks; None searches all of them.
     # Fail loudly on a blank (or non-text) question instead of running an empty search.
     if not isinstance(query, str) or not query.strip():
@@ -119,7 +130,17 @@ def _check_passages(passages: list[dict]) -> None:
 
 
 def summarize(passages: list[dict], question: str | None = None) -> dict:
-    # Thin wrapper: the contract signature stays here, the Gemini call lives in summarizer.py.
+    try:
+        return _summarize(passages, question)
+    except Exception as e:
+        # A wrong `passages` may not even have a length, so the detail is chosen carefully.
+        count = len(passages) if isinstance(passages, list) else "?"
+        error_log.record_exception("summarize", f"{count} passages", e)
+        raise
+
+
+def _summarize(passages: list[dict], question: str | None) -> dict:
+    # The contract signature is summarize() above; the Gemini call lives in summarizer.py.
     # Contract v1.7 (FIF-D15-AI): pass the user's question, so the summary keeps only takeaways
     # that answer it and says "not found" when none do. None works exactly as before.
     _check_passages(passages)
@@ -159,6 +180,14 @@ def _check_filters(filters: dict) -> None:
 
 
 def get_table(filters: dict | None = None) -> list[dict]:
+    try:
+        return _get_table(filters)
+    except Exception as e:
+        error_log.record_exception("get_table", str(filters), e)
+        raise
+
+
+def _get_table(filters: dict | None) -> list[dict]:
     # Without this, get_table("FLEX") would complain about unknown filters 'E', 'F', 'L', 'X'.
     if filters is not None and not isinstance(filters, dict):
         raise ValueError('filters must be a dict like {"experiment": "FLEX"}, or None')
