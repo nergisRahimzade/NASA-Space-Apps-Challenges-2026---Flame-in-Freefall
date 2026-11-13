@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from flame_in_freefall.api import MAX_QUERY_CHARS, get_table, search, summarize  # noqa: E402
 from flame_in_freefall.config import get_settings  # noqa: E402
+from flame_in_freefall.demo_questions import load_demo_questions  # noqa: E402
 from flame_in_freefall.filters import (  # noqa: E402
     ALL,
     Filters,
@@ -133,8 +134,39 @@ if not all_rows.empty:
         st.button("Reset filters", on_click=reset_filters)
     f = from_choices(experiment, material, oxygen)
 
+# FIF-D19-FE: example questions from demo_questions.md (FIF-D19-DAT). [] if the file is missing,
+# and then no buttons show.
+demo_questions = load_demo_questions()
+
+
+def ask_example(question: str, source: str) -> None:
+    # Runs before the page reruns, so the search box below already shows the question and the
+    # page searches it straight away.
+    st.session_state["query"] = question
+    # A filter on another experiment would hide this example's answer, so widen it to All
+    if st.session_state.get("f_experiment", ALL) not in (ALL, source):
+        st.session_state["f_experiment"] = ALL
+        st.session_state["example_note"] = (
+            f"Experiment set to All, so this example can find its {source} answer."
+        )
+
+
 # FIF-D16-BE: the box stops at the longest question search() accepts (api.MAX_QUERY_CHARS)
-query = st.text_input("Search the research reports", max_chars=MAX_QUERY_CHARS)
+query = st.text_input("Search the research reports", max_chars=MAX_QUERY_CHARS, key="query")
+if demo_questions:
+    st.caption("Or try an example question:")
+    with st.container(horizontal=True):
+        for i, item in enumerate(demo_questions):
+            st.button(
+                item["question"],
+                key=f"example_{i}",
+                on_click=ask_example,
+                args=(item["question"], item["source"]),
+                icon=":material/search:",
+            )
+note = st.session_state.pop("example_note", None)
+if note:
+    st.caption(note)
 # Only experiments with reports can be searched; search() rejects any other name
 searchable = f.experiment in load_experiments()
 if f.experiment:
@@ -147,7 +179,10 @@ if f.experiment:
 search_experiment = f.experiment if searchable else None
 
 if not query.strip():
-    st.caption("Try a question like: What gases were tested as fire suppressants in microgravity?")
+    if not demo_questions:
+        st.caption(
+            "Try a question like: What gases were tested as fire suppressants in microgravity?"
+        )
 else:
     try:
         with st.spinner(SEARCH_SPINNER):

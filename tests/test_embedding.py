@@ -71,3 +71,32 @@ def test_mock_docs_embed_and_save(fake_model, tmp_path):
     vectors, loaded = load_index(tmp_path)
     assert vectors.shape == (len(chunks), 384)
     assert [c["id"] for c in loaded] == [c["id"] for c in chunks]  # row i still = chunk i
+
+
+def test_model_loads_once_when_many_threads_ask_at_the_same_time(monkeypatch):
+    # Day 19: several searches at once (quick clicks on example buttons) used to load the
+    # model in parallel and crash the app. Now one thread loads and the rest wait.
+    import threading
+    import time
+
+    loads = []
+
+    class SlowModel:
+        def __init__(self, name):
+            loads.append(name)
+            time.sleep(0.2)  # like the real model, loading takes a while
+
+    import sys
+    import types
+
+    monkeypatch.setitem(
+        sys.modules, "sentence_transformers", types.SimpleNamespace(SentenceTransformer=SlowModel)
+    )
+    embedding._load_model.cache_clear()
+    threads = [threading.Thread(target=embedding._load_model_once, args=("m",)) for _ in range(5)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    embedding._load_model.cache_clear()
+    assert loads == ["m"]
